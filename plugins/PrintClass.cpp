@@ -22,13 +22,6 @@ PrintClass::PrintClass(const std::string& name) : DAQModule(name)
 }
 
 void
-PrintClass::do_print(const data_t&)
-{
-  std::cout << "Printing!!!" << std::endl;
-  std::cout << int_to_print << std::endl;
-}
-
-void
 PrintClass::init(const data_t& args)
 {
   std::cout << "Printing init!!!" << std::endl;
