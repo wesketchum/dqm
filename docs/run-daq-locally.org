@@ -43,7 +43,7 @@ script will be very handy for that.
 * Working locally
 We are going to run
 #+BEGIN_SRC
-singularity run -B/cvmfs:/cvmfs /cvmfs/singularity.opensciencegrid.org/novaexperiment/sl7:latest~
+singularity run -B/cvmfs:/cvmfs /cvmfs/singularity.opensciencegrid.org/novaexperiment/sl7:latest
 #+END_SRC
 and if all goes well we should be inside the singularity container.
 
