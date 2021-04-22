@@ -42,13 +42,17 @@ script will be very handy for that.
 
 * Working locally
 We are going to run
-~$ singularity run -B/cvmfs:/cvmfs /cvmfs/singularity.opensciencegrid.org/novaexperiment/sl7:latest~
+#+BEGIN_SRC
+singularity run -B/cvmfs:/cvmfs /cvmfs/singularity.opensciencegrid.org/novaexperiment/sl7:latest~
+#+END_SRC
 and if all goes well we should be inside the singularity container.
 
 ** My workflow
 I have downloaded every package in the DUNE-DAQ repos, by using the following
 command:
-~GHORG=DUNE-DAQ; curl "https://api.github.com/orgs/$GHORG/repos?per_page=1000" | grep -o 'git@[^"]*' | xargs -L1 git clone~
+#+BEGIN_SRC
+GHORG=DUNE-DAQ; curl "https://api.github.com/orgs/$GHORG/repos?per_page=1000" | grep -o 'git@[^"]*' | xargs -L1 git clone
+#+END_SRC
 I also have a small script to pull for all packages, called ~pull.sh~:
 #+BEGIN_SRC
 for f in $(ls -d */)
@@ -61,8 +65,18 @@ done
 that I run from the directory where I have all the packages.
 
 I have the whole repo cloned so that I can move between files quickly. Then, I
-cloned the daq-buildtools and made a test release following the instructions in:
+cloned the daq-buildtools and made a test release following the instructions in
+https://github.com/DUNE-DAQ/appfwk/wiki/Compiling-and-running-under-v2.4.0:
+#+BEGIN_SRC
+git clone https://github.com/DUNE-DAQ/daq-buildtools.git -b v2.3.0
+source daq-buildtools/dbt-setup-env.sh
+dbt-create.sh v2.4.0 test-release-2.4.0
+#+END_SRC
 
 I add packages to sourcecode by adding a symbolic link to them:
+#+BEGIN_SRC
+cd test-release-2.4.0/sourcecode
+ln -s ~/Dune/Dune-daq-all/readout .
+#+END_SRC
 
 * Troubleshooting
