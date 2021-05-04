@@ -11,6 +11,7 @@
  */
 
 #include "appfwk/DAQModule.hpp"
+#include <atomic>
 
 namespace dunedaq::DQM {
 
@@ -36,7 +37,10 @@ public:
   void init(const data_t& ) override;
 
   void do_print(const data_t&);
-  void pop(const data_t&);
+  void do_start(const data_t&);
+  void do_stop(const data_t&);
+
+  std::atomic<bool> m_run_marker;
 
 };
 

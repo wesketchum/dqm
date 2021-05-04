@@ -32,7 +32,7 @@ public:
   Hist(int steps, double low, double high);
   int fill(double x);
 
-  void save(std::string filename) const;
+  void save(const std::string &filename) const;
   void save(std::ofstream &filehandle) const;
 };
 
@@ -63,7 +63,7 @@ int Hist::fill(double x){
   return bin;
 }
 
-void Hist::save(std::string filename) const {
+void Hist::save(const std::string &filename) const {
   std::ofstream file;
   file.open(filename);
   file << m_steps << " " << m_low << " " << m_high << " " << std::endl;
