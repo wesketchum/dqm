@@ -14,6 +14,7 @@
 #include "readout/ReadoutTypes.hpp"
 #include "Hist.hpp"
 #include "Fourier.hpp"
+#include "Exporter.hpp"
 
 #include <thread>
 

@@ -12,13 +12,14 @@ find_package(dataformats REQUIRED)
 # find_package(ers REQUIRED)     
 # find_package(TRACE REQUIRED)
 # find_package(Boost COMPONENTS unit_test_framework program_options REQUIRED)
+find_package(RdKafka REQUIRED)
 
 # We put here the name of our class, and the libraries we want to link with
 
-daq_add_library()
+daq_add_library(LINK_LIBRARIES Rdkafka::rdkafka)
 
 daq_add_plugin(PrintClass duneDAQModule LINK_LIBRARIES appfwk::appfwk dataformats::dataformats DQM readout)
-daq_add_plugin(DataReceiver duneDAQModule LINK_LIBRARIES appfwk::appfwk dataformats::dataformats DQM readout)
+#daq_add_plugin(DataReceiver duneDAQModule LINK_LIBRARIES appfwk::appfwk dataformats::dataformats DQM readout)
 
 daq_install()
 
