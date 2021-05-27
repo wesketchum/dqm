@@ -1,3 +1,5 @@
+#pragma once
+
 /**
  * @file Hist.hpp Simple 1D histogram implementation
  *
@@ -12,12 +14,20 @@
 #include <fstream>
 #include <iostream>
 
+// DQM
+#include "AnalysisModule.hpp"
+#include "Decoder.hpp"
+
+#include "dataformats/TriggerRecord.hpp"
+
 /**
  * Basic 1D histogram that counts entries
  * It only supports uniform binning
  * Overflow and underflow is not supported yet
  */
-class Hist {
+namespace dunedaq::DQM{
+
+class Hist : public AnalysisModule{
 
   int find_bin(double x) const;
 
@@ -34,6 +44,9 @@ public:
 
   void save(const std::string &filename) const;
   void save(std::ofstream &filehandle) const;
+
+  bool is_running();
+  void run(dunedaq::dataformats::TriggerRecord &tr);
 };
 
 
@@ -45,11 +58,15 @@ Hist::Hist(int steps, double low, double high)
   m_step_size = (high - low) / steps;
 }
 
-int Hist::find_bin(double x) const {
+int
+Hist::find_bin(double x) const
+{
     return (x - m_low) / m_step_size;
 }
-  
-int Hist::fill(double x){
+
+int
+Hist::fill(double x)
+{
   int bin = find_bin(x);
   // Underflow, do nothing
   if(bin < 0) return -1;
@@ -63,7 +80,9 @@ int Hist::fill(double x){
   return bin;
 }
 
-void Hist::save(const std::string &filename) const {
+void
+Hist::save(const std::string &filename) const
+{
   std::ofstream file;
   file.open(filename);
   file << m_steps << " " << m_low << " " << m_high << " " << std::endl;
@@ -72,9 +91,75 @@ void Hist::save(const std::string &filename) const {
   file << std::endl;
 }
 
-void Hist::save(std::ofstream &filehandle) const {
+void
+Hist::save(std::ofstream &filehandle) const
+{
   filehandle << m_steps << " " << m_low << " " << m_high << " " << std::endl;
   for (auto x: m_entries)
     filehandle << x << " ";
   filehandle << std::endl;
 }
+
+bool
+Hist::is_running()
+{
+  return true;
+}
+
+void
+Hist::run(dunedaq::dataformats::TriggerRecord &tr)
+{
+  dunedaq::DQM::Decoder dec;
+  auto wibframes = dec.decode(tr);
+
+  for(auto &fr:wibframes){
+    for(int ich=0; ich<256; ++ich)
+      this->fill(fr.get_channel(ich));
+  }
+  this->save("Hist/hist.txt");
+  
+}
+
+class HistLink : public AnalysisModule{
+  std::string m_name;
+  std::vector<Hist> histvec;
+  bool m_run_mark;
+
+public:
+
+  HistLink(std::string name, int steps, double low, double high);
+
+  void run(dunedaq::dataformats::TriggerRecord &tr);
+  bool is_running();
+};
+
+HistLink::HistLink(std::string name, int steps, double low, double high)
+  : m_name(name), m_run_mark(false)
+{
+  for(int i=0; i<256; ++i){
+    Hist hist(steps, low, high);
+    histvec.push_back(hist);
+  }
+}
+
+void HistLink::run(dunedaq::dataformats::TriggerRecord &tr){
+  m_run_mark = true;
+  dunedaq::DQM::Decoder dec;
+  auto wibframes = dec.decode(tr);
+
+  for(auto &fr:wibframes){
+    for(int ich=0; ich<256; ++ich)
+    histvec[ich].fill(fr.get_channel(ich));
+  }
+
+  for(int ich=0; ich<256; ++ich)
+    histvec[ich].save("Hist/" + m_name + "-" + std::to_string(ich) + ".txt");
+  m_run_mark = false;
+}
+
+bool HistLink::is_running(){
+  return m_run_mark;
+}
+ 
+
+} // namespace dunedaq::DQM

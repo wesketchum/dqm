@@ -18,10 +18,7 @@ find_package(dataformats REQUIRED)
 
 daq_add_library()
 
-daq_add_plugin(PrintClass duneDAQModule LINK_LIBRARIES appfwk::appfwk dataformats::dataformats DQM readout)
+# daq_add_plugin(PrintClass duneDAQModule LINK_LIBRARIES appfwk::appfwk dataformats::dataformats DQM readout)
 daq_add_plugin(DataReceiver duneDAQModule LINK_LIBRARIES appfwk::appfwk dataformats::dataformats DQM readout)
 
 daq_install()
-
-
-
