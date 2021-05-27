@@ -9,6 +9,7 @@ daq_setup_environment()
 
 find_package(appfwk REQUIRED)     
 find_package(dataformats REQUIRED)
+# find_package(dfmodules REQUIRED)
 # find_package(ers REQUIRED)     
 # find_package(TRACE REQUIRED)
 # find_package(Boost COMPONENTS unit_test_framework program_options REQUIRED)
