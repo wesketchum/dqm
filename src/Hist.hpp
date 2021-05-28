@@ -111,10 +111,6 @@ Hist::scramble(double scrambulation)
 {
   std::srand((unsigned) time(NULL));
 
-  double m_low, m_high, m_step_size;
-  int m_nentries;
-  double m_sum;
-
   for (int i = 0; i < m_nentries; i++)
   {
     m_entries[i] +=  m_entries[i]*((((std::rand() % 20) - 10.)/10.)*scrambulation);
