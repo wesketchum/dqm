@@ -1,3 +1,5 @@
+#pragma once
+
 /**
  * @file Fourier.hpp Fast fourier transform using the Cooley-Tukey algorithm
  *
@@ -13,6 +15,15 @@
 #include <iostream>
 #include <complex>
 #include <valarray>
+
+// DQM
+//#include "AnalysisModule.hpp"
+//#include "Decoder.hpp"
+
+#include "dataformats/TriggerRecord.hpp"
+
+
+namespace dunedaq::DQM{
  
 typedef std::complex<double> Complex;
 typedef std::valarray<Complex> CArray;
@@ -223,3 +234,47 @@ void Fourier::save_fourier(std::ofstream &filehandle) const
     filehandle << x << " ";
   filehandle << std::endl;
 }
+
+
+class FourierLink : public AnalysisModule{
+  std::string m_name;
+  std::vector<Fourier> fouriervec;
+  bool m_run_mark;
+
+public:
+
+  FourierLink(std::string name, int start, int end, int npoints);
+
+  void run(dunedaq::dataformats::TriggerRecord &tr);
+  bool is_running();
+};
+
+FourierLink::FourierLink(std::string name, int start, int end, int npoints)
+  : m_name(name), m_run_mark(false)
+{
+  for(int i=0; i<256; ++i){
+    Fourier fourier(start, end, npoints);
+    fouriervec.push_back(fourier);
+  }
+}
+
+void FourierLink::run(dunedaq::dataformats::TriggerRecord &tr){
+  m_run_mark = true;
+  dunedaq::DQM::Decoder dec;
+  auto wibframes = dec.decode(tr);
+
+  for(auto &fr:wibframes){
+    for(int ich=0; ich<256; ++ich)
+      fouriervec[ich].enter(fr.get_channel(ich), 0);
+  }
+
+  for(int ich=0; ich<256; ++ich)
+    fouriervec[ich].save("Fourier/" + m_name + "-" + std::to_string(ich) + ".txt");
+  m_run_mark = false;
+}
+
+bool FourierLink::is_running(){
+  return m_run_mark;
+}
+
+} // namespace dunedaq::DQM
