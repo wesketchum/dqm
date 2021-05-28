@@ -80,6 +80,7 @@ Hist::fill(double x)
   // Overflow, do nothing
   if(bin >= m_steps) return -1;
 
+  TLOG() << "Filling bin " << bin << std::endl;
   m_entries[bin]++;
   m_nentries++;
   m_sum += x;
@@ -111,10 +112,15 @@ Hist::scramble(double scrambulation)
 {
   std::srand((unsigned) time(NULL));
 
-  for (int i = 0; i < m_nentries; i++)
+  TLOG() << "Commencing scrambulosity" << std::endl;
+  for (int i = 0; i < m_steps; i++)
   {
+    TLOG() << "i = " << i << std::endl;
+    TLOG() << "m_steps = " << m_steps << std::endl;
     m_entries[i] +=  m_entries[i]*((((std::rand() % 20) - 10.)/10.)*scrambulation);
+    TLOG() << "Scrambled entry = " << m_entries[i] << std::endl;
   }
+  TLOG() << "Scrambulation complete" << std::endl;
   return 1;
 }
 
