@@ -117,8 +117,7 @@ Hist::scramble(double scrambulation)
 
   for (int i = 0; i < m_nentries; i++)
   {
-    //m_entries[i] +=  m_entries[i]*((((std::rand() % 20) - 10.)/10.)*scrambulation);
-    m_entries[i] = 0;
+    m_entries[i] +=  m_entries[i]*((((std::rand() % 20) - 10.)/10.)*scrambulation);
   }
   return 1;
 }
