@@ -52,7 +52,7 @@ std::vector<dataformats::WIBFrame> decodewib(dataformats::TriggerRecord &record)
   std::vector<dataformats::WIBFrame> vec;
 
   for(int iframe=0; iframe<100; ++iframe){
-    if(offset + 5568 > fr->get_size()){
+    if(offset + 5568 >= fr->get_size()){
       TLOG() << "EXITING!!!!!!!!!!!!" << iframe << " " << fr->get_size();
       break;
     }
@@ -60,13 +60,8 @@ std::vector<dataformats::WIBFrame> decodewib(dataformats::TriggerRecord &record)
     auto pair = std::make_pair<void*, size_t> (static_cast<void*>(data_array), (size_t)5568);
     frag_pieces.push_back(pair);
     offset += 5568;
-    // TLOG() << "i = " << i;
-
     dataformats::WIBFrame *frame = static_cast<dataformats::WIBFrame*> (frag_pieces[iframe].first);
     vec.push_back(*frame);
-
-
-
 
     // for(int i=0; i<256; ++i) {
     //     // TLOG() << "Channel i: " << frame->get_channel(i);

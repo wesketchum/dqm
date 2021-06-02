@@ -14,6 +14,7 @@
 #include "readout/ReadoutTypes.hpp"
 #include "Hist.hpp"
 #include "Fourier.hpp"
+#include "Exporter.hpp"
 
 #include <thread>
 
@@ -39,6 +40,9 @@ PrintClass::do_start(const data_t&)
 {
   m_run_marker.store(true);
 
+  Exporter(1);
+
+  /*
   appfwk::DAQSource< std::unique_ptr<dataformats::Fragment >> source("data_fragments_q");
   std::unique_ptr<dataformats::Fragment, std::default_delete<dataformats::Fragment> > element;
   int i = 0;
@@ -67,6 +71,7 @@ PrintClass::do_start(const data_t&)
     hist.save("histogram.txt");
     ++i; 
   }
+*/
 
 }
 

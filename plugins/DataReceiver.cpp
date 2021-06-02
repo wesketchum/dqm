@@ -158,6 +158,9 @@ void DataReceiver::RequestMaker(){
   map[std::chrono::system_clock::now()] = {&hist10s, 10, 1};
   map[std::chrono::system_clock::now()] = {&fourier10s, 10, 2};
 
+  std::vector<std::thread> threads;
+  threads.reserve(4);
+
   // Main loop, running forever
   while(m_run_marker){
 
@@ -168,9 +171,10 @@ void DataReceiver::RequestMaker(){
     }
     auto next_time = fr->first;
     AnalysisModule *algo = fr->second.mod;
-    TLOG() << "TIME: next_time" << next_time.time_since_epoch().count();
 
-    TLOG() << "MAIN LOOP" << " Instance of " << fr->second.between_time << " seconds" << (algo == &hist1s) << " " << (algo == &hist5s);
+    //TLOG() << "TIME: next_time" << next_time.time_since_epoch().count();
+
+    //TLOG() << "MAIN LOOP" << " Instance of " << fr->second.between_time << " seconds" << (algo == &hist1s) << " " << (algo == &hist5s);
     
     // Sleep until the next time
     std::this_thread::sleep_until(next_time);
@@ -187,14 +191,18 @@ void DataReceiver::RequestMaker(){
     // Now it's the time to do something
     auto request = CreateRequest(m_links);
     m_sink->push(request, m_sink_timeout);
-    TLOG() << "Request pushed";
 
-    TLOG() << "Going to pop";
+    //TLOG() << "Request pushed";
+
+    //TLOG() << "Going to pop";
     m_source->pop(element, m_source_timeout);
-    TLOG() << "Element popped";
-    std::thread *t = new std::thread(&AnalysisModule::run, std::ref(*algo), std::ref(*element));
+    //TLOG() << "Element popped";
+    //std::thread *t = new std::thread(&AnalysisModule::run, std::ref(*algo), std::ref(*element));
+    threads.emplace_back(std::thread(&AnalysisModule::run, std::ref(*algo), std::ref(*element)));
+    //for (auto t: threads) t.join;
+    
 
-    // Add a new entry for the current instance
+    //Add a new entry for the current instance
     map[std::chrono::system_clock::now()+std::chrono::milliseconds((int)fr->second.between_time*1000)] = {algo, fr->second.between_time, fr->second.default_unavailable_time};
 
     // Delete the entry we just used and find the next one
@@ -208,40 +216,38 @@ void DataReceiver::RequestMaker(){
 
     dfmessages::TriggerDecision decision;
     // decision.components.clear();
-    TLOG() << "decision.components.size() after clear: " << decision.components.size();
+    //TLOG() << "decision.components.size() after clear: " << decision.components.size();
     decision.trigger_number = 1;
 
     decision.trigger_timestamp = 1;
     // decision.components = std::vector<dataformats::ComponentRequest>();
     // decision.components.reserve(2);
 
-    
-
     std::vector<dfmessages::ComponentRequest> v;
     // decision.components.push_back()));
 
-    for (auto &link : m_links) {
-      TLOG() << "ONE LINK";
-        dataformats::ComponentRequest request;
-        request.component = link;
-        request.window_end = 1000;
-        request.window_begin = 0;
-        // request.window_begin = timestamp - m_trigger_window_offset;
-        // request.window_end = request.window_begin + window_ticks_dist(random_engine);
-        // dfmessages::ComponentRequest request(link, 0, 1000);
+    for (auto &link : m_links) 
+    {
+      //TLOG() << "ONE LINK";
+      dataformats::ComponentRequest request;
+      request.component = link;
+      request.window_end = 1000;
+      request.window_begin = 0;
+      // request.window_begin = timestamp - m_trigger_window_offset;
+      // request.window_end = request.window_begin + window_ticks_dist(random_engine);
+      // dfmessages::ComponentRequest request(link, 0, 1000);
         
-
-    TLOG() << "decision.components.size() before push: " << decision.components.size();
-    v.push_back(request);
-    decision.components.push_back(request);
-    TLOG() << "decision.components.size() after push: " << decision.components.size();
+      //TLOG() << "decision.components.size() before push: " << decision.components.size();
+      v.push_back(request);
+      decision.components.push_back(request);
+      //TLOG() << "decision.components.size() after push: " << decision.components.size();
     }
-    TLOG() << "decision.components.size() before push: " << decision.components.size();
-    TLOG() << "decision.components.size() after push: " << decision.components.size();
+    //TLOG() << "decision.components.size() before push: " << decision.components.size();
+    //TLOG() << "decision.components.size() after push: " << decision.components.size();
 
     // TLOG() << "m_links.size(): " << m_links.size();
     // decision.components.push_back( dfmessages::ComponentRequest(m_links[0], 0, 1000));
-    TLOG() << "decision.components.size(): " << decision.components.size();
+    //TLOG() << "decision.components.size(): " << decision.components.size();
     return decision;
   }
 
