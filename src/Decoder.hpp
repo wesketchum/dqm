@@ -61,28 +61,12 @@ std::vector<dataformats::WIBFrame> decodewib(dataformats::TriggerRecord &record)
       TLOG() << "EXITING!!!!!!!!!!!!" << iframe << " " << fr->get_size();
       break;
     }
-    TLOG() << "A" << std::endl;
-    TLOG() << "Offset = " << offset << std::endl;
-    TLOG() << "fr->get_size() = " << fr->get_size() << std::endl;
-    TLOG() << "sizeof(data) = " << sizeof(data) << std::endl;
-    TLOG() << "sizeof(data_array) = " << sizeof(data_array) << std::endl;
-    TLOG() << "(char*)data + offset = %p" << (char*)data + offset << std::endl;
     memcpy(data_array, (char*)data + offset, 5568);
-    TLOG() << "B" << std::endl;
     auto pair = std::make_pair<void*, size_t> (static_cast<void*>(data_array), (size_t)5568);
-    TLOG() << "C" << std::endl;
     frag_pieces.push_back(pair);
-    TLOG() << "D" << std::endl;
     offset += 5568;
-    // TLOG() << "i = " << i;
-    TLOG() << "E" << std::endl;
     dataformats::WIBFrame *frame = static_cast<dataformats::WIBFrame*> (frag_pieces[iframe].first);
-    TLOG() << "F" << std::endl;
     vec.push_back(*frame);
-    TLOG() << "G" << std::endl;
-
-
-
 
     // for(int i=0; i<256; ++i) {
     //     // TLOG() << "Channel i: " << frame->get_channel(i);

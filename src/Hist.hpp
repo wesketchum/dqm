@@ -66,7 +66,6 @@ Hist::Hist(int steps, double low, double high)
 int
 Hist::find_bin(double x) const
 {
-    TLOG() << "Found bin: " << (x - m_low) / m_step_size << std::endl;
     return (x - m_low) / m_step_size;
 }
 
@@ -80,7 +79,6 @@ Hist::fill(double x)
   // Overflow, do nothing
   if(bin >= m_steps) return -1;
 
-  TLOG() << "Filling bin " << bin << std::endl;
   m_entries[bin]++;
   m_nentries++;
   m_sum += x;
@@ -110,17 +108,12 @@ Hist::save(std::ofstream &filehandle) const
 int
 Hist::scramble(double scrambulation)
 {
-  std::srand((unsigned) time(NULL));
+  //std::srand(time(NULL));
 
-  TLOG() << "Commencing scrambulosity" << std::endl;
   for (int i = 0; i < m_steps; i++)
   {
-    TLOG() << "i = " << i << std::endl;
-    TLOG() << "m_steps = " << m_steps << std::endl;
     m_entries[i] +=  m_entries[i]*((((std::rand() % 20) - 10.)/10.)*scrambulation);
-    TLOG() << "Scrambled entry = " << m_entries[i] << std::endl;
   }
-  TLOG() << "Scrambulation complete" << std::endl;
   return 1;
 }
 
@@ -204,17 +197,13 @@ void HistLink::run(dunedaq::dataformats::TriggerRecord &tr){
 
   m_run_mark = true;
   dunedaq::DQM::Decoder dec;
-  TLOG() << "ALPHA" << std::endl;
+  TLOG() << "Decoding" << std::endl;
   auto wibframes = dec.decode(tr);
-  TLOG() << "OMEGA" << std::endl;
+  TLOG() << "WIB frames decoded" << std::endl;
 
   for(auto &fr:wibframes){
     for(int ich=0; ich<256; ++ich)
     {
-      //double fill_value = (std::rand() % 5000);
-      //TLOG() << "Fill value = " << fill_value << std::endl;
-      //histvec[ich].fill(fill_value);
-
       histvec[ich].fill(fr.get_channel(ich));
     }
   }
@@ -222,7 +211,7 @@ void HistLink::run(dunedaq::dataformats::TriggerRecord &tr){
   //Add random variation to histograms 
   for (int ich=0; ich<256; ++ich)
   {
-    int scramblor = histvec[ich].scramble(25.);
+    int scramblor = histvec[ich].scramble(.25);
   }
 
   //Transmit via kafka
