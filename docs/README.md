@@ -21,13 +21,21 @@ To authenticate its connection to the broadcast service, it requires 3 certifica
 ## Steps for generating your own certificates 
 For the .crt.pem and .key.pem files: obtain a .p12 GRID certificate from the CERN certification authority: https://ca.cern.ch/ca/user/Request.aspx?template=ee2user
 Then use the following commands to generate the .crt.pem and .key.pem certificates from the .p12 file:
+
 openssl pkcs12 -in <cert.p12> -out <cert.crt.pem> -clcerts -nokeys
+
 openssl pkcs12 -in <cert.p12> -out <cert.key.pem> -nocerts -nodes
 
 For the .pem file: execute the following commands
+
 set -e
+
 curl -k https://cafiles.cern.ch/cafiles/certificates/CERN%20Root%20Certification%20Authority%202.crt -o CERNRootCertificationAuthority2.crt
+
 curl -k https://cafiles.cern.ch/cafiles/certificates/CERN%20Grid%20Certification%20Authority.crt -o CERNGridCertificationAuthority.crt
+
 openssl x509 -in CERNRootCertificationAuthority2.crt -inform DER  -out CERNRoot.pem
+
 cat CERNRoot.pem CERNGridCertificationAuthority.crt > cerncacerts.pem
+
 rm CERNRoot.pem CERNGridCertificationAuthority.crt CERNRootCertificationAuthority2.crt
