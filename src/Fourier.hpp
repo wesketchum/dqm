@@ -16,14 +16,14 @@
 #include <complex>
 #include <valarray>
 
-// DQM
+// dqm
 //#include "AnalysisModule.hpp"
 //#include "Decoder.hpp"
 
 #include "dataformats/TriggerRecord.hpp"
 
 
-namespace dunedaq::DQM{
+namespace dunedaq::dqm{
  
 typedef std::complex<double> Complex;
 typedef std::valarray<Complex> CArray;
@@ -277,4 +277,4 @@ bool FourierLink::is_running(){
   return m_run_mark;
 }
 
-} // namespace dunedaq::DQM
+} // namespace dunedaq::dqm

@@ -22,7 +22,8 @@
 
 #include "dataformats/TriggerRecord.hpp"
 
-namespace dunedaq::DQM {
+
+namespace dunedaq::dqm {
 
 class DataReceiver : public dunedaq::appfwk::DAQModule
 {
@@ -68,6 +69,6 @@ private:
 };
 
 
-} // namespace dunedaq::DQM
+} // namespace dunedaq::dqm
 
 

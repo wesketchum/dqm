@@ -15,7 +15,7 @@
 #include <vector>
 
 namespace dunedaq{
-namespace DQM{
+namespace dqm{
 
 class Decoder {
 public:
@@ -84,4 +84,4 @@ std::vector<dataformats::WIBFrame> Decoder::decode(dataformats::TriggerRecord &r
 }
   
 } // namespace dunedaq
-} // namespace DQM
+} // namespace dqm

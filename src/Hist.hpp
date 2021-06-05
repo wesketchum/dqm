@@ -35,7 +35,7 @@
  * It only supports uniform binning
  * Overflow and underflow is not supported yet
  */
-namespace dunedaq::DQM{
+namespace dunedaq::dqm{
 
 class Hist : public AnalysisModule{
 
@@ -132,7 +132,7 @@ Hist::is_running()
 void
 Hist::run(dunedaq::dataformats::TriggerRecord &tr)
 {
-  dunedaq::DQM::Decoder dec;
+  dunedaq::dqm::Decoder dec;
   auto wibframes = dec.decode(tr);
 
   for(auto &fr:wibframes){
@@ -233,4 +233,4 @@ bool HistLink::is_running(){
 }
  
 
-} // namespace dunedaq::DQM
+} // namespace dunedaq::dqm
