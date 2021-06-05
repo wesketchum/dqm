@@ -260,7 +260,7 @@ FourierLink::FourierLink(std::string name, int start, int end, int npoints)
 
 void FourierLink::run(dunedaq::dataformats::TriggerRecord &tr){
   m_run_mark = true;
-  dunedaq::DQM::Decoder dec;
+  dunedaq::dqm::Decoder dec;
   auto wibframes = dec.decode(tr);
 
   for(auto &fr:wibframes){

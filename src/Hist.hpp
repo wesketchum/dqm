@@ -200,7 +200,7 @@ void HistLink::run(dunedaq::dataformats::TriggerRecord &tr){
   std::srand((unsigned) time(NULL));
 
   m_run_mark = true;
-  dunedaq::DQM::Decoder dec;
+  dunedaq::dqm::Decoder dec;
   TLOG() << "Decoding" << std::endl;
   auto wibframes = dec.decode(tr);
   TLOG() << "WIB frames decoded" << std::endl;
