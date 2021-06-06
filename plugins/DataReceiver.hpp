@@ -66,6 +66,8 @@ private:
   std::chrono::milliseconds m_sink_timeout{1000};
   std::chrono::milliseconds m_source_timeout{1000};
 
+  std::string m_running_mode;
+
 };
 
 
