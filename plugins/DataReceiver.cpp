@@ -29,7 +29,7 @@
 #include "dataformats/wib/WIBFrame.hpp"
 
 namespace dunedaq{
-namespace DQM {
+namespace dqm {
 
 int MAX_HIST_FRAME = 9;
 int rolling_index = 10;
@@ -252,7 +252,7 @@ void DataReceiver::RequestMaker(){
   }
 
 } // namespace dunedaq
-} // namespace DQM
+} // namespace dqm
 
 // Define the module
-DEFINE_DUNE_DAQ_MODULE(dunedaq::DQM::DataReceiver)
+DEFINE_DUNE_DAQ_MODULE(dunedaq::dqm::DataReceiver)

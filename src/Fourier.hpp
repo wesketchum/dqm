@@ -16,14 +16,14 @@
 #include <complex>
 #include <valarray>
 
-// DQM
+// dqm
 //#include "AnalysisModule.hpp"
 //#include "Decoder.hpp"
 
 #include "dataformats/TriggerRecord.hpp"
 
 
-namespace dunedaq::DQM{
+namespace dunedaq::dqm{
  
 typedef std::complex<double> Complex;
 typedef std::valarray<Complex> CArray;
@@ -260,7 +260,7 @@ FourierLink::FourierLink(std::string name, int start, int end, int npoints)
 
 void FourierLink::run(dunedaq::dataformats::TriggerRecord &tr){
   m_run_mark = true;
-  dunedaq::DQM::Decoder dec;
+  dunedaq::dqm::Decoder dec;
   auto wibframes = dec.decode(tr);
 
   for(auto &fr:wibframes){
@@ -277,4 +277,4 @@ bool FourierLink::is_running(){
   return m_run_mark;
 }
 
-} // namespace dunedaq::DQM
+} // namespace dunedaq::dqm

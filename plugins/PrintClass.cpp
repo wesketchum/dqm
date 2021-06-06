@@ -20,7 +20,7 @@
 
 
 namespace dunedaq{
-namespace DQM {
+namespace dqm {
 
 PrintClass::PrintClass(const std::string& name) : DAQModule(name)
 {
@@ -83,7 +83,7 @@ PrintClass::do_stop(const data_t&)
 }
 
 } // namespace dunedaq
-} // namespace DQM
+} // namespace dqm
 
 // Needed to define a module
-DEFINE_DUNE_DAQ_MODULE(dunedaq::DQM::PrintClass)
+DEFINE_DUNE_DAQ_MODULE(dunedaq::dqm::PrintClass)

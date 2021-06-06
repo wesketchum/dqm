@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.12)
-project(DQM VERSION 1.1.0)
+project(dqm VERSION 1.0.0)
 
 find_package(daq-cmake REQUIRED)
 
@@ -19,7 +19,7 @@ find_package(RdKafka REQUIRED)
 
 daq_add_library()
 
-# daq_add_plugin(PrintClass duneDAQModule LINK_LIBRARIES appfwk::appfwk dataformats::dataformats DQM readout)
-daq_add_plugin(DataReceiver duneDAQModule LINK_LIBRARIES appfwk::appfwk dataformats::dataformats DQM readout RdKafka::rdkafka RdKafka::rdkafka++)
+# daq_add_plugin(PrintClass duneDAQModule LINK_LIBRARIES appfwk::appfwk dataformats::dataformats dqm readout)
+daq_add_plugin(DataReceiver duneDAQModule LINK_LIBRARIES appfwk::appfwk dataformats::dataformats dqm readout RdKafka::rdkafka RdKafka::rdkafka++)
 
 daq_install()

@@ -13,7 +13,7 @@
 #include "appfwk/DAQModule.hpp"
 #include <atomic>
 
-namespace dunedaq::DQM {
+namespace dunedaq::dqm {
 
 class PrintClass : public dunedaq::appfwk::DAQModule
 {
@@ -45,6 +45,6 @@ public:
 };
 
 
-} // namespace dunedaq::DQM
+} // namespace dunedaq::dqm
 
 

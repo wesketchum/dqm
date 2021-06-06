@@ -12,7 +12,7 @@
 
 #include "dataformats/TriggerRecord.hpp"
 
-namespace dunedaq::DQM {
+namespace dunedaq::dqm {
 
 class AnalysisModule {
 public:
@@ -20,4 +20,4 @@ public:
   virtual void run(dataformats::TriggerRecord &record) = 0;
 };
 
-} //namespace dunedaq::DQM
+} //namespace dunedaq::dqm
