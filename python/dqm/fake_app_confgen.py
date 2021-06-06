@@ -17,6 +17,8 @@ moo.otypes.load_types('dfmodules/hdf5datastore.jsonnet')
 moo.otypes.load_types('readout/fakecardreader.jsonnet')
 moo.otypes.load_types('readout/datalinkhandler.jsonnet')
 
+moo.otypes.load_types('dqm/datareceiver.jsonnet')
+
 # Import new types
 import dunedaq.cmdlib.cmd as basecmd # AddressedCmd, 
 import dunedaq.rcif.cmd as rccmd # AddressedCmd, 
@@ -28,6 +30,7 @@ import dunedaq.dfmodules.datawriter as dw
 import dunedaq.dfmodules.hdf5datastore as hdf5ds
 import dunedaq.readout.fakecardreader as fcr
 import dunedaq.readout.datalinkhandler as dlh
+import dunedaq.dqm.datareceiver as datareceiver
 
 from appfwk.utils import mcmd, mrccmd, mspec
 
@@ -106,7 +109,7 @@ def generate(
         #                 app.QueueInfo(name="token_output_queue", inst="token_q", dir="output"),
         #             ]),
 
-        mspec("printing", "DataReceiver", [
+        mspec("datareceiver", "DataReceiver", [
                         app.QueueInfo(name="trigger_record_data_receiver", inst="trigger_record_q_dqm", dir="input"),
                         app.QueueInfo(name="trigger_decision_data_receiver", inst="trigger_decision_q", dir="output"),
                     ]),
@@ -219,7 +222,12 @@ def generate(
                         apa_number = 0,
                         link_number = idx
                         )) for idx in range(NUMBER_OF_DATA_PRODUCERS)
-            ])
+            ] + [
+                ('datareceiver', datareceiver.Conf(
+                        mode='debug'
+                        ))
+            ]
+                     )
     
     jstr = json.dumps(confcmd.pod(), indent=4, sort_keys=True)
     print(jstr)
@@ -232,7 +240,7 @@ def generate(
             ("trb", startpars),
             ("trb_dqm", startpars),
             ("tde", startpars),
-            ("printing", None),
+            ("datareceiver", None),
         ])
 
     jstr = json.dumps(startcmd.pod(), indent=4, sort_keys=True)
@@ -246,6 +254,7 @@ def generate(
             ("trb", None),
             ("trb_dqm", None),
             ("datawriter", None),
+            ("datareceiver", None),
         ])
 
     jstr = json.dumps(stopcmd.pod(), indent=4, sort_keys=True)

@@ -28,6 +28,8 @@
 #include "dataformats/ComponentRequest.hpp"
 #include "dataformats/wib/WIBFrame.hpp"
 
+#include "dqm/datareceiver/Nljs.hpp"
+#include "dqm/datareceiver/Structs.hpp"
 namespace dunedaq{
 namespace dqm {
 
@@ -37,6 +39,7 @@ int rolling_index = 10;
 DataReceiver::DataReceiver(const std::string& name) : DAQModule(name)
 {
   register_command("start", &DataReceiver::do_start);
+  register_command("conf", &DataReceiver::do_configure);
   register_command("stop", &DataReceiver::do_stop);
 }
 
@@ -48,8 +51,10 @@ DataReceiver::init(const data_t&)
 }
 
 void
-DataReceiver::do_configure(const data_t&)
+DataReceiver::do_configure(const nlohmann::json& args)
 {
+  auto conf = args.get<datareceiver::Conf>();
+  m_running_mode = conf.mode;
   // m_source = std::unique_ptr<appfwk::DAQSource < std::unique_ptr<dataformats::TriggerRecord >>> ("trigger_record_q_dqm");
   // m_sink = std::unique_ptr<appfwk::DAQSink < dfmessages::TriggerDecision >> ("trigger_decision_q_dqm");
 }
@@ -198,7 +203,7 @@ void DataReceiver::RequestMaker(){
     m_source->pop(element, m_source_timeout);
     //TLOG() << "Element popped";
     //std::thread *t = new std::thread(&AnalysisModule::run, std::ref(*algo), std::ref(*element));
-    threads.emplace_back(std::thread(&AnalysisModule::run, std::ref(*algo), std::ref(*element)));
+    threads.emplace_back(std::thread(&AnalysisModule::run, std::ref(*algo), std::ref(*element), m_running_mode));
     //for (auto t: threads) t.join;
     
 

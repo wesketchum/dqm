@@ -37,7 +37,7 @@
  */
 namespace dunedaq::dqm{
 
-class Hist : public AnalysisModule{
+class Hist {
 
   int find_bin(double x) const;
 
@@ -153,7 +153,7 @@ public:
 
   HistLink(std::string name, int steps, double low, double high);
 
-  void run(dunedaq::dataformats::TriggerRecord &tr);
+  void run(dunedaq::dataformats::TriggerRecord &tr, std::string mode);
   void transmit(const std::string &topicname, int run_num, time_t timestamp) const;
 
   bool is_running();
@@ -195,7 +195,7 @@ void HistLink::transmit(const std::string &topicname, int run_num, time_t timest
   KafkaExport(csv_output.str(), topicname);
 }
 
-void HistLink::run(dunedaq::dataformats::TriggerRecord &tr){
+  void HistLink::run(dunedaq::dataformats::TriggerRecord &tr, std::string mode){
 
   std::srand((unsigned) time(NULL));
 
