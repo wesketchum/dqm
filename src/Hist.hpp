@@ -37,7 +37,7 @@
  */
 namespace dunedaq::dqm{
 
-class Hist : public AnalysisModule{
+class Hist {
 
   int find_bin(double x) const;
 
