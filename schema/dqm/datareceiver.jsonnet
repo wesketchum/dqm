@@ -13,11 +13,14 @@ local s = moo.oschema.schema(ns);
 
 // Object structure used by the test/fake producer module
 local datareceiver = {
-    conf: s.record("Conf", [
-        s.field("mode", self.string,
-                 doc="'debug' if in debug mode")
-    ], doc="SNBWriter configuration"),
 
+    running_mode : s.string("RunningMode", moo.re.ident,
+                            doc="A string field"),
+
+    conf: s.record("Conf", [
+        s.field("mode", self.running_mode, "",
+                doc="'debug' if in debug mode"),
+    ], doc="Generic DQM configuration"),
 };
 
 moo.oschema.sort_select(datareceiver, ns)
