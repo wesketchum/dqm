@@ -42,7 +42,7 @@ QUEUE_POP_WAIT_MS=100;
 CLOCK_SPEED_HZ = 50000000;
 
 def generate(
-        NUMBER_OF_DATA_PRODUCERS=2,
+        NUMBER_OF_DATA_PRODUCERS=1,
         EMULATOR_MODE=False,
         DATA_RATE_SLOWDOWN_FACTOR = 10,
         RUN_NUMBER = 333, 
@@ -111,7 +111,7 @@ def generate(
 
         mspec("datareceiver", "DataReceiver", [
                         app.QueueInfo(name="trigger_record_data_receiver", inst="trigger_record_q_dqm", dir="input"),
-                        app.QueueInfo(name="trigger_decision_data_receiver", inst="trigger_decision_q", dir="output"),
+                        app.QueueInfo(name="trigger_decision_data_receiver", inst="trigger_decision_q_dqm", dir="output"),
                     ]),
 
         mspec("fake_source", "FakeCardReader", [
@@ -203,19 +203,19 @@ def generate(
                             )
                         )),
                 ("fake_source",fcr.Conf(
-                            link_ids=list(range(NUMBER_OF_DATA_PRODUCERS)),
+                            link_confs=[fcr.LinkConfiguration(
+                                geoid=fcr.GeoID(system="TPC", region=0, element=idx),
+                                slowdown=DATA_RATE_SLOWDOWN_FACTOR,
+                                queue_name=f"output_{idx}"
+                            ) for idx in range(NUMBER_OF_DATA_PRODUCERS)],
                             # input_limit=10485100, # default
-                            rate_khz = CLOCK_SPEED_HZ/(25*12*DATA_RATE_SLOWDOWN_FACTOR*1000),
-                            raw_type = "wib",
-                            data_filename = DATA_FILE,
-                            queue_timeout_ms = QUEUE_POP_WAIT_MS
+                            queue_timeout_ms = QUEUE_POP_WAIT_MS,
+			                set_t0_to = 0
                         )),
             ] + [
                 (f"datahandler_{idx}", dlh.Conf(
-                        raw_type = "wib",
-                        emulator_mode = EMULATOR_MODE,
-                        # fake_trigger_flag=0, # default
                         source_queue_timeout_ms= QUEUE_POP_WAIT_MS,
+                        fake_trigger_flag=1,
                         latency_buffer_size = 3*CLOCK_SPEED_HZ/(25*12*DATA_RATE_SLOWDOWN_FACTOR),
                         pop_limit_pct = 0.8,
                         pop_size_pct = 0.1,
@@ -297,7 +297,7 @@ if __name__ == '__main__':
     import click
 
     @click.command(context_settings=CONTEXT_SETTINGS)
-    @click.option('-n', '--number-of-data-producers', default=2)
+    @click.option('-n', '--number-of-data-producers', default=1)
     @click.option('-e', '--emulator-mode', is_flag=True)
     @click.option('-s', '--data-rate-slowdown-factor', default=10)
     @click.option('-r', '--run-number', default=333)
