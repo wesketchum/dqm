@@ -215,7 +215,7 @@ def generate(
             ] + [
                 (f"datahandler_{idx}", dlh.Conf(
                         source_queue_timeout_ms= QUEUE_POP_WAIT_MS,
-                        fake_trigger_flag=1,
+                        fake_trigger_flag=0,
                         latency_buffer_size = 3*CLOCK_SPEED_HZ/(25*12*DATA_RATE_SLOWDOWN_FACTOR),
                         pop_limit_pct = 0.8,
                         pop_size_pct = 0.1,
