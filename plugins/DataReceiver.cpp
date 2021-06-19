@@ -13,7 +13,7 @@
 
 // DQM includes
 #include "DataReceiver.hpp"
-#include "Hist.hpp"
+#include "HistContainer.hpp"
 #include "Fourier.hpp"
 
 #include "appfwk/DAQSource.hpp"
@@ -152,9 +152,9 @@ void DataReceiver::RequestMaker(){
   std::unique_ptr<dataformats::TriggerRecord> element;
 
   // Instances of analysis modules
-  HistLink hist1s("hist1s", 100, 0, 5000);
-  HistLink hist5s("hist5s", 50, 0, 5000);
-  HistLink hist10s("hist10s", 10, 0, 5000);
+  HistContainer hist1s("hist1s", 256, 100, 0, 5000);
+  HistContainer hist5s("hist5s", 256, 50, 0, 5000);
+  HistContainer hist10s("hist10s", 256, 10, 0, 5000);
   FourierLink fourier10s("fourier10s", 0, 10, 100);
 
   // Initial tasks
