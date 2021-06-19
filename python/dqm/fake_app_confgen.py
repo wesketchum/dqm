@@ -10,10 +10,7 @@ moo.otypes.load_types('rcif/cmd.jsonnet')
 moo.otypes.load_types('appfwk/cmd.jsonnet')
 moo.otypes.load_types('appfwk/app.jsonnet')
 
-moo.otypes.load_types('trigemu/triggerdecisionemulator.jsonnet')
 moo.otypes.load_types('dfmodules/triggerrecordbuilder.jsonnet')
-moo.otypes.load_types('dfmodules/datawriter.jsonnet')
-moo.otypes.load_types('dfmodules/hdf5datastore.jsonnet')
 moo.otypes.load_types('readout/fakecardreader.jsonnet')
 moo.otypes.load_types('readout/datalinkhandler.jsonnet')
 
@@ -24,10 +21,7 @@ import dunedaq.cmdlib.cmd as basecmd # AddressedCmd,
 import dunedaq.rcif.cmd as rccmd # AddressedCmd, 
 import dunedaq.appfwk.cmd as cmd # AddressedCmd, 
 import dunedaq.appfwk.app as app # AddressedCmd, 
-import dunedaq.trigemu.triggerdecisionemulator as tde
 import dunedaq.dfmodules.triggerrecordbuilder as trb
-import dunedaq.dfmodules.datawriter as dw
-import dunedaq.dfmodules.hdf5datastore as hdf5ds
 import dunedaq.readout.fakecardreader as fcr
 import dunedaq.readout.datalinkhandler as dlh
 import dunedaq.dqm.datareceiver as datareceiver
@@ -43,25 +37,22 @@ CLOCK_SPEED_HZ = 50000000;
 
 def generate(
         NUMBER_OF_DATA_PRODUCERS=1,
-        EMULATOR_MODE=False,
-        DATA_RATE_SLOWDOWN_FACTOR = 10,
-        RUN_NUMBER = 333, 
-        TRIGGER_RATE_HZ = 1.0,
+        DATA_RATE_SLOWDOWN_FACTOR=1,
+        RUN_NUMBER=333,
+        TRIGGER_RATE_HZ=1.0,
         DATA_FILE="./frames.bin",
         OUTPUT_PATH=".",
         DISABLE_OUTPUT=False,
         TOKEN_COUNT=10
     ):
     
-    trigger_interval_ticks = math.floor((1/TRIGGER_RATE_HZ) * CLOCK_SPEED_HZ/DATA_RATE_SLOWDOWN_FACTOR)
+    trigger_interval_ticks = math.floor((1/TRIGGER_RATE_HZ) *
+                                        CLOCK_SPEED_HZ/DATA_RATE_SLOWDOWN_FACTOR)
 
     # Define modules and queues
     queue_bare_specs = [
-            app.QueueSpec(inst="time_sync_q", kind='FollyMPMCQueue', capacity=100),
-            app.QueueSpec(inst="token_q", kind='FollySPSCQueue', capacity=20),
-            app.QueueSpec(inst="trigger_decision_q", kind='FollySPSCQueue', capacity=20),
+            app.QueueSpec(inst="time_sync_q", kind='FollyMPMCQueue', capacity=10),
             app.QueueSpec(inst="trigger_decision_q_dqm", kind='FollySPSCQueue', capacity=20),
-            app.QueueSpec(inst="trigger_record_q", kind='FollySPSCQueue', capacity=20),
             app.QueueSpec(inst="trigger_record_q_dqm", kind='FollySPSCQueue', capacity=20),
             app.QueueSpec(inst="data_fragments_q", kind='FollyMPMCQueue', capacity=20*NUMBER_OF_DATA_PRODUCERS),
             app.QueueSpec(inst="data_fragments_q_dqm", kind='FollyMPMCQueue', capacity=20*NUMBER_OF_DATA_PRODUCERS),
@@ -80,21 +71,19 @@ def generate(
 
 
     mod_specs = [
-        mspec("tde", "TriggerDecisionEmulator", [
-                        app.QueueInfo(name="time_sync_source", inst="time_sync_q", dir="input"),
-                        app.QueueInfo(name="token_source", inst="token_q", dir="input"),
-                        app.QueueInfo(name="trigger_decision_sink", inst="trigger_decision_q", dir="output"),
-                    ]),
+        mspec("fake_source", "FakeCardReader", [
 
-        # mspec("trb", "TriggerRecordBuilder", [
-        #                 app.QueueInfo(name="trigger_decision_input_queue", inst="trigger_decision_q", dir="input"),
-        #                 app.QueueInfo(name="trigger_record_output_queue", inst="trigger_record_q", dir="output"),
-        #                 app.QueueInfo(name="data_fragment_input_queue", inst="data_fragments_q", dir="input")
-        #             ] + [
-        #                 app.QueueInfo(name=f"data_request_{idx}_output_queue", inst=f"data_requests_{idx}", dir="output")
-        #                     for idx in range(NUMBER_OF_DATA_PRODUCERS)
-        #             ]),
-
+                        app.QueueInfo(name=f"output_{idx}", inst=f"wib_fake_link_{idx}", dir="output")
+                            for idx in range(NUMBER_OF_DATA_PRODUCERS)
+                        ]),
+        ] + [
+        mspec(f"datahandler_{idx}", "DataLinkHandler", [
+                        app.QueueInfo(name="raw_input", inst=f"wib_fake_link_{idx}", dir="input"),
+                        app.QueueInfo(name="timesync", inst="time_sync_q", dir="output"),
+                        app.QueueInfo(name="requests", inst=f"data_requests_{idx}", dir="input"),
+                        app.QueueInfo(name="fragments_dqm", inst="data_fragments_q_dqm", dir="output"),
+                        ]) for idx in range(NUMBER_OF_DATA_PRODUCERS)
+        ] + [
         mspec("trb_dqm", "TriggerRecordBuilder", [
                         app.QueueInfo(name="trigger_decision_input_queue", inst="trigger_decision_q_dqm", dir="input"),
                         app.QueueInfo(name="trigger_record_output_queue", inst="trigger_record_q_dqm", dir="output"),
@@ -103,32 +92,17 @@ def generate(
                         app.QueueInfo(name=f"data_request_{idx}_output_queue", inst=f"data_requests_{idx}", dir="output")
                             for idx in range(NUMBER_OF_DATA_PRODUCERS)
                     ]),
-
-        # mspec("datawriter", "DataWriter", [
-        #                 app.QueueInfo(name="trigger_record_input_queue", inst="trigger_record_q", dir="input"),
-        #                 app.QueueInfo(name="token_output_queue", inst="token_q", dir="output"),
-        #             ]),
-
+        ] + [
         mspec("datareceiver", "DataReceiver", [
                         app.QueueInfo(name="trigger_record_data_receiver", inst="trigger_record_q_dqm", dir="input"),
                         app.QueueInfo(name="trigger_decision_data_receiver", inst="trigger_decision_q_dqm", dir="output"),
                     ]),
 
-        mspec("fake_source", "FakeCardReader", [
-
-                        app.QueueInfo(name=f"output_{idx}", inst=f"wib_fake_link_{idx}", dir="output")
-                            for idx in range(NUMBER_OF_DATA_PRODUCERS)
-                        ]),
-
         ] + [
-                mspec(f"datahandler_{idx}", "DataLinkHandler", [
-
-                            app.QueueInfo(name="raw_input", inst=f"wib_fake_link_{idx}", dir="input"),
-                            app.QueueInfo(name="timesync", inst="time_sync_q", dir="output"),
-                            app.QueueInfo(name="requests", inst=f"data_requests_{idx}", dir="input"),
-                            app.QueueInfo(name="fragments", inst="data_fragments_q", dir="output"),
-                            app.QueueInfo(name="fragments_dqm", inst="data_fragments_q_dqm", dir="output"),
-                            ]) for idx in range(NUMBER_OF_DATA_PRODUCERS)
+        # Timesync consumer since readout is always pushing to time_sync_q, silences an annoying message
+        mspec(f"timesync_consumer", "DummyConsumerTimeSync", [
+                                    app.QueueInfo(name="input_queue", inst=f"time_sync_q", dir="input")
+                                    ])
         ]
 
     init_specs = app.Init(queues=queue_specs, modules=mod_specs)
@@ -151,57 +125,6 @@ def generate(
         trigemu_token_count = 0
 
     confcmd = mrccmd("conf", "INITIAL", "CONFIGURED",[
-                ("tde", tde.ConfParams(
-                        links=[idx for idx in range(NUMBER_OF_DATA_PRODUCERS)],
-                        min_links_in_request=NUMBER_OF_DATA_PRODUCERS,
-                        max_links_in_request=NUMBER_OF_DATA_PRODUCERS,
-                        min_readout_window_ticks=1200,
-                        max_readout_window_ticks=1200,
-                        trigger_window_offset=1000,
-                        # The delay is set to put the trigger well within the latency buff
-                        trigger_delay_ticks=math.floor( 2* CLOCK_SPEED_HZ/DATA_RATE_SLOWDOWN_FACTOR),
-                        # We divide the trigger interval by
-                        # DATA_RATE_SLOWDOWN_FACTOR so the triggers are still
-                        # emitted per (wall-clock) second, rather than being
-                        # spaced out further
-                        trigger_interval_ticks=trigger_interval_ticks,
-                        clock_frequency_hz=CLOCK_SPEED_HZ/DATA_RATE_SLOWDOWN_FACTOR,
-                        initial_token_count=trigemu_token_count
-                        )),
-                ("trb", trb.ConfParams(
-                        general_queue_timeout=QUEUE_POP_WAIT_MS,
-                        map=trb.mapgeoidqueue([
-                                trb.geoidinst(region=0, element=idx, system="TPC", queueinstance=f"data_requests_{idx}") for idx in range(NUMBER_OF_DATA_PRODUCERS)
-                            ])  
-                        )),
-                ("trb_dqm", trb.ConfParams(
-                        general_queue_timeout=QUEUE_POP_WAIT_MS,
-                        map=trb.mapgeoidqueue([
-                                trb.geoidinst(region=0, element=idx, system="TPC", queueinstance=f"data_requests_{idx}") for idx in range(NUMBER_OF_DATA_PRODUCERS)
-                            ]),
-                        )),
-                ("datawriter", dw.ConfParams(
-                            initial_token_count=df_token_count,
-                            data_store_parameters=hdf5ds.ConfParams(
-                                name="data_store",
-                                # type = "HDF5DataStore", # default
-                                directory_path = OUTPUT_PATH, # default
-                                # mode = "all-per-file", # default
-                                max_file_size_bytes = 1073741824,
-                                filename_parameters = hdf5ds.HDF5DataStoreFileNameParams(
-                                    overall_prefix = "swtest",
-                                    digits_for_run_number = 6,
-                                    file_index_prefix = "",
-                                    digits_for_file_index = 4,
-                                ),
-                                file_layout_parameters = hdf5ds.HDF5DataStoreFileLayoutParams(
-                                    trigger_record_name_prefix= "TriggerRecord",
-                                    digits_for_trigger_number = 5,
-                                    digits_for_apa_number = 3,
-                                    digits_for_link_number = 2,
-                                )
-                            )
-                        )),
                 ("fake_source",fcr.Conf(
                             link_confs=[fcr.LinkConfiguration(
                                 geoid=fcr.GeoID(system="TPC", region=0, element=idx),
@@ -209,19 +132,26 @@ def generate(
                                 queue_name=f"output_{idx}"
                             ) for idx in range(NUMBER_OF_DATA_PRODUCERS)],
                             # input_limit=10485100, # default
-                            queue_timeout_ms = QUEUE_POP_WAIT_MS,
-			                set_t0_to = 0
+                            queue_timeout_ms=QUEUE_POP_WAIT_MS,
+			                set_t0_to=0
                         )),
             ] + [
                 (f"datahandler_{idx}", dlh.Conf(
-                        source_queue_timeout_ms= QUEUE_POP_WAIT_MS,
+                        source_queue_timeout_ms=QUEUE_POP_WAIT_MS,
                         fake_trigger_flag=0,
-                        latency_buffer_size = 3*CLOCK_SPEED_HZ/(25*12*DATA_RATE_SLOWDOWN_FACTOR),
-                        pop_limit_pct = 0.8,
-                        pop_size_pct = 0.1,
-                        apa_number = 0,
-                        link_number = idx
+                        latency_buffer_size=3*CLOCK_SPEED_HZ/(25*12*DATA_RATE_SLOWDOWN_FACTOR),
+                        pop_limit_pct=0.8,
+                        pop_size_pct=0.1,
+                        apa_number=0,
+                        link_number=idx
                         )) for idx in range(NUMBER_OF_DATA_PRODUCERS)
+            ] + [
+                ("trb_dqm", trb.ConfParams(
+                        general_queue_timeout=QUEUE_POP_WAIT_MS,
+                        map=trb.mapgeoidqueue([
+                                trb.geoidinst(region=0, element=idx, system="TPC", queueinstance=f"data_requests_{idx}") for idx in range(NUMBER_OF_DATA_PRODUCERS)
+                            ]),
+                        )),
             ] + [
                 ('datareceiver', datareceiver.Conf(
                         mode='debug'
@@ -234,13 +164,11 @@ def generate(
 
     startpars = rccmd.StartParams(run=RUN_NUMBER, trigger_interval_ticks=trigger_interval_ticks, disable_data_storage=DISABLE_OUTPUT)
     startcmd = mrccmd("start", "CONFIGURED", "RUNNING", [
-            ("datawriter", startpars),
-            ("datahandler_.*", startpars),
             ("fake_source", startpars),
-            ("trb", startpars),
+            ("datahandler_.*", startpars),
             ("trb_dqm", startpars),
-            ("tde", startpars),
             ("datareceiver", None),
+            ("timesync_consumer", startpars),
         ])
 
     jstr = json.dumps(startcmd.pod(), indent=4, sort_keys=True)
@@ -248,13 +176,11 @@ def generate(
 
 
     stopcmd = mrccmd("stop", "RUNNING", "CONFIGURED", [
-            ("tde", None),
             ("fake_source", None),
             ("datahandler_.*", None),
-            ("trb", None),
             ("trb_dqm", None),
-            ("datawriter", None),
             ("datareceiver", None),
+            ("timesync_consumer", None),
         ])
 
     jstr = json.dumps(stopcmd.pod(), indent=4, sort_keys=True)
@@ -268,9 +194,6 @@ def generate(
     print("="*80+"\nPause\n\n", jstr)
 
     resumecmd = mrccmd("resume", "RUNNING", "RUNNING", [
-            ("tde", tde.ResumeParams(
-                            trigger_interval_ticks=trigger_interval_ticks
-                        ))
         ])
 
     jstr = json.dumps(resumecmd.pod(), indent=4, sort_keys=True)
@@ -307,7 +230,9 @@ if __name__ == '__main__':
     @click.option('--disable-data-storage', is_flag=True)
     @click.option('-c', '--token-count', default=10)
     @click.argument('json_file', type=click.Path(), default='dqm.json')
-    def cli(number_of_data_producers, emulator_mode, data_rate_slowdown_factor, run_number, trigger_rate_hz, data_file, output_path, disable_data_storage, token_count, json_file):
+    def cli(number_of_data_producers, emulator_mode, data_rate_slowdown_factor,
+            run_number, trigger_rate_hz, data_file, output_path, disable_data_storage,
+            token_count, json_file):
         """
           JSON_FILE: Input raw data file.
           JSON_FILE: Output json configuration file.
@@ -315,18 +240,16 @@ if __name__ == '__main__':
 
         with open(json_file, 'w') as f:
             f.write(generate(
-                    NUMBER_OF_DATA_PRODUCERS = number_of_data_producers,
-                    EMULATOR_MODE = emulator_mode,
-                    DATA_RATE_SLOWDOWN_FACTOR = data_rate_slowdown_factor,
-                    RUN_NUMBER = run_number, 
-                    TRIGGER_RATE_HZ = trigger_rate_hz,
-                    DATA_FILE = data_file,
-                    OUTPUT_PATH = output_path,
-                    DISABLE_OUTPUT = disable_data_storage,
-                    TOKEN_COUNT = token_count
+                    NUMBER_OF_DATA_PRODUCERS=number_of_data_producers,
+                    DATA_RATE_SLOWDOWN_FACTOR=data_rate_slowdown_factor,
+                    RUN_NUMBER=run_number,
+                    TRIGGER_RATE_HZ=trigger_rate_hz,
+                    DATA_FILE=data_file,
+                    OUTPUT_PATH=output_path,
+                    DISABLE_OUTPUT=disable_data_storage,
+                    TOKEN_COUNT=token_count
                 ))
 
         print(f"'{json_file}' generation completed.")
 
     cli()
-    
