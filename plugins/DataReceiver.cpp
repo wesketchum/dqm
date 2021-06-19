@@ -63,7 +63,7 @@ void
 DataReceiver::do_start(const data_t&)
 {
   m_run_marker.store(true);
-  RequestMaker();
+  new std::thread(&DataReceiver::RequestMaker, this);
 }
 
 void
