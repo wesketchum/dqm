@@ -4,11 +4,8 @@ Software and tools for data monitoring
 Work in progress
 
 ## How to run
-It works with the following commits:
-* dataformats: d7ff725
-* dfmessages: 4d75b3d
-* dfmodules: 156f921
-and everything else in develop. 
+The following modules are needed: dataformats, dfmessages, dfmodules, readout
+and serialization in 2.6.0. readout has to be in the branch `floriangroetschla/request_types`
 
 ## Using the Kafka exporter
 The Exporter.hpp module runs using the librdkafka library. To enable this library, once you have set up your build environment run:
