@@ -228,6 +228,8 @@ void DataReceiver::RequestMaker(){
     // decision.components = std::vector<dataformats::ComponentRequest>();
     // decision.components.reserve(2);
 
+    decision.readout_type = dfmessages::ReadoutType::kMonitoring;
+
     std::vector<dfmessages::ComponentRequest> v;
     // decision.components.push_back()));
 
