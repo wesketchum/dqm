@@ -7,6 +7,11 @@ Work in progress
 The following modules are needed: dataformats, dfmessages, dfmodules, readout
 and serialization in 2.6.0. readout has to be in the branch `floriangroetschla/request_types`
 
+### Running in debug mode
+There is a variable `mode` in the python configuration that controls if the
+Kafka exporter is used or not. To disable the Kafka exporter (for example, for
+debugging purposes) set this variable to `"debug"`.
+
 ## Using the Kafka exporter
 The Exporter.hpp module runs using the librdkafka library. To enable this library, once you have set up your build environment run:
 

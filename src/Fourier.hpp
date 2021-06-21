@@ -245,7 +245,7 @@ public:
 
   FourierLink(std::string name, int start, int end, int npoints);
 
-  void run(dunedaq::dataformats::TriggerRecord &tr, std::string mode);
+  void run(dunedaq::dataformats::TriggerRecord &tr, RunningMode mode);
   bool is_running();
 };
 
@@ -258,7 +258,7 @@ FourierLink::FourierLink(std::string name, int start, int end, int npoints)
   }
 }
 
-void FourierLink::run(dunedaq::dataformats::TriggerRecord &tr, std::string mode){
+void FourierLink::run(dunedaq::dataformats::TriggerRecord &tr, RunningMode mode){
   m_run_mark = true;
   dunedaq::dqm::Decoder dec;
   auto wibframes = dec.decode(tr);

@@ -154,7 +154,7 @@ def generate(
                         )),
             ] + [
                 ('datareceiver', datareceiver.Conf(
-                        mode='debug'
+                        mode='normal' # normal or debug
                         ))
             ]
                      )

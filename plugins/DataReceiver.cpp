@@ -30,6 +30,8 @@
 
 #include "dqm/datareceiver/Nljs.hpp"
 #include "dqm/datareceiver/Structs.hpp"
+#include "dqm/Types.hpp"
+
 namespace dunedaq{
 namespace dqm {
 
@@ -54,7 +56,12 @@ void
 DataReceiver::do_configure(const nlohmann::json& args)
 {
   auto conf = args.get<datareceiver::Conf>();
-  m_running_mode = conf.mode;
+  if (conf.mode == "debug" or conf.mode == "local processing")
+    m_running_mode = RunningMode::kLocalProcessing;
+  else if (conf.mode == "normal")
+    m_running_mode = RunningMode::kNormal;
+  else
+    TLOG() << "Invalid value for mode, supported values are 'debug', 'local processing' and 'normal'";
   // m_source = std::unique_ptr<appfwk::DAQSource < std::unique_ptr<dataformats::TriggerRecord >>> ("trigger_record_q_dqm");
   // m_sink = std::unique_ptr<appfwk::DAQSink < dfmessages::TriggerDecision >> ("trigger_decision_q_dqm");
 }
