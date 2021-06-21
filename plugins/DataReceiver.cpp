@@ -126,11 +126,14 @@ void decode(dataformats::TriggerRecord &record){
 }
 
 void DataReceiver::RequestMaker(){
-  // Helper struct with the necessary information
+
+  // Helper struct with the necessary information about an instance
   struct AnalysisInstance{
     AnalysisModule *mod;
     double between_time;
     double default_unavailable_time;
+    std::thread *running_thread;
+    std::string name;
   };
 
   // Frequencies (how many seconds do we wait until running the next one?
@@ -158,13 +161,9 @@ void DataReceiver::RequestMaker(){
   FourierLink fourier10s("fourier10s", 0, 10, 100);
 
   // Initial tasks
-  map[std::chrono::system_clock::now()] = {&hist1s, 1, 1};
-  map[std::chrono::system_clock::now()] = {&hist5s, 5, 1};
-  map[std::chrono::system_clock::now()] = {&hist10s, 10, 1};
-  map[std::chrono::system_clock::now()] = {&fourier10s, 10, 2};
-
-  std::vector<std::thread> threads;
-  threads.reserve(4);
+  map[std::chrono::system_clock::now()] = {&hist1s, 1, 1, nullptr, "Histogram every 1 s"};
+  map[std::chrono::system_clock::now()] = {&hist5s, 5, 1, nullptr, "Histogram every 5 s"};
+  map[std::chrono::system_clock::now()] = {&hist10s, 10, 1, nullptr, "Histogram every 10 s"};
 
   // Main loop, running forever
   while(m_run_marker){
@@ -176,6 +175,9 @@ void DataReceiver::RequestMaker(){
     }
     auto next_time = fr->first;
     AnalysisModule *algo = fr->second.mod;
+
+    // Save pointer to delete the thread later
+    std::thread *previous_thread = fr->second.running_thread;
 
     //TLOG() << "TIME: next_time" << next_time.time_since_epoch().count();
 
@@ -202,16 +204,26 @@ void DataReceiver::RequestMaker(){
     //TLOG() << "Going to pop";
     m_source->pop(element, m_source_timeout);
     //TLOG() << "Element popped";
-    //std::thread *t = new std::thread(&AnalysisModule::run, std::ref(*algo), std::ref(*element));
-    threads.emplace_back(std::thread(&AnalysisModule::run, std::ref(*algo), std::ref(*element), m_running_mode));
-    //for (auto t: threads) t.join;
-    
+
+    std::thread *current_thread = new std::thread(&AnalysisModule::run, std::ref(*algo), std::ref(*element), m_running_mode);
 
     //Add a new entry for the current instance
-    map[std::chrono::system_clock::now()+std::chrono::milliseconds((int)fr->second.between_time*1000)] = {algo, fr->second.between_time, fr->second.default_unavailable_time};
+    map[std::chrono::system_clock::now()+std::chrono::milliseconds((int)fr->second.between_time*1000)] =
+      {algo, fr->second.between_time, fr->second.default_unavailable_time, current_thread, fr->second.name};
 
     // Delete the entry we just used and find the next one
     map.erase(fr);
+
+    // Delete thread
+    if (previous_thread != nullptr) {
+      if (previous_thread->joinable()) {
+        previous_thread->join();
+        delete previous_thread;
+      }
+      else {
+        // Should not be happening
+      }
+    }
 
   }
 
