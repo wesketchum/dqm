@@ -176,6 +176,9 @@ void DataReceiver::RequestMaker(){
     auto next_time = fr->first;
     AnalysisModule *algo = fr->second.mod;
 
+    // Save pointer to delete the thread later
+    std::thread *previous_thread = fr->second.running_thread;
+
     //TLOG() << "TIME: next_time" << next_time.time_since_epoch().count();
 
     //TLOG() << "MAIN LOOP" << " Instance of " << fr->second.between_time << " seconds" << (algo == &hist1s) << " " << (algo == &hist5s);
