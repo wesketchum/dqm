@@ -22,8 +22,11 @@
 
 #include "dataformats/TriggerRecord.hpp"
 
+#include "dqm/Types.hpp"
+
 
 namespace dunedaq::dqm {
+
 
 class DataReceiver : public dunedaq::appfwk::DAQModule
 {
@@ -66,7 +69,7 @@ private:
   std::chrono::milliseconds m_sink_timeout{1000};
   std::chrono::milliseconds m_source_timeout{1000};
 
-  std::string m_running_mode;
+  RunningMode m_running_mode;
 
 };
 

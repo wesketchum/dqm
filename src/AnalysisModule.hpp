@@ -12,12 +12,14 @@
 
 #include "dataformats/TriggerRecord.hpp"
 
+#include "dqm/Types.hpp"
+
 namespace dunedaq::dqm {
 
 class AnalysisModule {
 public:
   virtual bool is_running() = 0;
-  virtual void run(dataformats::TriggerRecord &record, std::string mode) = 0;
+  virtual void run(dataformats::TriggerRecord &record, RunningMode mode) = 0;
 };
 
 } //namespace dunedaq::dqm
