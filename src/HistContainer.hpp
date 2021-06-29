@@ -52,10 +52,10 @@ public:
   m_run_mark = true;
   dunedaq::dqm::Decoder dec;
   auto wibframes = dec.decode(tr);
+  for(auto fr:wibframes){
 
-  for(auto &fr:wibframes){
     for(int ich=0; ich<m_size; ++ich)
-    histvec[ich].fill(fr.get_channel(ich));
+    histvec[ich].fill(fr->get_channel(ich));
   }
 
   //Transmit via kafka

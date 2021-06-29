@@ -135,9 +135,9 @@ Hist::run(dunedaq::dataformats::TriggerRecord &tr)
   dunedaq::dqm::Decoder dec;
   auto wibframes = dec.decode(tr);
 
-  for(auto &fr:wibframes){
+  for(auto fr:wibframes){
     for(int ich=0; ich<256; ++ich)
-      this->fill(fr.get_channel(ich));
+      this->fill(fr->get_channel(ich));
   }
   this->save("Hist/hist.txt");
 }
@@ -205,10 +205,10 @@ void HistLink::transmit(const std::string &topicname, int run_num, time_t timest
   auto wibframes = dec.decode(tr);
   TLOG() << "WIB frames decoded" << std::endl;
 
-  for(auto &fr:wibframes){
+  for(auto fr:wibframes){
     for(int ich=0; ich<256; ++ich)
     {
-      histvec[ich].fill(fr.get_channel(ich));
+      histvec[ich].fill(fr->get_channel(ich));
     }
   }
 
