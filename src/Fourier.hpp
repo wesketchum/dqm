@@ -263,9 +263,9 @@ void FourierLink::run(dunedaq::dataformats::TriggerRecord &tr, RunningMode mode)
   dunedaq::dqm::Decoder dec;
   auto wibframes = dec.decode(tr);
 
-  for(auto &fr:wibframes){
+  for(auto fr:wibframes){
     for(int ich=0; ich<256; ++ich)
-      fouriervec[ich].enter(fr.get_channel(ich), 0);
+      fouriervec[ich].enter(fr->get_channel(ich), 0);
   }
 
   for(int ich=0; ich<256; ++ich)
