@@ -14,7 +14,7 @@ moo.otypes.load_types('dfmodules/triggerrecordbuilder.jsonnet')
 moo.otypes.load_types('readout/fakecardreader.jsonnet')
 moo.otypes.load_types('readout/datalinkhandler.jsonnet')
 
-moo.otypes.load_types('dqm/dqmprocessor.jsonnet')
+moo.otypes.load_types('dqm/datareceiver.jsonnet')
 
 # Import new types
 import dunedaq.cmdlib.cmd as basecmd # AddressedCmd, 
@@ -24,7 +24,7 @@ import dunedaq.appfwk.app as app # AddressedCmd,
 import dunedaq.dfmodules.triggerrecordbuilder as trb
 import dunedaq.readout.fakecardreader as fcr
 import dunedaq.readout.datalinkhandler as dlh
-import dunedaq.dqm.dqmprocessor as dqmprocessor
+import dunedaq.dqm.datareceiver as datareceiver
 
 from appfwk.utils import mcmd, mrccmd, mspec
 
@@ -93,9 +93,9 @@ def generate(
                             for idx in range(NUMBER_OF_DATA_PRODUCERS)
                     ]),
         ] + [
-        mspec("dqmprocessor", "DQMProcessor", [
-                        app.QueueInfo(name="trigger_record_dqm_processor", inst="trigger_record_q_dqm", dir="input"),
-                        app.QueueInfo(name="trigger_decision_dqm_processor", inst="trigger_decision_q_dqm", dir="output"),
+        mspec("datareceiver", "DataReceiver", [
+                        app.QueueInfo(name="trigger_record_data_receiver", inst="trigger_record_q_dqm", dir="input"),
+                        app.QueueInfo(name="trigger_decision_data_receiver", inst="trigger_decision_q_dqm", dir="output"),
                     ]),
 
         ] + [
@@ -153,7 +153,7 @@ def generate(
                             ]),
                         )),
             ] + [
-                ('dqmprocessor', dqmprocessor.Conf(
+                ('datareceiver', datareceiver.Conf(
                         mode='normal' # normal or debug
                         ))
             ]
@@ -167,7 +167,7 @@ def generate(
             ("fake_source", startpars),
             ("datahandler_.*", startpars),
             ("trb_dqm", startpars),
-            ("dqmprocessor", None),
+            ("datareceiver", None),
             ("timesync_consumer", startpars),
         ])
 
@@ -179,7 +179,7 @@ def generate(
             ("fake_source", None),
             ("datahandler_.*", None),
             ("trb_dqm", None),
-            ("dqmprocessor", None),
+            ("datareceiver", None),
             ("timesync_consumer", None),
         ])
 

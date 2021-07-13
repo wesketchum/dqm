@@ -22,6 +22,6 @@ find_package(RdKafka REQUIRED)
 daq_add_library()
 
 # daq_add_plugin(PrintClass duneDAQModule LINK_LIBRARIES appfwk::appfwk dataformats::dataformats dqm readout)
-daq_add_plugin(DQMProcessor duneDAQModule LINK_LIBRARIES appfwk::appfwk dataformats::dataformats dqm readout RdKafka::rdkafka RdKafka::rdkafka++)
+daq_add_plugin(DataReceiver duneDAQModule LINK_LIBRARIES appfwk::appfwk dataformats::dataformats dqm readout RdKafka::rdkafka RdKafka::rdkafka++)
 
 daq_install()
