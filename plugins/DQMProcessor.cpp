@@ -1,5 +1,5 @@
 /**
- * @file DataReceiver.cpp DataReceiver Class Implementation
+ * @file DQMProcessor.cpp DQMProcessor Class Implementation
  *
  * See header for more on this class
  *
@@ -12,7 +12,7 @@
 #include <thread>
 
 // DQM includes
-#include "DataReceiver.hpp"
+#include "DQMProcessor.hpp"
 #include "HistContainer.hpp"
 #include "Fourier.hpp"
 
@@ -28,8 +28,8 @@
 #include "dataformats/ComponentRequest.hpp"
 #include "dataformats/wib/WIBFrame.hpp"
 
-#include "dqm/datareceiver/Nljs.hpp"
-#include "dqm/datareceiver/Structs.hpp"
+#include "dqm/dqmprocessor/Nljs.hpp"
+#include "dqm/dqmprocessor/Structs.hpp"
 #include "dqm/Types.hpp"
 
 namespace dunedaq{
@@ -38,24 +38,24 @@ namespace dqm {
 int MAX_HIST_FRAME = 9;
 int rolling_index = 10;
 
-DataReceiver::DataReceiver(const std::string& name) : DAQModule(name)
+DQMProcessor::DQMProcessor(const std::string& name) : DAQModule(name)
 {
-  register_command("start", &DataReceiver::do_start);
-  register_command("conf", &DataReceiver::do_configure);
-  register_command("stop", &DataReceiver::do_stop);
+  register_command("start", &DQMProcessor::do_start);
+  register_command("conf", &DQMProcessor::do_configure);
+  register_command("stop", &DQMProcessor::do_stop);
 }
 
 void
-DataReceiver::init(const data_t&)
+DQMProcessor::init(const data_t&)
 {
   m_source.reset(new trigger_record_source_qt("trigger_record_q_dqm"));
   m_sink.reset(new trigger_decision_sink_qt("trigger_decision_q_dqm"));
 }
 
 void
-DataReceiver::do_configure(const nlohmann::json& args)
+DQMProcessor::do_configure(const nlohmann::json& args)
 {
-  auto conf = args.get<datareceiver::Conf>();
+  auto conf = args.get<dqmprocessor::Conf>();
   if (conf.mode == "debug" or conf.mode == "local processing")
     m_running_mode = RunningMode::kLocalProcessing;
   else if (conf.mode == "normal")
@@ -67,14 +67,14 @@ DataReceiver::do_configure(const nlohmann::json& args)
 }
 
 void
-DataReceiver::do_start(const data_t&)
+DQMProcessor::do_start(const data_t&)
 {
   m_run_marker.store(true);
-  new std::thread(&DataReceiver::RequestMaker, this);
+  new std::thread(&DQMProcessor::RequestMaker, this);
 }
 
 void
-DataReceiver::do_stop(const data_t&)
+DQMProcessor::do_stop(const data_t&)
 {
   m_run_marker.store(false);
 }
@@ -132,7 +132,7 @@ void decode(dataformats::TriggerRecord &record){
 
 }
 
-void DataReceiver::RequestMaker(){
+void DQMProcessor::RequestMaker(){
 
   // Helper struct with the necessary information about an instance
   struct AnalysisInstance{
@@ -236,7 +236,7 @@ void DataReceiver::RequestMaker(){
 
 }
 
-  dfmessages::TriggerDecision DataReceiver::CreateRequest(std::vector<dfmessages::GeoID> m_links){
+  dfmessages::TriggerDecision DQMProcessor::CreateRequest(std::vector<dfmessages::GeoID> m_links){
 
     dfmessages::TriggerDecision decision;
     // decision.components.clear();
@@ -281,4 +281,4 @@ void DataReceiver::RequestMaker(){
 } // namespace dqm
 
 // Define the module
-DEFINE_DUNE_DAQ_MODULE(dunedaq::dqm::DataReceiver)
+DEFINE_DUNE_DAQ_MODULE(dunedaq::dqm::DQMProcessor)

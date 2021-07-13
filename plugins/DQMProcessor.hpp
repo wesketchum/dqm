@@ -1,7 +1,7 @@
 /**
- * @file DataReceiver.hpp DataReceiver Class Interface
+ * @file DQMProcessor.hpp DQMProcessor Class Interface
  *
- * DataReceiver is a class that illustrates how to make a DUNE DAQ
+ * DQMProcessor is a class that illustrates how to make a DUNE DAQ
  * module that interacts with another one. It does some printing to the screen
  * and prints the trigger number of a Fragment
  *
@@ -28,24 +28,24 @@
 namespace dunedaq::dqm {
 
 
-class DataReceiver : public dunedaq::appfwk::DAQModule
+class DQMProcessor : public dunedaq::appfwk::DAQModule
 {
 
 public:
  /**
- * @brief DataReceiver Constructor
- * @param name Instance name for this DataReceiver instance
+ * @brief DQMProcessor Constructor
+ * @param name Instance name for this DQMProcessor instance
  */
-  explicit DataReceiver(const std::string& name);
+  explicit DQMProcessor(const std::string& name);
 
-  DataReceiver(const DataReceiver&) =
-    delete; ///< DataReceiver is not copy-constructible
-  DataReceiver& operator=(const DataReceiver&) =
-    delete; ///< DataReceiver is not copy-assignable
-  DataReceiver(DataReceiver&&) =
-    delete; ///< DataReceiver is not move-constructible
-  DataReceiver& operator=(DataReceiver&&) =
-    delete; ///< DataReceiver is not move-assignable
+  DQMProcessor(const DQMProcessor&) =
+    delete; ///< DQMProcessor is not copy-constructible
+  DQMProcessor& operator=(const DQMProcessor&) =
+    delete; ///< DQMProcessor is not copy-assignable
+  DQMProcessor(DQMProcessor&&) =
+    delete; ///< DQMProcessor is not move-constructible
+  DQMProcessor& operator=(DQMProcessor&&) =
+    delete; ///< DQMProcessor is not move-assignable
 
   void init(const data_t& ) override;
 

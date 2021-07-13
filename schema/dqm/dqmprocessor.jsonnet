@@ -8,11 +8,11 @@
 local moo = import "moo.jsonnet";
 
 // A schema builder in the given path (namespace)
-local ns = "dunedaq.dqm.datareceiver";
+local ns = "dunedaq.dqm.dqmprocessor";
 local s = moo.oschema.schema(ns);
 
 // Object structure used by the test/fake producer module
-local datareceiver = {
+local dqmprocessor = {
 
     running_mode : s.string("RunningMode", moo.re.ident,
                             doc="A string field"),
@@ -23,4 +23,4 @@ local datareceiver = {
     ], doc="Generic DQM configuration"),
 };
 
-moo.oschema.sort_select(datareceiver, ns)
+moo.oschema.sort_select(dqmprocessor, ns)
