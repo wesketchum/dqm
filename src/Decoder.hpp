@@ -34,14 +34,15 @@ decodewib(dataformats::TriggerRecord &record)
 
   for (auto &fragment:fragments)
   {
+    // There is some debugging code for timestamps, should be improved
     int num_chunks = (fragment->get_size() - sizeof(dataformats::FragmentHeader)) / sizeof(dataformats::WIBFrame);
     // TLOG() << "Number of chunks being decoded: " << num_chunks;
-    uint64_t mintimestamp = ULONG_LONG_MAX;
+    // uint64_t mintimestamp = ULONG_LONG_MAX;
     // uint64_t maxtimestamp = 0;
     for (int i=0; i<num_chunks; ++i)
     {
       dataformats::WIBFrame* frame = reinterpret_cast<dataformats::WIBFrame*> (static_cast<char*>(fragment->get_data()) + (i * 464));
-      uint64_t timestamp = frame->get_wib_header()->get_timestamp();
+      // uint64_t timestamp = frame->get_wib_header()->get_timestamp();
       // mintimestamp = std::min(mintimestamp, timestamp);
       // maxtimestamp = std::max(maxtimestamp, timestamp);
       wib_frames.push_back(frame);

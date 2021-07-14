@@ -15,7 +15,7 @@
 
 static volatile sig_atomic_t run = 1;
 
-static void sigterm (int sig) 
+static void sigterm (int)
 {
   run = 0;
 }
@@ -41,7 +41,7 @@ void KafkaExport(std::string input, std::string topic)
   std::string brokers = "dbnile-kafka-a-5.cern.ch:9443";
   //std::string topic   = "testdunedqm";
 
-  char hostname[128];
+  //char hostname[128];
   std::string errstr;
   
   RdKafka::Conf *conf = RdKafka::Conf::create(RdKafka::Conf::CONF_GLOBAL);
