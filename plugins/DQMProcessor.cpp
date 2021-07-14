@@ -76,6 +76,9 @@ DQMProcessor::do_stop(const data_t&)
   m_run_marker.store(false);
 }
 
+void
+DQMProcessor::RequestMaker()
+{
 
   // Helper struct with the necessary information about an instance
   struct AnalysisInstance{
@@ -169,8 +172,8 @@ DQMProcessor::do_stop(const data_t&)
 
 }
 
-  dfmessages::TriggerDecision DQMProcessor::CreateRequest(std::vector<dfmessages::GeoID> m_links){
-
+dfmessages::TriggerDecision
+DQMProcessor::CreateRequest(std::vector<dfmessages::GeoID> m_links){
     dfmessages::TriggerDecision decision;
     decision.trigger_number = 1;
 
