@@ -62,7 +62,8 @@ Fourier::Fourier(uint64_t start, uint64_t end, int npoints)
   m_end = end;
   m_npoints = npoints;
 
-  uint64_t npoints64 = (uint64_t) npoints;
+  // Unused
+  // uint64_t npoints64 = (uint64_t) npoints;
   //m_inc_size = (end - start)/npoints64;
   m_inc_size = 25;
   m_data = std::vector<double> (npoints, 0);
@@ -82,6 +83,7 @@ CArray Fourier::fourier_prep(const std::vector<double> &input) const
 
 CArray Fourier::fourier_rebin(CArray input, double factor)
 {
+  // Unused
   int newsize = (int) (input.size()/factor);
   std::valarray<Complex> output (newsize);
   for (size_t i = 0; i < input.size(); i++)
@@ -146,7 +148,8 @@ void Fourier::compute_fourier(double rebin_factor)
   fast_fourier_transform(input);
   //m_data.clear();
   //std::cout << "Transform performed" << std::endl;
-  int newsize = (int) input.size()/rebin_factor;
+  // Unused
+  // int newsize = (int) input.size()/rebin_factor;
   //std::cout << "Size of array after rebinning = " << newsize << std::endl;
   CArray out_array (input);
   //std::cout << "CArray set up" << std::endl;
@@ -170,7 +173,7 @@ void Fourier::compute_fourier(double rebin_factor)
 int Fourier::enter(double value, uint64_t time)
 {
   uint64_t index64 = (time - m_start)/m_inc_size;
-  if (index64 > m_npoints) 
+  if (index64 > static_cast<uint64_t>(m_npoints) )
   {
     std::cout << "-------OVERSPILL---------" << std::endl;
     std::cout << "index = ( time (" << time << ") - m_start (" << m_start << ") ) / m_inc_size (" << m_inc_size << ") = " << index64 << ", should be less than " << m_npoints << std::endl;
@@ -258,7 +261,7 @@ FourierLink::FourierLink(std::string name, int start, int end, int npoints)
   }
 }
 
-void FourierLink::run(dunedaq::dataformats::TriggerRecord &tr, RunningMode mode){
+void FourierLink::run(dunedaq::dataformats::TriggerRecord &tr, RunningMode){
   m_run_mark = true;
   dunedaq::dqm::Decoder dec;
   auto wibframes = dec.decode(tr);
