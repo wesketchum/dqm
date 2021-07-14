@@ -35,9 +35,6 @@
 namespace dunedaq{
 namespace dqm {
 
-int MAX_HIST_FRAME = 9;
-int rolling_index = 10;
-
 DQMProcessor::DQMProcessor(const std::string& name) : DAQModule(name)
 {
   register_command("start", &DQMProcessor::do_start);
@@ -79,60 +76,6 @@ DQMProcessor::do_stop(const data_t&)
   m_run_marker.store(false);
 }
 
-void decode(dataformats::TriggerRecord &record){
-  std::vector<std::unique_ptr<dataformats::Fragment>>& fragments = record.get_fragments_ref();
-  // std::cout << "Size of fragments is " << fragments.size() << std::endl;
-  // for (auto &p: fragments) {
-  //   TLOG() << "Fragment: " << p->get_trigger_number() << " " << p->get_size();
-  //   auto datap = p->get_size();
-  // }
-  std::ofstream file("Hist/hist.txt");
-
-  rolling_index++;
-  if(rolling_index >= 20)
-    rolling_index -= 10;
-  TLOG() << "rolling_indx" << rolling_index;
-
-
-  std::vector<Hist> v;
-  for(int i=0; i<256; ++i)
-      v.push_back(Hist(100, 0, 5000));
-
-  auto &fr = fragments[0];
-  auto data = fr->get_data();
-  std::vector<std::pair<void*, size_t>> frag_pieces;
-  size_t offset = sizeof(dataformats::FragmentHeader);
-  void *data_array = malloc(5568);
-
-  for(int iframe=0; iframe<20; ++iframe){
-    if(offset + 5568 >= fr->get_size()){
-      TLOG() << "EXITING!!!!!!!!!!!!" << fr->get_size();
-      break;
-    }
-    memcpy(data_array, (char*)data + offset, 5568);
-    auto pair = std::make_pair<void*, size_t> (static_cast<void*>(data_array), (size_t)5568);
-    frag_pieces.push_back(pair);
-    offset += 5568;
-    // TLOG() << "i = " << i;
-
-    dataformats::WIBFrame *frame = static_cast<dataformats::WIBFrame*> (frag_pieces[iframe].first);
-
-    for(int i=0; i<256; ++i) {
-        // TLOG() << "Channel i: " << frame->get_channel(i);
-        // TLOG() << "Channel i: " << frame->get_channel(i);
-        v[i].fill(frame->get_channel(i));
-    }
-    if (iframe == rolling_index) {
-      for(int i=0; i<256; ++i)
-        v[i].save(file);
-      file.close();
-      return;
-    }
-  }
-
-}
-
-void DQMProcessor::RequestMaker(){
 
   // Helper struct with the necessary information about an instance
   struct AnalysisInstance{
@@ -142,16 +85,6 @@ void DQMProcessor::RequestMaker(){
     std::thread *running_thread;
     std::string name;
   };
-
-  // Frequencies (how many seconds do we wait until running the next one?
-  // Hard coded, should be read from another place
-  double histogram_time = 1;
-  int histogram_frames = 10;
-  int histogram_default_unavailable = 1;
-  double fourier_time = 10;
-  int fourier_frequency = 10;
-  int fourier_default_unavailable = 5;
-  std::vector<double> times {histogram_time, fourier_time};
 
   // For now only one link
   std::vector<dfmessages::GeoID> m_links;
@@ -239,18 +172,12 @@ void DQMProcessor::RequestMaker(){
   dfmessages::TriggerDecision DQMProcessor::CreateRequest(std::vector<dfmessages::GeoID> m_links){
 
     dfmessages::TriggerDecision decision;
-    // decision.components.clear();
-    //TLOG() << "decision.components.size() after clear: " << decision.components.size();
     decision.trigger_number = 1;
 
     decision.trigger_timestamp = 1;
-    // decision.components = std::vector<dataformats::ComponentRequest>();
-    // decision.components.reserve(2);
 
     decision.readout_type = dfmessages::ReadoutType::kMonitoring;
 
-    std::vector<dfmessages::ComponentRequest> v;
-    // decision.components.push_back()));
 
     for (auto &link : m_links) 
     {
@@ -259,21 +186,10 @@ void DQMProcessor::RequestMaker(){
       request.component = link;
       request.window_end = 1000;
       request.window_begin = 0;
-      // request.window_begin = timestamp - m_trigger_window_offset;
-      // request.window_end = request.window_begin + window_ticks_dist(random_engine);
-      // dfmessages::ComponentRequest request(link, 0, 1000);
         
-      //TLOG() << "decision.components.size() before push: " << decision.components.size();
-      v.push_back(request);
       decision.components.push_back(request);
-      //TLOG() << "decision.components.size() after push: " << decision.components.size();
     }
-    //TLOG() << "decision.components.size() before push: " << decision.components.size();
-    //TLOG() << "decision.components.size() after push: " << decision.components.size();
 
-    // TLOG() << "m_links.size(): " << m_links.size();
-    // decision.components.push_back( dfmessages::ComponentRequest(m_links[0], 0, 1000));
-    //TLOG() << "decision.components.size(): " << decision.components.size();
     return decision;
   }
 
