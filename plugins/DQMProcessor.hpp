@@ -22,6 +22,8 @@
 
 #include "dataformats/TriggerRecord.hpp"
 
+#include "dqm/dqmprocessor/Nljs.hpp"
+#include "dqm/dqmprocessor/Structs.hpp"
 #include "dqm/Types.hpp"
 
 
@@ -70,6 +72,11 @@ private:
   std::chrono::milliseconds m_source_timeout{1000};
 
   RunningMode m_running_mode;
+
+  std::thread m_worker_thread;
+
+  // Configuration parameters
+  dqmprocessor::StandardDQM m_standard_dqm;
 
 };
 
