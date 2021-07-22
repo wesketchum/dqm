@@ -182,6 +182,7 @@ DQMProcessor::RequestMaker()
 
 dfmessages::TriggerDecision
 DQMProcessor::CreateRequest(std::vector<dfmessages::GeoID> m_links){
+    auto timestamp = m_time_est->get_timestamp_estimate();
     dfmessages::TriggerDecision decision;
     decision.trigger_number = 1;
 
