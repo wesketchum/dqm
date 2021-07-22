@@ -49,11 +49,31 @@ public:
   int m_steps;
   std::vector<int> m_entries;
 
+  /**
+   * @brief Hist constructor
+   * @param steps Number of uniform bins
+   * @param low Lower limit of the histogram
+   * @param high Upper limit of the histogram
+   */
   Hist(int steps, double low, double high);
+
+  /**
+   * @brief Add an entry to the histogram
+   * @param x The number that is being added
+   */
   int fill(double x);
   int scramble(double scrambulation);
 
+  /**
+   * @brief Save to a text file (for debugging purposes)
+   * @param filename Name of the file where the histogram will be saved
+   */
   void save(const std::string &filename) const;
+
+  /**
+   * @brief Save to a text file (for debugging purposes)
+   * @param filehandle Handle of the file where the histogram will be saved
+   */
   void save(std::ofstream &filehandle) const;
 
   bool is_running();
