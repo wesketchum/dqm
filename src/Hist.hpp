@@ -49,15 +49,36 @@ public:
   int m_steps;
   std::vector<int> m_entries;
 
+  /**
+   * @brief Hist constructor
+   * @param steps Number of uniform bins
+   * @param low Lower limit of the histogram
+   * @param high Upper limit of the histogram
+   */
   Hist(int steps, double low, double high);
-  int fill(double x);
-  int scramble(double scrambulation);
 
+  /**
+   * @brief Add an entry to the histogram
+   * @param x The number that is being added
+   */
+  int fill(double x);
+
+  /**
+   * @brief Save to a text file (for debugging purposes)
+   * @param filename Name of the file where the histogram will be saved
+   */
   void save(const std::string &filename) const;
+
+  /**
+   * @brief Save to a text file (for debugging purposes)
+   * @param filehandle Handle of the file where the histogram will be saved
+   */
   void save(std::ofstream &filehandle) const;
 
   bool is_running();
   void run(dunedaq::dataformats::TriggerRecord &tr);
+  void clean();
+
 };
 
 
@@ -72,7 +93,7 @@ Hist::Hist(int steps, double low, double high)
 int
 Hist::find_bin(double x) const
 {
-    return (x - m_low) / m_step_size;
+  return (x - m_low) / m_step_size;
 }
 
 int
@@ -100,6 +121,7 @@ Hist::save(const std::string &filename) const
   for (auto x: m_entries)
     file << x << " ";
   file << std::endl;
+  file.close();
 }
 
 void
@@ -133,7 +155,10 @@ Hist::run(dunedaq::dataformats::TriggerRecord &tr)
 void
 Hist::clean()
 {
+  m_sum = 0;
+  m_nentries = 0;
+  for (auto &elem : m_entries)
+    elem = 0;
 }
- 
 
 } // namespace dunedaq::dqm
