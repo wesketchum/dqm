@@ -13,8 +13,8 @@
 #include "dataformats/wib/WIBFrame.hpp"
 
 #include <climits>
-#include <vector>
 #include <memory>
+#include <vector>
 
 namespace dunedaq {
 namespace dqm {

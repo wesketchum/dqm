@@ -12,8 +12,8 @@
 #include "AnalysisModule.hpp"
 #include "Decoder.hpp"
 
-#include "logging/Logging.hpp"
 #include "dataformats/TriggerRecord.hpp"
+#include "logging/Logging.hpp"
 
 #include <complex>
 #include <fstream>
@@ -176,9 +176,9 @@ Fourier::enter(double value, uint64_t time) // NOLINT(build/unsigned)
   {
     TLOG() << "-------OVERSPILL---------";
     TLOG() << "index = ( time (" << time << ") - m_start (" << m_start << ") ) / m_inc_size (" << m_inc_size
-              << ") = " << index64 << ", should be less than " << m_npoints;
+           << ") = " << index64 << ", should be less than " << m_npoints;
     TLOG() << "Curr. time = " << time << ", should be less than end time = " << m_end
-              << ". Difference = " << m_end - time;
+           << ". Difference = " << m_end - time;
     TLOG() << "m_inc_size = ( end (" << m_end << ") - start (" << m_start << ") ) / npoints (" << m_npoints << ")";
   }
 
@@ -288,7 +288,7 @@ FourierLink::run(dunedaq::dataformats::TriggerRecord& tr, RunningMode)
 
   for (int ich = 0; ich < 256; ++ich) {
     fouriervec[ich].save("Fourier/" + m_name + "-" + std::to_string(ich) + ".txt");
-  } 
+  }
   m_run_mark = false;
 }
 

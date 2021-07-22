@@ -26,11 +26,11 @@
 #include "readout/ReadoutTypes.hpp"
 
 #include <chrono>
-#include <thread>
 #include <map>
-#include <string>
-#include <vector>
 #include <memory>
+#include <string>
+#include <thread>
+#include <vector>
 
 namespace dunedaq {
 namespace dqm {
@@ -170,7 +170,8 @@ DQMProcessor::RequestMaker()
       new std::thread(&AnalysisModule::run, std::ref(*algo), std::ref(*element), m_running_mode);
 
     // Add a new entry for the current instance
-    map[std::chrono::system_clock::now() + std::chrono::milliseconds(static_cast<int>(fr->second.between_time) * 1000)] = {
+    map[std::chrono::system_clock::now() +
+        std::chrono::milliseconds(static_cast<int>(fr->second.between_time) * 1000)] = {
       algo, fr->second.between_time, fr->second.default_unavailable_time, current_thread, fr->second.name
     };
 
