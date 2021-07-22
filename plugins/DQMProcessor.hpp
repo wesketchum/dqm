@@ -22,6 +22,8 @@
 
 #include "dataformats/TriggerRecord.hpp"
 
+#include "timinglibs/TimestampEstimator.hpp"
+
 #include "dqm/Types.hpp"
 
 
@@ -70,6 +72,12 @@ private:
   std::chrono::milliseconds m_source_timeout{1000};
 
   RunningMode m_running_mode;
+
+
+  using timesync_source_qt = appfwk::DAQSource<dfmessages::TimeSync>;
+  std::unique_ptr<timesync_source_qt> m_timesync_source;
+
+  timinglibs::TimestampEstimator* m_time_est;
 
 };
 

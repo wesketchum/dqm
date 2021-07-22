@@ -47,6 +47,7 @@ DQMProcessor::init(const data_t&)
 {
   m_source.reset(new trigger_record_source_qt("trigger_record_q_dqm"));
   m_sink.reset(new trigger_decision_sink_qt("trigger_decision_q_dqm"));
+  m_timesync_source.reset(new timesync_source_qt("time_sync_dqm_q"));
 }
 
 void
@@ -61,6 +62,7 @@ DQMProcessor::do_configure(const nlohmann::json& args)
     TLOG() << "Invalid value for mode, supported values are 'debug', 'local processing' and 'normal'";
   // m_source = std::unique_ptr<appfwk::DAQSource < std::unique_ptr<dataformats::TriggerRecord >>> ("trigger_record_q_dqm");
   // m_sink = std::unique_ptr<appfwk::DAQSink < dfmessages::TriggerDecision >> ("trigger_decision_q_dqm");
+  m_time_est = new timinglibs::TimestampEstimator(m_timesync_source, 1);
 }
 
 void
@@ -137,6 +139,12 @@ DQMProcessor::RequestMaker()
       map.erase(fr);
       continue;
     }
+    // Before creating a request check that there
+    // There has been a bug where the timestamp was retrieved before there were any timestamps
+    // obtaining an invalid timestamps
+
+    auto timestamp = m_time_est->get_timestamp_estimate();
+    if (timestamp == dfmessages::TypeDefaults::s_invalid_timestamp) continue;
       
     // Now it's the time to do something
     auto request = CreateRequest(m_links);
@@ -181,14 +189,16 @@ DQMProcessor::CreateRequest(std::vector<dfmessages::GeoID> m_links){
 
     decision.readout_type = dfmessages::ReadoutType::kMonitoring;
 
+    int number_of_frames = 2000;
+    int window_size = number_of_frames * 25;
 
     for (auto &link : m_links) 
     {
       //TLOG() << "ONE LINK";
       dataformats::ComponentRequest request;
       request.component = link;
-      request.window_end = 1000;
-      request.window_begin = 0;
+      request.window_begin = timestamp;
+      request.window_end = timestamp + window_size;
         
       decision.components.push_back(request);
     }
