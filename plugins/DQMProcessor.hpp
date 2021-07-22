@@ -9,47 +9,43 @@
  * Licensing/copyright details are in the COPYING file that you should have
  * received with this code.
  */
-
-#include <atomic>
-#include <chrono>
-#include <utility>
-
-#include "appfwk/DAQModule.hpp"
-#include "appfwk/DAQSource.hpp"
-#include "appfwk/DAQSink.hpp"
-
-#include "dfmessages/TriggerDecision.hpp"
-
-#include "dataformats/TriggerRecord.hpp"
-
-#include "timinglibs/TimestampEstimator.hpp"
+#ifndef DQM_PLUGINS_DQMPROCESSOR_HPP_
+#define DQM_PLUGINS_DQMPROCESSOR_HPP_
 
 #include "dqm/Types.hpp"
 
+#include "appfwk/DAQModule.hpp"
+#include "appfwk/DAQSink.hpp"
+#include "appfwk/DAQSource.hpp"
+#include "dataformats/TriggerRecord.hpp"
+#include "dfmessages/TriggerDecision.hpp"
+#include "timinglibs/TimestampEstimator.hpp"
+
+#include <atomic>
+#include <chrono>
+#include <memory>
+#include <string>
+#include <utility>
+#include <vector>
 
 namespace dunedaq::dqm {
-
 
 class DQMProcessor : public dunedaq::appfwk::DAQModule
 {
 
 public:
- /**
- * @brief DQMProcessor Constructor
- * @param name Instance name for this DQMProcessor instance
- */
+  /**
+   * @brief DQMProcessor Constructor
+   * @param name Instance name for this DQMProcessor instance
+   */
   explicit DQMProcessor(const std::string& name);
 
-  DQMProcessor(const DQMProcessor&) =
-    delete; ///< DQMProcessor is not copy-constructible
-  DQMProcessor& operator=(const DQMProcessor&) =
-    delete; ///< DQMProcessor is not copy-assignable
-  DQMProcessor(DQMProcessor&&) =
-    delete; ///< DQMProcessor is not move-constructible
-  DQMProcessor& operator=(DQMProcessor&&) =
-    delete; ///< DQMProcessor is not move-assignable
+  DQMProcessor(const DQMProcessor&) = delete;            ///< DQMProcessor is not copy-constructible
+  DQMProcessor& operator=(const DQMProcessor&) = delete; ///< DQMProcessor is not copy-assignable
+  DQMProcessor(DQMProcessor&&) = delete;                 ///< DQMProcessor is not move-constructible
+  DQMProcessor& operator=(DQMProcessor&&) = delete;      ///< DQMProcessor is not move-assignable
 
-  void init(const data_t& ) override;
+  void init(const data_t&) override;
 
   void do_print(const data_t&);
   void do_start(const data_t&);
@@ -62,26 +58,22 @@ public:
   dfmessages::TriggerDecision CreateRequest(std::vector<dfmessages::GeoID> m_links);
 
 private:
-
-  using trigger_record_source_qt = appfwk::DAQSource < std::unique_ptr<dataformats::TriggerRecord>>;
+  using trigger_record_source_qt = appfwk::DAQSource<std::unique_ptr<dataformats::TriggerRecord>>;
   std::unique_ptr<trigger_record_source_qt> m_source;
-  using trigger_decision_sink_qt = appfwk::DAQSink <dfmessages::TriggerDecision>;
+  using trigger_decision_sink_qt = appfwk::DAQSink<dfmessages::TriggerDecision>;
   std::unique_ptr<trigger_decision_sink_qt> m_sink;
 
-  std::chrono::milliseconds m_sink_timeout{1000};
-  std::chrono::milliseconds m_source_timeout{1000};
+  std::chrono::milliseconds m_sink_timeout{ 1000 };
+  std::chrono::milliseconds m_source_timeout{ 1000 };
 
   RunningMode m_running_mode;
-
 
   using timesync_source_qt = appfwk::DAQSource<dfmessages::TimeSync>;
   std::unique_ptr<timesync_source_qt> m_timesync_source;
 
   timinglibs::TimestampEstimator* m_time_est;
-
 };
-
 
 } // namespace dunedaq::dqm
 
-
+#endif // DQM_PLUGINS_DQMPROCESSOR_HPP_
