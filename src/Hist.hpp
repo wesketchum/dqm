@@ -62,7 +62,6 @@ public:
    * @param x The number that is being added
    */
   int fill(double x);
-  int scramble(double scrambulation);
 
   /**
    * @brief Save to a text file (for debugging purposes)
@@ -78,6 +77,8 @@ public:
 
   bool is_running();
   void run(dunedaq::dataformats::TriggerRecord &tr);
+  void clean();
+
 };
 
 
@@ -92,7 +93,7 @@ Hist::Hist(int steps, double low, double high)
 int
 Hist::find_bin(double x) const
 {
-    return (x - m_low) / m_step_size;
+  return (x - m_low) / m_step_size;
 }
 
 int
@@ -120,6 +121,7 @@ Hist::save(const std::string &filename) const
   for (auto x: m_entries)
     file << x << " ";
   file << std::endl;
+  file.close();
 }
 
 void
@@ -153,7 +155,10 @@ Hist::run(dunedaq::dataformats::TriggerRecord &tr)
 void
 Hist::clean()
 {
+  m_sum = 0;
+  m_nentries = 0;
+  for (auto &elem : m_entries)
+    elem = 0;
 }
- 
 
 } // namespace dunedaq::dqm
