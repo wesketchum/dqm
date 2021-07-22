@@ -160,7 +160,7 @@ def generate(
                         )),
             ] + [
                 ('dqmprocessor', dqmprocessor.Conf(
-                        mode='normal' # normal or debug
+                        mode='debug' # normal or debug
                         ))
             ]
                      )

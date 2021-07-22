@@ -107,8 +107,8 @@ DQMProcessor::RequestMaker()
 
   // Initial tasks
   map[std::chrono::system_clock::now()] = {&hist1s, 1, 1, nullptr, "Histogram every 1 s"};
-  map[std::chrono::system_clock::now()] = {&hist5s, 5, 1, nullptr, "Histogram every 5 s"};
-  map[std::chrono::system_clock::now()] = {&hist10s, 10, 1, nullptr, "Histogram every 10 s"};
+  // map[std::chrono::system_clock::now()] = {&hist5s, 5, 1, nullptr, "Histogram every 5 s"};
+  // map[std::chrono::system_clock::now()] = {&hist10s, 10, 1, nullptr, "Histogram every 10 s"};
 
   // Main loop, running forever
   while(m_run_marker){
