@@ -69,9 +69,13 @@ DQMProcessor::do_configure(const nlohmann::json& args)
 }
 
 void
-DQMProcessor::do_start(const data_t&)
+DQMProcessor::do_start(const nlohmann::json& args)
 {
   m_run_marker.store(true);
+
+  m_run_number.store(dataformats::run_number_t(
+      args.at("run").get<dataformats::run_number_t>()));
+
   new std::thread(&DQMProcessor::RequestMaker, this);
 }
 
@@ -195,10 +199,12 @@ DQMProcessor::CreateRequest(std::vector<dfmessages::GeoID> m_links)
 {
   auto timestamp = m_time_est->get_timestamp_estimate();
   dfmessages::TriggerDecision decision;
-  decision.trigger_number = 1;
 
-  decision.trigger_timestamp = 1;
+  static dataformats::trigger_number_t trigger_number = 1;
 
+  decision.trigger_number = trigger_number++;
+  decision.run_number = m_run_number;
+  decision.trigger_timestamp = timestamp;
   decision.readout_type = dfmessages::ReadoutType::kMonitoring;
 
   int number_of_frames = 2000;
