@@ -5,8 +5,8 @@
  * Licensing/copyright details are in the COPYING file that you should have
  * received with this code.
  */
-
-#pragma once
+#ifndef DQM_INCLUDE_DQM_TYPES_HPP_
+#define DQM_INCLUDE_DQM_TYPES_HPP_
 
 namespace dunedaq::dqm {
 
@@ -20,3 +20,5 @@ enum class RunningMode
 };
 
 } // namespace dunedaq::dqm
+
+#endif // DQM_INCLUDE_DQM_TYPES_HPP_

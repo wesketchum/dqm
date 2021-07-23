@@ -1,5 +1,3 @@
-#pragma once
-
 /**
  * @file AnalysisModule.hpp Definition of the abstract class AnalysisModule
  *
@@ -7,19 +5,24 @@
  * Licensing/copyright details are in the COPYING file that you should have
  * received with this code.
  */
-
-#include <atomic>
-
-#include "dataformats/TriggerRecord.hpp"
+#ifndef DQM_SRC_ANALYSISMODULE_HPP_
+#define DQM_SRC_ANALYSISMODULE_HPP_
 
 #include "dqm/Types.hpp"
 
+#include "dataformats/TriggerRecord.hpp"
+
+#include <atomic>
+
 namespace dunedaq::dqm {
 
-class AnalysisModule {
+class AnalysisModule
+{
 public:
   virtual bool is_running() = 0;
-  virtual void run(dataformats::TriggerRecord &record, RunningMode mode) = 0;
+  virtual void run(dataformats::TriggerRecord& record, RunningMode mode) = 0;
 };
 
-} //namespace dunedaq::dqm
+} // namespace dunedaq::dqm
+
+#endif // DQM_SRC_ANALYSISMODULE_HPP_
