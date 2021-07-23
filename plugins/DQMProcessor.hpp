@@ -72,6 +72,8 @@ private:
   std::unique_ptr<timesync_source_qt> m_timesync_source;
 
   timinglibs::TimestampEstimator* m_time_est;
+
+  std::atomic<dataformats::run_number_t> m_run_number;
 };
 
 } // namespace dunedaq::dqm
