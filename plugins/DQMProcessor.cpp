@@ -164,12 +164,23 @@ DQMProcessor::RequestMaker()
 
     // Now it's the time to do something
     auto request = CreateRequest(m_links);
-    m_sink->push(request, m_sink_timeout);
+
+    try {
+      m_sink->push(request, m_sink_timeout);
+    } catch (const ers::Issue &excpt) {
+      TLOG() << "DQM: Unable to push to the request queue";
+      continue;
+    }
 
     // TLOG() << "Request pushed";
 
     // TLOG() << "Going to pop";
-    m_source->pop(element, m_source_timeout);
+    try {
+      m_source->pop(element, m_source_timeout);
+    } catch (const ers::Issue &excpt) {
+      TLOG() << "DQM: Unable to pop from the data queue";
+      continue;
+    }
     // TLOG() << "Element popped";
 
     std::thread* current_thread =
