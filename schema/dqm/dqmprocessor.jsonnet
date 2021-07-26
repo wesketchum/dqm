@@ -17,9 +17,25 @@ local dqmprocessor = {
     running_mode : s.string("RunningMode", moo.re.ident,
                             doc="A string field"),
 
+    time : s.number("Time", "f4", doc="A time"),
+
+    count : s.number("Count", "i4",
+                     doc="A count of not too many things"),
+
+    standard_dqm: s.record("StandardDQM", [
+        s.field("histogram_how_often", self.time, 1,
+                doc="Histograms are run every x seconds"),
+        s.field("histogram_unavailable_time", self.time, 1,
+                doc="When it's time to run the histograms but it's already running wait this time"),
+        s.field("histogram_frames", self.count, 1,
+                doc="How many frames we send in each instance of the histogram")
+    ], doc="Standard DQM analysis"),
+
     conf: s.record("Conf", [
-        s.field("mode", self.running_mode, "",
+        s.field("mode", self.running_mode,
                 doc="'debug' if in debug mode"),
+        s.field("sdqm", self.standard_dqm,
+                doc="Test")
     ], doc="Generic DQM configuration"),
 };
 

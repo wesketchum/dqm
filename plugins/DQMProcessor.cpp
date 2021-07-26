@@ -65,6 +65,7 @@ DQMProcessor::do_configure(const nlohmann::json& args)
   // m_source = std::unique_ptr<appfwk::DAQSource < std::unique_ptr<dataformats::TriggerRecord >>>
   // ("trigger_record_q_dqm"); m_sink = std::unique_ptr<appfwk::DAQSink < dfmessages::TriggerDecision >>
   // ("trigger_decision_q_dqm");
+  m_standard_dqm = args.get<dqmprocessor::StandardDQM>();
   m_time_est = new timinglibs::TimestampEstimator(m_timesync_source, 1);
 }
 
@@ -114,7 +115,8 @@ DQMProcessor::RequestMaker()
   FourierLink fourier10s("fourier10s", 0, 10, 100);
 
   // Initial tasks
-  map[std::chrono::system_clock::now()] = { &hist1s, 1, 1, nullptr, "Histogram every 1 s" };
+  map[std::chrono::system_clock::now()] = {&hist1s, m_standard_dqm.histogram_how_often, m_standard_dqm.histogram_unavailable_time, nullptr, "Histogram every " + std::to_string(m_standard_dqm.histogram_how_often) + " s"};
+  // map[std::chrono::system_clock::now()] = { &hist1s, 1, 1, nullptr, "Histogram every 1 s" };
   // map[std::chrono::system_clock::now()] = {&hist5s, 5, 1, nullptr, "Histogram every 5 s"};
   // map[std::chrono::system_clock::now()] = {&hist10s, 10, 1, nullptr, "Histogram every 10 s"};
 

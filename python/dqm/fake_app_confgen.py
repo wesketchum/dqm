@@ -160,7 +160,8 @@ def generate(
                         )),
             ] + [
                 ('dqmprocessor', dqmprocessor.Conf(
-                        mode='debug' # normal or debug
+                        mode='debug', # normal or debug
+                        sdqm=[1, 1, 1],
                         ))
             ]
                      )
@@ -173,7 +174,7 @@ def generate(
             ("fake_source", startpars),
             ("datahandler_.*", startpars),
             ("trb_dqm", startpars),
-            ("dqmprocessor", None),
+            ("dqmprocessor", startpars),
         ])
 
     jstr = json.dumps(startcmd.pod(), indent=4, sort_keys=True)
