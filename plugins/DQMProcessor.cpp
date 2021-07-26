@@ -61,12 +61,12 @@ DQMProcessor::do_configure(const nlohmann::json& args)
     m_running_mode = RunningMode::kNormal;
   } else {
     TLOG() << "Invalid value for mode, supported values are 'debug', 'local processing' and 'normal'";
+  }
   // m_source = std::unique_ptr<appfwk::DAQSource < std::unique_ptr<dataformats::TriggerRecord >>>
   // ("trigger_record_q_dqm"); m_sink = std::unique_ptr<appfwk::DAQSink < dfmessages::TriggerDecision >>
   // ("trigger_decision_q_dqm");
   m_standard_dqm = args.get<dqmprocessor::StandardDQM>();
   m_time_est = new timinglibs::TimestampEstimator(m_timesync_source, 1);
-  }
 }
 
 void

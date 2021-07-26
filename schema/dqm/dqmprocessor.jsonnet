@@ -17,8 +17,7 @@ local dqmprocessor = {
     running_mode : s.string("RunningMode", moo.re.ident,
                             doc="A string field"),
 
-    time : s.number("Time", "u4",
-                    doc="A time"),
+    time : s.number("Time", "f4", doc="A time"),
 
     count : s.number("Count", "i4",
                      doc="A count of not too many things"),
