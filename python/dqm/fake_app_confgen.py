@@ -30,14 +30,15 @@ from appfwk.utils import mcmd, mrccmd, mspec
 
 import json
 import math
-# Time to waait on pop()
+# Time to wait on pop()
 QUEUE_POP_WAIT_MS=100;
 # local clock speed Hz
 CLOCK_SPEED_HZ = 50000000;
 
 def generate(
+        FRONTEND_TYPE='wib',
         NUMBER_OF_DATA_PRODUCERS=1,
-        DATA_RATE_SLOWDOWN_FACTOR=1,
+        DATA_RATE_SLOWDOWN_FACTOR=10,
         RUN_NUMBER=333,
         TRIGGER_RATE_HZ=1.0,
         DATA_FILE="./frames.bin",
@@ -51,17 +52,23 @@ def generate(
 
     # Define modules and queues
     queue_bare_specs = [
-            app.QueueSpec(inst="time_sync_q", kind='FollyMPMCQueue', capacity=10),
+            app.QueueSpec(inst="time_sync_dqm_q", kind='FollyMPMCQueue', capacity=100),
             app.QueueSpec(inst="trigger_decision_q_dqm", kind='FollySPSCQueue', capacity=20),
             app.QueueSpec(inst="trigger_record_q_dqm", kind='FollySPSCQueue', capacity=20),
             app.QueueSpec(inst="data_fragments_q", kind='FollyMPMCQueue', capacity=20*NUMBER_OF_DATA_PRODUCERS),
             app.QueueSpec(inst="data_fragments_q_dqm", kind='FollyMPMCQueue', capacity=20*NUMBER_OF_DATA_PRODUCERS),
         ] + [
-            app.QueueSpec(inst=f"data_requests_{idx}", kind='FollySPSCQueue', capacity=20)
+            app.QueueSpec(inst=f"wib_fake_link_{idx}", kind='FollySPSCQueue', capacity=100000)
                 for idx in range(NUMBER_OF_DATA_PRODUCERS)
         ] + [
 
-            app.QueueSpec(inst=f"wib_fake_link_{idx}", kind='FollySPSCQueue', capacity=100000)
+            app.QueueSpec(inst=f"data_requests_{idx}", kind='FollySPSCQueue', capacity=1000)
+                for idx in range(NUMBER_OF_DATA_PRODUCERS)
+        ] + [
+            app.QueueSpec(inst=f"{FRONTEND_TYPE}_link_{idx}", kind='FollySPSCQueue', capacity=100000)
+                for idx in range(NUMBER_OF_DATA_PRODUCERS)
+        ] + [
+            app.QueueSpec(inst=f"{FRONTEND_TYPE}_recording_link_{idx}", kind='FollySPSCQueue', capacity=100000)
                 for idx in range(NUMBER_OF_DATA_PRODUCERS)
         ]
     
@@ -73,15 +80,18 @@ def generate(
     mod_specs = [
         mspec("fake_source", "FakeCardReader", [
 
-                        app.QueueInfo(name=f"output_{idx}", inst=f"wib_fake_link_{idx}", dir="output")
+                        app.QueueInfo(name=f"output_{idx}", inst=f"{FRONTEND_TYPE}_link_{idx}", dir="output")
                             for idx in range(NUMBER_OF_DATA_PRODUCERS)
                         ]),
         ] + [
         mspec(f"datahandler_{idx}", "DataLinkHandler", [
-                        app.QueueInfo(name="raw_input", inst=f"wib_fake_link_{idx}", dir="input"),
-                        app.QueueInfo(name="timesync", inst="time_sync_q", dir="output"),
-                        app.QueueInfo(name="requests", inst=f"data_requests_{idx}", dir="input"),
-                        app.QueueInfo(name="fragments_dqm", inst="data_fragments_q_dqm", dir="output"),
+                        app.QueueInfo(name="raw_input", inst=f"{FRONTEND_TYPE}_link_{idx}", dir="input"),
+                        app.QueueInfo(name="timesync", inst="time_sync_dqm_q", dir="output"),
+                        # app.QueueInfo(name="requests", inst=f"data_requests_{idx}", dir="input"),
+                        # app.QueueInfo(name="fragments_dqm", inst="data_fragments_q_dqm", dir="output"),
+                        app.QueueInfo(name="data_requests_0", inst=f"data_requests_{idx}", dir="input"),
+                        app.QueueInfo(name="data_response_0", inst="data_fragments_q_dqm", dir="output"),
+                        app.QueueInfo(name="raw_recording", inst=f"{FRONTEND_TYPE}_recording_link_{idx}", dir="output")
                         ]) for idx in range(NUMBER_OF_DATA_PRODUCERS)
         ] + [
         mspec("trb_dqm", "TriggerRecordBuilder", [
@@ -96,13 +106,9 @@ def generate(
         mspec("dqmprocessor", "DQMProcessor", [
                         app.QueueInfo(name="trigger_record_dqm_processor", inst="trigger_record_q_dqm", dir="input"),
                         app.QueueInfo(name="trigger_decision_dqm_processor", inst="trigger_decision_q_dqm", dir="output"),
+                        app.QueueInfo(name="timesync_dqm_processor", inst="time_sync_dqm_q", dir="input"),
                     ]),
 
-        ] + [
-        # Timesync consumer since readout is always pushing to time_sync_q, silences an annoying message
-        mspec(f"timesync_consumer", "DummyConsumerTimeSync", [
-                                    app.QueueInfo(name="input_queue", inst=f"time_sync_q", dir="input")
-                                    ])
         ]
 
     init_specs = app.Init(queues=queue_specs, modules=mod_specs)
@@ -154,7 +160,7 @@ def generate(
                         )),
             ] + [
                 ('dqmprocessor', dqmprocessor.Conf(
-                        mode='normal' # normal or debug
+                        mode='debug' # normal or debug
                         ))
             ]
                      )
@@ -168,7 +174,6 @@ def generate(
             ("datahandler_.*", startpars),
             ("trb_dqm", startpars),
             ("dqmprocessor", None),
-            ("timesync_consumer", startpars),
         ])
 
     jstr = json.dumps(startcmd.pod(), indent=4, sort_keys=True)
@@ -180,7 +185,6 @@ def generate(
             ("datahandler_.*", None),
             ("trb_dqm", None),
             ("dqmprocessor", None),
-            ("timesync_consumer", None),
         ])
 
     jstr = json.dumps(stopcmd.pod(), indent=4, sort_keys=True)
