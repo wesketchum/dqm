@@ -14,7 +14,7 @@ local s = moo.oschema.schema(ns);
 // Object structure used by the test/fake producer module
 local dqmprocessor = {
 
-    running_mode : s.string("RunningMode", moo.re.ident,
+    string : s.string("RunningMode", moo.re.ident,
                             doc="A string field"),
 
     time : s.number("Time", "f4", doc="A time"),
@@ -32,10 +32,12 @@ local dqmprocessor = {
     ], doc="Standard DQM analysis"),
 
     conf: s.record("Conf", [
-        s.field("mode", self.running_mode,
+        s.field("mode", self.string,
                 doc="'debug' if in debug mode"),
         s.field("sdqm", self.standard_dqm,
-                doc="Test")
+                doc="Test"),
+        s.field("kafka_address", self.string,
+                doc="Address used for sending to the kafka broker")
     ], doc="Generic DQM configuration"),
 };
 
