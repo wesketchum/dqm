@@ -65,6 +65,7 @@ DQMProcessor::do_configure(const nlohmann::json& args)
   // m_source = std::unique_ptr<appfwk::DAQSource < std::unique_ptr<dataformats::TriggerRecord >>>
   // ("trigger_record_q_dqm"); m_sink = std::unique_ptr<appfwk::DAQSink < dfmessages::TriggerDecision >>
   // ("trigger_decision_q_dqm");
+  m_kafka_address = conf.kafka_address;
   m_standard_dqm = args.get<dqmprocessor::StandardDQM>();
   m_time_est = new timinglibs::TimestampEstimator(m_timesync_source, 1);
 }
@@ -183,7 +184,7 @@ DQMProcessor::RequestMaker()
     // TLOG() << "Element popped";
 
     std::thread* current_thread =
-      new std::thread(&AnalysisModule::run, std::ref(*algo), std::ref(*element), m_running_mode);
+      new std::thread(&AnalysisModule::run, std::ref(*algo), std::ref(*element), m_running_mode, m_kafka_address);
 
     // Add a new entry for the current instance
     map[std::chrono::system_clock::now() +
@@ -219,7 +220,7 @@ DQMProcessor::CreateRequest(std::vector<dfmessages::GeoID> m_links)
   decision.trigger_timestamp = timestamp;
   decision.readout_type = dfmessages::ReadoutType::kMonitoring;
 
-  int number_of_frames = 2000;
+  int number_of_frames = 1;
   int window_size = number_of_frames * 25;
 
   for (auto& link : m_links) {

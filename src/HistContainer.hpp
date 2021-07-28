@@ -35,8 +35,8 @@ class HistContainer : public AnalysisModule
 public:
   HistContainer(std::string name, int nhist, int steps, double low, double high);
 
-  void run(dunedaq::dataformats::TriggerRecord& tr, RunningMode mode = RunningMode::kNormal);
-  void transmit(const std::string& topicname, int run_num, time_t timestamp);
+  void run(dunedaq::dataformats::TriggerRecord& tr, RunningMode mode = RunningMode::kNormal, std::string kafka_address="");
+  void transmit(std::string &kafka_address, const std::string& topicname, int run_num, time_t timestamp);
   void clean();
   void save_and_clean(uint64_t timestamp); // NOLINT(build/unsigned)
   bool is_running();
@@ -57,7 +57,7 @@ HistContainer::HistContainer(std::string name, int nhist, int steps, double low,
 }
 
 void
-HistContainer::run(dunedaq::dataformats::TriggerRecord& tr, RunningMode mode)
+HistContainer::run(dunedaq::dataformats::TriggerRecord& tr, RunningMode mode, std::string kafka_address)
 {
   m_run_mark = true;
   dunedaq::dqm::Decoder dec;
@@ -77,7 +77,7 @@ HistContainer::run(dunedaq::dataformats::TriggerRecord& tr, RunningMode mode)
       if (mode == RunningMode::kLocalProcessing) {
         save_and_clean(timestamp);
       } else if (mode == RunningMode::kNormal) {
-        transmit("testdunedqm", tr.get_header_ref().get_run_number(), tr.get_header_ref().get_trigger_timestamp());
+        transmit(kafka_address, "testdunedqm", tr.get_header_ref().get_run_number(), tr.get_header_ref().get_trigger_timestamp());
       }
       frames_run = 0;
       ++current_index;
@@ -105,7 +105,7 @@ HistContainer::is_running()
 }
 
 void
-HistContainer::transmit(const std::string& topicname, int run_num, time_t timestamp)
+HistContainer::transmit(std::string& kafka_address, const std::string& topicname, int run_num, time_t timestamp)
 {
   std::stringstream csv_output;
   std::string datasource = "TESTSOURCE";
@@ -131,7 +131,7 @@ HistContainer::transmit(const std::string& topicname, int run_num, time_t timest
   // csv_output << "\n";
 
   // Transmit
-  KafkaExport(csv_output.str(), topicname);
+  KafkaExport(kafka_address, csv_output.str(), topicname);
 
   clean();
 }

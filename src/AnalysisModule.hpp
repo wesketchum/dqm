@@ -20,7 +20,7 @@ class AnalysisModule
 {
 public:
   virtual bool is_running() = 0;
-  virtual void run(dataformats::TriggerRecord& record, RunningMode mode) = 0;
+  virtual void run(dataformats::TriggerRecord& record, RunningMode mode, std::string kafka_address) = 0;
 };
 
 } // namespace dunedaq::dqm
