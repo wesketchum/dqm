@@ -38,7 +38,8 @@ KafkaStream::KafkaStream(const std::string &param)
 
 void KafkaStream::kafka_exporter(std::string input, std::string topic)
 {
-  m_producer->produce(topic,
+  RdKafka::ErrorCode err = m_producer->produce(
+                      topic,
                       RdKafka::Topic::PARTITION_UA,
                       RdKafka::Producer::RK_MSG_COPY,
                       const_cast<char *>(input.c_str()), input.size(),
@@ -47,11 +48,11 @@ void KafkaStream::kafka_exporter(std::string input, std::string topic)
                       0,
                       nullptr,
                       nullptr);
-  m_producer->purge(10000);
-  if (m_producer->outq_len() > 0)
-    TLOG() << m_producer->outq_len() << " message(s) were not delivered";
-  else
-    TLOG() << "No problems";
+
+  if (err != RdKafka::ERR_NO_ERROR) {
+     TLOG()<< "% Failed to produce to topic " << topic << ": " <<
+           RdKafka::err2str(err);
+  }
 }
 
 void
