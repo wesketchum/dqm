@@ -55,9 +55,9 @@ void KafkaStream::kafka_exporter(std::string input, std::string topic)
 }
 
 void
-KafkaExport(std::string input, std::string topic)
+KafkaExport(std::string &kafka_address, std::string input, std::string topic)
 {
-  static dqm::KafkaStream stream("dqmbroadcast:9092");
+  static dqm::KafkaStream stream(kafka_address);
   stream.kafka_exporter(input, topic);
 }
 

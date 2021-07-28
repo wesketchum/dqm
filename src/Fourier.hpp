@@ -259,7 +259,7 @@ class FourierLink : public AnalysisModule
 public:
   FourierLink(std::string name, int start, int end, int npoints);
 
-  void run(dunedaq::dataformats::TriggerRecord& tr, RunningMode mode);
+  void run(dunedaq::dataformats::TriggerRecord& tr, RunningMode mode, std::string kafka_address);
   bool is_running();
 };
 
@@ -274,7 +274,7 @@ FourierLink::FourierLink(std::string name, int start, int end, int npoints)
 }
 
 void
-FourierLink::run(dunedaq::dataformats::TriggerRecord& tr, RunningMode)
+FourierLink::run(dunedaq::dataformats::TriggerRecord& tr, RunningMode, std::string kafka_address)
 {
   m_run_mark = true;
   dunedaq::dqm::Decoder dec;

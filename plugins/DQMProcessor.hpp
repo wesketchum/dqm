@@ -77,6 +77,8 @@ private:
   timinglibs::TimestampEstimator* m_time_est;
 
   std::atomic<dataformats::run_number_t> m_run_number;
+
+  std::string m_kafka_address;
 };
 
 } // namespace dunedaq::dqm
