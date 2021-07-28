@@ -102,7 +102,7 @@ DQMProcessor::RequestMaker()
   };
 
   // For now only one link
-  std::vector<dfmessages::GeoID> m_links;
+  std::vector<dataformats::GeoID> m_links;
   m_links.push_back({ dataformats::GeoID::SystemType::kTPC, 0, 0 });
 
   std::map<std::chrono::time_point<std::chrono::system_clock>, AnalysisInstance> map;
