@@ -148,8 +148,7 @@ DQMProcessor::RequestMaker()
       TLOG() << "ALGORITHM already running";
       map[std::chrono::system_clock::now() +
           std::chrono::milliseconds(static_cast<int>(fr->second.default_unavailable_time) * 1000)] = {
-        algo, fr->second.between_time, fr->second.default_unavailable_time
-      };
+        algo, fr->second.between_time, fr->second.default_unavailable_time, previous_thread, fr->second.name};
       map.erase(fr);
       continue;
     }
