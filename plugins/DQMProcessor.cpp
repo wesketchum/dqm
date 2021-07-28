@@ -220,7 +220,7 @@ DQMProcessor::CreateRequest(std::vector<dfmessages::GeoID> m_links)
   decision.trigger_timestamp = timestamp;
   decision.readout_type = dfmessages::ReadoutType::kMonitoring;
 
-  int number_of_frames = 2000;
+  int number_of_frames = 1;
   int window_size = number_of_frames * 25;
 
   for (auto& link : m_links) {
