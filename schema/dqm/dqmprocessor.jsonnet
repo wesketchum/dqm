@@ -22,6 +22,12 @@ local dqmprocessor = {
     count : s.number("Count", "i4",
                      doc="A count of not too many things"),
 
+    index : s.number("Index", "i4",
+                     doc="An integer index"),
+
+    index_list : s.sequence("IndexList", self.index,
+                            doc="A list with indexes"),
+
     standard_dqm: s.record("StandardDQM", [
         s.field("histogram_how_often", self.time, 1,
                 doc="Histograms are run every x seconds"),
@@ -37,8 +43,10 @@ local dqmprocessor = {
         s.field("sdqm", self.standard_dqm,
                 doc="Test"),
         s.field("kafka_address", self.string,
-                doc="Address used for sending to the kafka broker")
-    ], doc="Generic DQM configuration"),
+                doc="Address used for sending to the kafka broker"),
+        s.field("link_idx", self.index_list,
+                doc="Index of each link that is sending data")
+    ], doc="Generic DQM configuration")
 };
 
 moo.oschema.sort_select(dqmprocessor, ns)
