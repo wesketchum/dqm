@@ -68,6 +68,8 @@ DQMProcessor::do_configure(const nlohmann::json& args)
   m_kafka_address = conf.kafka_address;
   m_standard_dqm = args.get<dqmprocessor::StandardDQM>();
   m_time_est = new timinglibs::TimestampEstimator(m_timesync_source, 1);
+
+  m_link_idx = conf.link_idx;
 }
 
 void
@@ -103,7 +105,10 @@ DQMProcessor::RequestMaker()
 
   // For now only one link
   std::vector<dataformats::GeoID> m_links;
-  m_links.push_back({ dataformats::GeoID::SystemType::kTPC, 0, 0 });
+
+  for (auto n: m_link_idx) {
+  m_links.push_back({ dataformats::GeoID::SystemType::kTPC, 0, n });
+  }
 
   std::map<std::chrono::time_point<std::chrono::system_clock>, AnalysisInstance> map;
 
