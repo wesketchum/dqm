@@ -12,6 +12,7 @@ How to clone and build DUNE DAQ packages, including dqm, is covered in [the daq-
 ## How to run
 
 * Standalone configuration
+
 To generate the standalone configuration, run
 
     python sourcecode/dqm/python/dqm/fake_app_confgen.py
@@ -27,6 +28,7 @@ output of the algorithms to a kafka broker (or dumps to a file if running in
 debug mode, see below).
 
 * Nanorc configuration
+
 The nanorc configuration can be generated with
 
     python -m minidaqapp.nanorc.mdapp_multiru_gen --enable-dqm nanorc-dqm
