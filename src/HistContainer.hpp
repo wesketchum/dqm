@@ -123,7 +123,7 @@ HistContainer::transmit(std::string& kafka_address, const std::string& topicname
   csv_output << axislabel << "\n";
   for (int ich = 0; ich < 256; ++ich) {
     csv_output << "Histogram_" << ich + 1 << "\n";
-    for (auto x : histvec[ich].m_entries) {
+    for (auto x : histvec[ich].m_sum) {
       csv_output << x << " ";
     }
     csv_output << "\n";
