@@ -274,7 +274,7 @@ FourierLink::FourierLink(std::string name, int start, int end, int npoints)
 }
 
 void
-FourierLink::run(dunedaq::dataformats::TriggerRecord& tr, RunningMode, std::string kafka_address)
+FourierLink::run(dunedaq::dataformats::TriggerRecord& tr, RunningMode, std::string)
 {
   m_run_mark = true;
   dunedaq::dqm::Decoder dec;
