@@ -1,7 +1,7 @@
 # Data Quality Monitoring
 Software and tools for data monitoring. This module processes data coming from
 readout and sends it output to a kafka broker. Then, the data can be displayed and analyzed. Related repos are
-[dqmanalysis][https://github.com/DUNE-DAQ/dqmanalysis] and [dqmplatform][https://github.com/DUNE-DAQ/dqmplatform]
+[dqmanalysis](https://github.com/DUNE-DAQ/dqmanalysis) and [dqmplatform](https://github.com/DUNE-DAQ/dqmplatform)
 
 This module does *not* include displaying of data.
 
@@ -11,7 +11,7 @@ How to clone and build DUNE DAQ packages, including dqm, is covered in [the daq-
 
 ## How to run
 
-*Standalone configuration*
+* Standalone configuration
 To generate the standalone configuration, run
 
     python sourcecode/dqm/python/dqm/fake_app_confgen.py
@@ -26,7 +26,7 @@ is located in the same directory that you are running from), and sends the
 output of the algorithms to a kafka broker (or dumps to a file if running in
 debug mode, see below).
 
-*Nanorc configuration*
+* Nanorc configuration
 The nanorc configuration can be generated with
 
     python -m minidaqapp.nanorc.mdapp_multiru_gen --enable-dqm nanorc-dqm
