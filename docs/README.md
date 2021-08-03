@@ -1,43 +1,43 @@
 # Data Quality Monitoring
-Software and tools for data monitoring
+Software and tools for data monitoring. This module processes data coming from
+readout and sends it output to a kafka broker. Then, the data can be displayed and analyzed. Related repos are
+[dqmanalysis][https://github.com/DUNE-DAQ/dqmanalysis] and [dqmplatform][https://github.com/DUNE-DAQ/dqmplatform]
 
-Work in progress
+This module does *not* include displaying of data.
+
+## Building
+
+How to clone and build DUNE DAQ packages, including dqm, is covered in [the daq-buildtools instructions](https://dune-daq-sw.readthedocs.io/en/latest/packages/daq-buildtools/).
 
 ## How to run
-The following modules are needed: dataformats, dfmessages, dfmodules, readout
-and serialization in 2.6.0. readout has to be in the branch `floriangroetschla/request_types`
+
+*Standalone configuration*
+To generate the standalone configuration, run
+
+    python sourcecode/dqm/python/dqm/fake_app_confgen.py
+
+This will create a JSON file that can be used to run the `daq_application`
+
+    daq_application -c dqm.json -n dqm
+
+The standalone configuration is as minimal as it can be. It runs readout,
+obtaining the data from a file called `frames.bin` (the configuration assumes it
+is located in the same directory that you are running from), and sends the
+output of the algorithms to a kafka broker (or dumps to a file if running in
+debug mode, see below).
+
+*Nanorc configuration*
+The nanorc configuration can be generated with
+
+    python -m minidaqapp.nanorc.mdapp_multiru_gen --enable-dqm nanorc-dqm
+
+And run with
+
+    nanorc nanorc-dqm
 
 ### Running in debug mode
 There is a variable `mode` in the python configuration that controls if the
 Kafka exporter is used or not. To disable the Kafka exporter (for example, for
-debugging purposes) set this variable to `"debug"`.
-
-## Using the Kafka exporter
-The Exporter.hpp module runs using the librdkafka library. To enable this library, once you have set up your build environment run:
-
-source /cvmfs/dune.opensciencegrid.org/dunedaq/DUNE/products_dev/setup
-setup -B librdkafka v1_7_0 -q e19:prof
-
-To authenticate its connection to the broadcast service, it requires 3 certificates: a .pem file, a .crt.pem file, and a .key.pem file. For development, certificates have been generated and stored at /afs/cern.ch/user/p/pahamilt/certs/. If you are running from a location where you cannot access these files, you may want to generate your own and point Exporter.hpp to them.
-
-## Steps for generating your own certificates 
-For the .crt.pem and .key.pem files: obtain a .p12 GRID certificate from the CERN certification authority: https://ca.cern.ch/ca/user/Request.aspx?template=ee2user
-Then use the following commands to generate the .crt.pem and .key.pem certificates from the .p12 file:
-
-openssl pkcs12 -in <cert.p12> -out <cert.crt.pem> -clcerts -nokeys
-
-openssl pkcs12 -in <cert.p12> -out <cert.key.pem> -nocerts -nodes
-
-For the .pem file: execute the following commands
-
-set -e
-
-curl -k https://cafiles.cern.ch/cafiles/certificates/CERN%20Root%20Certification%20Authority%202.crt -o CERNRootCertificationAuthority2.crt
-
-curl -k https://cafiles.cern.ch/cafiles/certificates/CERN%20Grid%20Certification%20Authority.crt -o CERNGridCertificationAuthority.crt
-
-openssl x509 -in CERNRootCertificationAuthority2.crt -inform DER  -out CERNRoot.pem
-
-cat CERNRoot.pem CERNGridCertificationAuthority.crt > cerncacerts.pem
-
-rm CERNRoot.pem CERNGridCertificationAuthority.crt CERNRootCertificationAuthority2.crt
+debugging purposes) set this variable to `"debug"`. If you have a folder called
+`Hist` from where you are running `daq_application` or `nanorc` it will dump the
+information there.
