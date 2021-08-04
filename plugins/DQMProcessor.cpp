@@ -109,8 +109,8 @@ DQMProcessor::RequestMaker()
   // For now only one link
   std::vector<dataformats::GeoID> m_links;
 
-  for (auto n: m_link_idx) {
-  m_links.push_back({ dataformats::GeoID::SystemType::kTPC, 0, n });
+  for (auto i: m_link_idx) {
+    m_links.push_back({ dataformats::GeoID::SystemType::kTPC, 0, static_cast<unsigned int>(i) });
   }
 
   std::map<std::chrono::time_point<std::chrono::system_clock>, AnalysisInstance> map;
