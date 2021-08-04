@@ -67,14 +67,17 @@ DQMProcessor::do_configure(const nlohmann::json& args)
   // ("trigger_decision_q_dqm");
   m_kafka_address = conf.kafka_address;
   m_standard_dqm = args.get<dqmprocessor::StandardDQM>();
-  m_time_est = new timinglibs::TimestampEstimator(m_timesync_source, 1);
 
   m_link_idx = conf.link_idx;
+
+  m_clock_frequency = conf.clock_frequency;
 }
 
 void
 DQMProcessor::do_start(const nlohmann::json& args)
 {
+  m_time_est.reset(new timinglibs::TimestampEstimator(m_timesync_source, m_clock_frequency));
+
   m_run_marker.store(true);
 
   m_run_number.store(dataformats::run_number_t(
