@@ -22,6 +22,9 @@ local dqmprocessor = {
     count : s.number("Count", "i4",
                      doc="A count of not too many things"),
 
+    big_count : s.number("BigCount", "i8",
+                         doc="A count of more things"),
+
     index : s.number("Index", "i4",
                      doc="An integer index"),
 
@@ -45,7 +48,9 @@ local dqmprocessor = {
         s.field("kafka_address", self.string,
                 doc="Address used for sending to the kafka broker"),
         s.field("link_idx", self.index_list,
-                doc="Index of each link that is sending data")
+                doc="Index of each link that is sending data"),
+        s.field("clock_frequency", self.big_count,
+                doc="Clock frequency in Hz")
     ], doc="Generic DQM configuration")
 };
 
