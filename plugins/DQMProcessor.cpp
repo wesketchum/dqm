@@ -150,6 +150,10 @@ DQMProcessor::RequestMaker()
 
     // Sleep until the next time
     std::this_thread::sleep_until(next_time);
+    // We don't want to run if the run has stopped
+    if (!m_run_marker) {
+      break;
+    }
 
     // Make sure that the process is not running and a request can be made
     // otherwise we wait for more time
