@@ -90,6 +90,9 @@ void
 DQMProcessor::do_stop(const data_t&)
 {
   m_run_marker.store(false);
+  // Delete the timestamp estimator
+  // Since it's not a plugin it runs forever until deleted
+  m_time_est.reset(nullptr);
 }
 
 void
@@ -155,6 +158,7 @@ DQMProcessor::RequestMaker()
       break;
     }
 
+
     // Make sure that the process is not running and a request can be made
     // otherwise we wait for more time
     if (algo->is_running()) {
@@ -184,7 +188,7 @@ DQMProcessor::RequestMaker()
       continue;
     }
 
-    // TLOG() << "Request pushed";
+    TLOG() << "Data pushed";
 
     // TLOG() << "Going to pop";
     try {
@@ -193,7 +197,7 @@ DQMProcessor::RequestMaker()
       TLOG() << "DQM: Unable to pop from the data queue";
       continue;
     }
-    // TLOG() << "Element popped";
+    TLOG() << "Data popped";
 
     std::thread* current_thread =
       new std::thread(&AnalysisModule::run, std::ref(*algo), std::ref(*element), m_running_mode, m_kafka_address);
@@ -224,6 +228,7 @@ DQMProcessor::CreateRequest(std::vector<dfmessages::GeoID> m_links)
 {
   auto timestamp = m_time_est->get_timestamp_estimate();
   dfmessages::TriggerDecision decision;
+  TLOG() << "Making request with timestamp " << timestamp;
 
   static dataformats::trigger_number_t trigger_number = 1;
 
