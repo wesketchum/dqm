@@ -90,9 +90,10 @@ void
 DQMProcessor::do_stop(const data_t&)
 {
   m_run_marker.store(false);
+  m_time_est->stop();
   // Delete the timestamp estimator
   // Since it's not a plugin it runs forever until deleted
-  m_time_est.reset(nullptr);
+  // m_time_est.reset(nullptr);
 }
 
 void
@@ -221,6 +222,8 @@ DQMProcessor::RequestMaker()
       }
     }
   }
+  // Delete the timestamp estimator after we are sure we won't need it
+  m_time_est.reset(nullptr);
 }
 
 dfmessages::TriggerDecision
