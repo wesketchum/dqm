@@ -74,11 +74,17 @@ private:
   using timesync_source_qt = appfwk::DAQSource<dfmessages::TimeSync>;
   std::unique_ptr<timesync_source_qt> m_timesync_source;
 
-  timinglibs::TimestampEstimator* m_time_est;
+  std::unique_ptr<timinglibs::TimestampEstimator> m_time_est;
 
   std::atomic<dataformats::run_number_t> m_run_number;
 
   std::string m_kafka_address;
+  std::vector<int> m_link_idx;
+
+  int m_clock_frequency;
+
+  std::unique_ptr<std::thread> m_running_thread;
+
 };
 
 } // namespace dunedaq::dqm

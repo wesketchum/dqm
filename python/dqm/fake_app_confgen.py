@@ -162,7 +162,9 @@ def generate(
                 ('dqmprocessor', dqmprocessor.Conf(
                         mode='normal', # normal or debug
                         sdqm=[1, 1, 1],
-                        kafka_address='dqmbroadcast:9092'
+                        kafka_address='dqmbroadcast:9092',
+                        link_idx=list(range(NUMBER_OF_DATA_PRODUCERS)),
+                        clock_frequency=CLOCK_SPEED_HZ
                         ))
             ]
                      )
