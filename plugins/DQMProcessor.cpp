@@ -249,8 +249,8 @@ DQMProcessor::CreateRequest(std::vector<dfmessages::GeoID> m_links)
     // TLOG() << "ONE LINK";
     dataformats::ComponentRequest request;
     request.component = link;
-    request.window_begin = timestamp;
-    request.window_end = timestamp + window_size;
+    request.window_begin = timestamp - window_size;
+    request.window_end = timestamp;
 
     decision.components.push_back(request);
   }
