@@ -15,12 +15,8 @@ find_package(dataformats REQUIRED)
 find_package(timinglibs REQUIRED)
 find_package(RdKafka REQUIRED)
 
-set(DUNEDAQ_DEPENDENCIES readout::readout)
-
 # We put here the name of our class, and the libraries we want to link with
 
-daq_add_library()
-
-daq_add_plugin(DQMProcessor duneDAQModule LINK_LIBRARIES appfwk::appfwk dataformats::dataformats dqm readout timinglibs::timinglibs RdKafka::rdkafka RdKafka::rdkafka++)
+daq_add_plugin(DQMProcessor duneDAQModule LINK_LIBRARIES appfwk::appfwk dataformats::dataformats readout::readout timinglibs::timinglibs RdKafka::rdkafka RdKafka::rdkafka++)
 
 daq_install()
