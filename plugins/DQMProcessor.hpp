@@ -57,6 +57,8 @@ public:
   void RequestMaker();
   dfmessages::TriggerDecision CreateRequest(std::vector<dfmessages::GeoID> m_links);
 
+  void get_info(opmonlib::InfoCollector& ci, int /*level*/);
+
 private:
   using trigger_record_source_qt = appfwk::DAQSource<std::unique_ptr<dataformats::TriggerRecord>>;
   std::unique_ptr<trigger_record_source_qt> m_source;
@@ -84,6 +86,11 @@ private:
   int m_clock_frequency;
 
   std::unique_ptr<std::thread> m_running_thread;
+
+  std::atomic<int> m_request_count{0};
+  std::atomic<int> m_total_request_count{0};
+  std::atomic<int> m_data_count{0};
+  std::atomic<int> m_total_data_count{0};
 
 };
 

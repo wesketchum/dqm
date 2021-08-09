@@ -10,6 +10,7 @@
 // DQM includes
 #include "dqm/Types.hpp"
 #include "dqm/dqmprocessor/Nljs.hpp"
+#include "dqm/dqmprocessorinfo/InfoNljs.hpp"
 #include "dqm/dqmprocessor/Structs.hpp"
 
 #include "DQMProcessor.hpp"
@@ -48,6 +49,19 @@ DQMProcessor::init(const data_t&)
   m_source.reset(new trigger_record_source_qt("trigger_record_q_dqm"));
   m_sink.reset(new trigger_decision_sink_qt("trigger_decision_q_dqm"));
   m_timesync_source.reset(new timesync_source_qt("time_sync_dqm_q"));
+}
+
+void
+DQMProcessor::get_info(opmonlib::InfoCollector& ci, int /*level*/)
+{
+  dqmprocessorinfo::Info fcr;
+
+  fcr.requests = m_request_count.exchange(0);
+  fcr.total_requests = m_total_request_count.load();
+  fcr.data_deliveries = m_data_count.exchange(0);
+  fcr.total_data_deliveries = m_total_data_count.load();
+
+  ci.add(fcr);
 }
 
 void
@@ -190,6 +204,8 @@ DQMProcessor::RequestMaker()
       TLOG() << "DQM: Unable to push to the request queue";
       continue;
     }
+    ++m_request_count;
+    ++m_total_request_count;
 
     TLOG() << "Data pushed";
 
@@ -200,6 +216,8 @@ DQMProcessor::RequestMaker()
       TLOG() << "DQM: Unable to pop from the data queue";
       continue;
     }
+    ++m_data_count;
+    ++m_total_data_count;
     TLOG() << "Data popped";
 
     std::thread* current_thread =

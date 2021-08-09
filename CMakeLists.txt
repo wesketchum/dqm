@@ -5,15 +5,18 @@ find_package(daq-cmake REQUIRED)
 
 daq_setup_environment()
 
-daq_codegen(*.jsonnet TEMPLATES Structs.hpp.j2 Nljs.hpp.j2 )
-
 # Here we put what packages we need
 
-find_package(readout REQUIRED)
 find_package(appfwk REQUIRED)     
+find_package(opmonlib REQUIRED)
+find_package(readout REQUIRED)
 find_package(dataformats REQUIRED)
 find_package(timinglibs REQUIRED)
 find_package(RdKafka REQUIRED)
+
+daq_codegen(*.jsonnet TEMPLATES Structs.hpp.j2 Nljs.hpp.j2 )
+daq_codegen(*info.jsonnet DEP_PKGS opmonlib TEMPLATES opmonlib/InfoStructs.hpp.j2 opmonlib/InfoNljs.hpp.j2 )
+
 
 # We put here the name of our class, and the libraries we want to link with
 
