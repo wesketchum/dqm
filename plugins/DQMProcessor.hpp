@@ -82,6 +82,9 @@ private:
   std::vector<int> m_link_idx;
 
   int m_clock_frequency;
+
+  std::unique_ptr<std::thread> m_running_thread;
+
 };
 
 } // namespace dunedaq::dqm

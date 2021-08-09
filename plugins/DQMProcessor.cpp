@@ -82,14 +82,14 @@ DQMProcessor::do_start(const nlohmann::json& args)
   m_run_number.store(dataformats::run_number_t(
       args.at("run").get<dataformats::run_number_t>()));
 
-  new std::thread(&DQMProcessor::RequestMaker, this);
+  m_running_thread.reset(new std::thread(&DQMProcessor::RequestMaker, this));
 }
 
 void
 DQMProcessor::do_stop(const data_t&)
 {
   m_run_marker.store(false);
-  m_time_est->stop();
+  m_running_thread->join();
   // Delete the timestamp estimator
   // Since it's not a plugin it runs forever until deleted
   // m_time_est.reset(nullptr);
