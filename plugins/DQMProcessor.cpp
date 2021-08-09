@@ -23,7 +23,6 @@
 #include "dataformats/TriggerRecord.hpp"
 #include "dataformats/wib/WIBFrame.hpp"
 #include "dfmessages/TriggerDecision.hpp"
-#include "readout/ReadoutTypes.hpp"
 
 #include <chrono>
 #include <map>
