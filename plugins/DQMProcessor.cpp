@@ -207,7 +207,7 @@ DQMProcessor::RequestMaker()
     ++m_request_count;
     ++m_total_request_count;
 
-    TLOG() << "Data pushed";
+    TLOG_DEBUG(10) << "Request (trigger decision) pushed to the queue";
 
     // TLOG() << "Going to pop";
     try {
@@ -218,7 +218,8 @@ DQMProcessor::RequestMaker()
     }
     ++m_data_count;
     ++m_total_data_count;
-    TLOG() << "Data popped";
+
+    TLOG_DEBUG(10) << "Data popped from the queue";
 
     std::thread* current_thread =
       new std::thread(&AnalysisModule::run, std::ref(*algo), std::ref(*element), m_running_mode, m_kafka_address);
@@ -251,7 +252,6 @@ DQMProcessor::CreateRequest(std::vector<dfmessages::GeoID> m_links)
 {
   auto timestamp = m_time_est->get_timestamp_estimate();
   dfmessages::TriggerDecision decision;
-  TLOG() << "Making request with timestamp " << timestamp;
 
   static dataformats::trigger_number_t trigger_number = 1;
 
@@ -272,6 +272,11 @@ DQMProcessor::CreateRequest(std::vector<dfmessages::GeoID> m_links)
 
     decision.components.push_back(request);
   }
+
+  TLOG_DEBUG(10) << "Making request (trigger decision) asking for " << m_links.size() <<
+    " links and with the beginning of the window at timestamp " <<
+    timestamp - window_size << " and the end of the window at timestamp " << timestamp;
+    ;
 
   return decision;
 }
