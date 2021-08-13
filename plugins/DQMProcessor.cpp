@@ -269,6 +269,9 @@ DQMProcessor::CreateRequest(std::vector<dfmessages::GeoID> m_links)
     request.component = link;
     // Some offset is required to avoid having delayed requests in readout
     // which make the TRB to take longer and longer to create the trigger records
+    // 10^5 was tried at first but wasn't enough. At 50 MHz, 10^5 = 2 ms
+    // The current value is 10^7 which seems to work after several hours of
+    // running and no delayed requests in readout
     request.window_begin = timestamp - window_size - 10000000;
     request.window_end = timestamp - 10000000;
 
