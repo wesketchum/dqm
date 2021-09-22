@@ -23,6 +23,7 @@
 #include <ostream>
 #include <string>
 #include <vector>
+#include <cmath>
 
 /**
  * Basic 1D histogram that counts entries
@@ -39,7 +40,8 @@ class Hist
 public:
   double m_low, m_high, m_step_size;
   int m_nentries;
-  double m_sum;
+  double m_sum, m_sum_sq, m_mean, m_std;
+  bool m_mean_set, m_std_set;
 
   int m_steps;
   std::vector<int> m_entries;
@@ -73,6 +75,10 @@ public:
   bool is_running();
   void run(dunedaq::dataformats::TriggerRecord& tr);
   void clean();
+
+  double mean();
+  double std();
+
 };
 
 Hist::Hist(int steps, double low, double high)
@@ -107,6 +113,7 @@ Hist::fill(double x)
   m_entries[bin]++;
   m_nentries++;
   m_sum += x;
+  m_sum_sq += x * x;
   return bin;
 }
 
@@ -161,6 +168,25 @@ Hist::clean()
   for (auto& elem : m_entries) {
     elem = 0;
   }
+}
+
+double
+Hist::mean()
+{
+  if (m_mean_set) return m_mean;
+  m_mean = m_sum / m_nentries;
+  m_mean_set = true;
+  return m_mean;
+}
+
+double
+Hist::std()
+{
+  if (m_std_set) return m_std;
+  m_mean = this->mean();
+  m_std = (m_sum_sq + m_nentries * m_mean * m_mean - 2 * m_sum * m_mean) / sqrt(m_nentries - 1);
+  m_std_set = true;
+  return m_std;
 }
 
 } // namespace dunedaq::dqm
