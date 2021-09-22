@@ -12,7 +12,7 @@
 #include "AnalysisModule.hpp"
 #include "Decoder.hpp"
 #include "Exporter.hpp"
-#include "Hist.hpp"
+#include "dqm/Hist.hpp"
 #include "dqm/Types.hpp"
 
 #include "dataformats/TriggerRecord.hpp"
