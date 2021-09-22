@@ -22,4 +22,8 @@ daq_codegen(*info.jsonnet DEP_PKGS opmonlib TEMPLATES opmonlib/InfoStructs.hpp.j
 
 daq_add_plugin(DQMProcessor duneDAQModule LINK_LIBRARIES appfwk::appfwk dataformats::dataformats readout::readout timinglibs::timinglibs RdKafka::rdkafka RdKafka::rdkafka++)
 
+# Unit tests
+
+daq_add_unit_test(Fourier_test LINK_LIBRARIES dataformats::dataformats)
+
 daq_install()
