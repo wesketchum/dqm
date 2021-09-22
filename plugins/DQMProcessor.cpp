@@ -136,16 +136,12 @@ DQMProcessor::RequestMaker()
   std::unique_ptr<dataformats::TriggerRecord> element;
 
   // Instances of analysis modules
-  HistContainer hist1s("hist1s", 256, 100, 0, 5000);
-  HistContainer hist5s("hist5s", 256, 50, 0, 5000);
-  HistContainer hist10s("hist10s", 256, 10, 0, 5000);
-  FourierLink fourier10s("fourier10s", 0, 10, 100);
+  HistContainer hist("hist1s", 256, 100, 0, 5000);
+  FourierContainer fourier("fourier10s", 256, 0, 10);
 
   // Initial tasks
-  map[std::chrono::system_clock::now()] = {&hist1s, m_standard_dqm.histogram_how_often, m_standard_dqm.histogram_unavailable_time, nullptr, "Histogram every " + std::to_string(m_standard_dqm.histogram_how_often) + " s"};
-  // map[std::chrono::system_clock::now()] = { &hist1s, 1, 1, nullptr, "Histogram every 1 s" };
-  // map[std::chrono::system_clock::now()] = {&hist5s, 5, 1, nullptr, "Histogram every 5 s"};
-  // map[std::chrono::system_clock::now()] = {&hist10s, 10, 1, nullptr, "Histogram every 10 s"};
+  map[std::chrono::system_clock::now()] = {&hist, m_standard_dqm_hist.how_often, m_standard_dqm_hist.unavailable_time, nullptr, "Histogram every " + std::to_string(m_standard_dqm_hist.how_often) + " s"};
+  map[std::chrono::system_clock::now()] = {&fourier, m_standard_dqm_fourier.how_often, m_standard_dqm_fourier.unavailable_time, nullptr, "Fourier every " + std::to_string(m_standard_dqm_fourier.how_often) + " s"};
 
   // Main loop, running forever
   while (m_run_marker) {
