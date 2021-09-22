@@ -121,11 +121,13 @@ HistContainer::transmit(std::string& kafka_address, const std::string& topicname
   csv_output << datasource << ";" << dataname << ";" << run_num << ";" << subrun << ";" << event << ";" << timestamp
              << ";" << metadata.str() << ";";
   csv_output << axislabel << "\n";
-  for (int ich = 0; ich < 256; ++ich) {
-    csv_output << "Histogram_" << ich + 1 << "\n";
-    csv_output << histvec[ich].m_sum;
-    csv_output << "\n";
-  }
+  // for (int ich = 0; ich < m_size; ++ich) {
+  //   csv_output << "Histogram_" << ich + 1 << "\n";
+  //   csv_output << histvec[ich].m_sum;
+  //   csv_output << "\n";
+  // }
+  csv_output << m_to_send;
+  m_to_send = "";
   // csv_output << "\n";
 
   // Transmit
