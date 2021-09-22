@@ -71,7 +71,8 @@ private:
   RunningMode m_running_mode;
 
   // Configuration parameters
-  dqmprocessor::StandardDQM m_standard_dqm;
+  dqmprocessor::StandardDQM m_standard_dqm_hist;
+  dqmprocessor::StandardDQM m_standard_dqm_fourier;
 
   using timesync_source_qt = appfwk::DAQSource<dfmessages::TimeSync>;
   std::unique_ptr<timesync_source_qt> m_timesync_source;

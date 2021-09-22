@@ -79,7 +79,8 @@ DQMProcessor::do_configure(const nlohmann::json& args)
   // ("trigger_record_q_dqm"); m_sink = std::unique_ptr<appfwk::DAQSink < dfmessages::TriggerDecision >>
   // ("trigger_decision_q_dqm");
   m_kafka_address = conf.kafka_address;
-  m_standard_dqm = args.get<dqmprocessor::StandardDQM>();
+  m_standard_dqm_hist = conf.sdqm_hist;
+  m_standard_dqm_fourier = conf.sdqm_fourier;
 
   m_link_idx = conf.link_idx;
 
