@@ -14,8 +14,8 @@
 #include "dqm/dqmprocessor/Structs.hpp"
 
 #include "DQMProcessor.hpp"
-#include "Fourier.hpp"
 #include "HistContainer.hpp"
+#include "FourierContainer.hpp"
 
 #include "appfwk/DAQSource.hpp"
 #include "dataformats/ComponentRequest.hpp"
