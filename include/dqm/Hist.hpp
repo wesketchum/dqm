@@ -73,7 +73,6 @@ public:
   void save(std::ofstream& filehandle) const;
 
   bool is_running();
-  void run(dunedaq::dataformats::TriggerRecord& tr);
   void clean();
 
   double mean();
@@ -144,20 +143,6 @@ bool
 Hist::is_running()
 {
   return true;
-}
-
-void
-Hist::run(dunedaq::dataformats::TriggerRecord& tr)
-{
-  dunedaq::dqm::Decoder dec;
-  auto wibframes = dec.decode(tr);
-
-  for (auto fr : wibframes) {
-    for (int ich = 0; ich < 256; ++ich) {
-      this->fill(fr->get_channel(ich));
-    }
-  }
-  this->save("Hist/hist.txt");
 }
 
 void
