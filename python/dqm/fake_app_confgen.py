@@ -11,7 +11,7 @@ moo.otypes.load_types('appfwk/cmd.jsonnet')
 moo.otypes.load_types('appfwk/app.jsonnet')
 
 moo.otypes.load_types('dfmodules/triggerrecordbuilder.jsonnet')
-moo.otypes.load_types('readout/fakecardreader.jsonnet')
+moo.otypes.load_types('readout/sourceemulatorconfig.jsonnet')
 moo.otypes.load_types('readout/datalinkhandler.jsonnet')
 
 moo.otypes.load_types('dqm/dqmprocessor.jsonnet')
@@ -22,7 +22,7 @@ import dunedaq.rcif.cmd as rccmd # AddressedCmd,
 import dunedaq.appfwk.cmd as cmd # AddressedCmd, 
 import dunedaq.appfwk.app as app # AddressedCmd, 
 import dunedaq.dfmodules.triggerrecordbuilder as trb
-import dunedaq.readout.fakecardreader as fcr
+import dunedaq.readout.sourceemulatorconfig as sec
 import dunedaq.readout.datalinkhandler as dlh
 import dunedaq.dqm.dqmprocessor as dqmprocessor
 
@@ -131,9 +131,9 @@ def generate(
         trigemu_token_count = 0
 
     confcmd = mrccmd("conf", "INITIAL", "CONFIGURED",[
-                ("fake_source",fcr.Conf(
-                            link_confs=[fcr.LinkConfiguration(
-                                geoid=fcr.GeoID(system="TPC", region=0, element=idx),
+                ("fake_source",sec.Conf(
+                            link_confs=[sec.LinkConfiguration(
+                                geoid=sec.GeoID(system="TPC", region=0, element=idx),
                                 slowdown=DATA_RATE_SLOWDOWN_FACTOR,
                                 queue_name=f"output_{idx}"
                             ) for idx in range(NUMBER_OF_DATA_PRODUCERS)],
