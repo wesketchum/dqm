@@ -17,13 +17,12 @@ find_package(RdKafka REQUIRED)
 daq_codegen(*.jsonnet TEMPLATES Structs.hpp.j2 Nljs.hpp.j2 )
 daq_codegen(*info.jsonnet DEP_PKGS opmonlib TEMPLATES opmonlib/InfoStructs.hpp.j2 opmonlib/InfoNljs.hpp.j2 )
 
-
 # We put here the name of our class, and the libraries we want to link with
 
 daq_add_plugin(DQMProcessor duneDAQModule LINK_LIBRARIES appfwk::appfwk dataformats::dataformats readout::readout timinglibs::timinglibs RdKafka::rdkafka RdKafka::rdkafka++)
 
 # Unit tests
 
-daq_add_unit_test(Fourier_test LINK_LIBRARIES dataformats::dataformats)
+daq_add_unit_test(Fourier_test LINK_LIBRARIES dataformats::dataformats readout::readout RdKafka::rdkafka++)
 
 daq_install()
