@@ -9,6 +9,7 @@
 #define DQM_SRC_ANALYSISMODULE_HPP_
 
 #include "dqm/Types.hpp"
+#include "ChannelMap.hpp"
 
 #include "dataformats/TriggerRecord.hpp"
 
@@ -20,7 +21,7 @@ class AnalysisModule
 {
 public:
   virtual bool is_running() = 0;
-  virtual void run(dataformats::TriggerRecord& record, RunningMode mode, std::string kafka_address) = 0;
+  virtual void run(dataformats::TriggerRecord& record, dqm::ChannelMap& map, RunningMode mode, std::string kafka_address) = 0;
 };
 
 } // namespace dunedaq::dqm
