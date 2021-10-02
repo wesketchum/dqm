@@ -124,7 +124,6 @@ DQMProcessor::RequestMaker()
     std::string name;
   };
 
-  // For now only one link
   std::vector<dataformats::GeoID> m_links;
 
   for (auto i: m_link_idx) {
