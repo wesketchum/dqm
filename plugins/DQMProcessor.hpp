@@ -13,6 +13,7 @@
 #define DQM_PLUGINS_DQMPROCESSOR_HPP_
 
 #include "dqm/Types.hpp"
+#include "ChannelMap.hpp"
 
 #include "appfwk/DAQModule.hpp"
 #include "appfwk/DAQSink.hpp"
@@ -92,6 +93,8 @@ private:
   std::atomic<int> m_total_request_count{0};
   std::atomic<int> m_data_count{0};
   std::atomic<int> m_total_data_count{0};
+
+  ChannelMap m_map;
 
 };
 
