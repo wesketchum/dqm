@@ -170,7 +170,7 @@ Hist::std()
 {
   if (m_std_set) return m_std;
   m_mean = mean();
-  m_std = (m_sum_sq + m_nentries * m_mean * m_mean - 2 * m_sum * m_mean) / sqrt(m_nentries - 1);
+  m_std = sqrt( (m_sum_sq + m_nentries * m_mean * m_mean - 2 * m_sum * m_mean) / (m_nentries - 1) );
   m_std_set = true;
   return m_std;
 }
