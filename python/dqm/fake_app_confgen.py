@@ -13,7 +13,6 @@ moo.otypes.load_types('appfwk/app.jsonnet')
 moo.otypes.load_types('dfmodules/triggerrecordbuilder.jsonnet')
 moo.otypes.load_types('readout/readoutconfig.jsonnet')
 moo.otypes.load_types('readout/sourceemulatorconfig.jsonnet')
-# moo.otypes.load_types('readout/datalinkhandler.jsonnet')
 
 moo.otypes.load_types('dqm/dqmprocessor.jsonnet')
 
