@@ -105,9 +105,6 @@ DQMProcessor::do_stop(const data_t&)
 {
   m_run_marker.store(false);
   m_running_thread->join();
-  // Delete the timestamp estimator
-  // Since it's not a plugin it runs forever until deleted
-  // m_time_est.reset(nullptr);
 }
 
 void
