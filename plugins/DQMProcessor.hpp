@@ -56,7 +56,7 @@ public:
   std::atomic<bool> m_run_marker;
 
   void RequestMaker();
-  dfmessages::TriggerDecision CreateRequest(std::vector<dfmessages::GeoID> m_links);
+  dfmessages::TriggerDecision CreateRequest(std::vector<dfmessages::GeoID>& m_links);
 
   void get_info(opmonlib::InfoCollector& ci, int /*level*/);
 
