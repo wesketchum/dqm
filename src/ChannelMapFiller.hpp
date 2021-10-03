@@ -19,28 +19,20 @@
 namespace dunedaq::dqm {
 
 class ChannelMapFiller : public AnalysisModule{
-  std::atomic<bool> m_is_running;
   std::string m_name;
 
 public:
   ChannelMapFiller(std::string name);
   void run(dunedaq::dataformats::TriggerRecord& tr, ChannelMap& map, RunningMode mode, std::string kafka_address);
-  bool is_running();
 
 };
 
 void
 ChannelMapFiller::run(dunedaq::dataformats::TriggerRecord& tr, ChannelMap& map, RunningMode, std::string)
 {
-  m_is_running.store(true);
+  m_run_mark.store(true);
   map.fill(tr);
-  m_is_running.store(false);
-}
-
-bool
-ChannelMapFiller::is_running()
-{
-  return m_is_running;
+  m_run_mark.store(false);
 }
 
 ChannelMapFiller::ChannelMapFiller(std::string name)

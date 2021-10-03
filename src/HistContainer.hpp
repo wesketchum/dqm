@@ -29,7 +29,6 @@ class HistContainer : public AnalysisModule
 {
   std::string m_name;
   std::vector<Hist> histvec;
-  bool m_run_mark;
   int m_size;
 
 public:
@@ -39,7 +38,6 @@ public:
   void transmit(std::string &kafka_address, const std::string& topicname, int run_num, time_t timestamp);
   void clean();
   void save_and_clean(uint64_t timestamp); // NOLINT(build/unsigned)
-  bool is_running();
 
   int frames_run = 0;
   int max_frames = 1;
@@ -49,7 +47,6 @@ public:
 
 HistContainer::HistContainer(std::string name, int nhist, int steps, double low, double high)
   : m_name(name)
-  , m_run_mark(false)
   , m_size(nhist)
 {
   for (int i = 0; i < m_size; ++i)
@@ -59,7 +56,7 @@ HistContainer::HistContainer(std::string name, int nhist, int steps, double low,
 void
 HistContainer::run(dunedaq::dataformats::TriggerRecord& tr, RunningMode mode, std::string kafka_address)
 {
-  m_run_mark = true;
+  m_run_mark.store(true);
   dunedaq::dqm::Decoder dec;
   auto wibframes = dec.decode(tr);
   std::uint64_t timestamp = 0; // NOLINT(build/unsigned)
@@ -93,15 +90,12 @@ HistContainer::run(dunedaq::dataformats::TriggerRecord& tr, RunningMode mode, st
   //
   // }
 
-  m_run_mark = false;
+  m_run_mark.store(false);
 
   // clean();
 }
 
-bool
-HistContainer::is_running()
 {
-  return m_run_mark;
 }
 
 void

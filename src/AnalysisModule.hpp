@@ -20,9 +20,16 @@ namespace dunedaq::dqm {
 class AnalysisModule
 {
 public:
-  virtual bool is_running() = 0;
+  std::atomic<bool> m_run_mark = false;
+
+  virtual bool is_running();
   virtual void run(dataformats::TriggerRecord& record, dqm::ChannelMap& map, RunningMode mode, std::string kafka_address) = 0;
 };
+
+bool
+AnalysisModule::is_running(){
+  return m_run_mark;
+}
 
 } // namespace dunedaq::dqm
 

@@ -29,7 +29,6 @@ class FourierContainer : public AnalysisModule
 {
   std::string m_name;
   std::vector<Fourier> fouriervec;
-  bool m_run_mark;
   size_t m_size;
 
 public:
@@ -39,13 +38,11 @@ public:
   void transmit(std::string &kafka_address, const std::string& topicname, int run_num, time_t timestamp);
   // void clean();
   // void save_and_clean(uint64_t timestamp); // NOLINT(build/unsigned)
-  bool is_running();
 
 };
 
   FourierContainer::FourierContainer(std::string name, int sizedouble, double inc, int npoints)
   : m_name(name)
-  , m_run_mark(false)
   , m_size(npoints)
 {
   for (size_t i = 0; i < m_size; ++i)
@@ -55,10 +52,10 @@ public:
 void
 FourierContainer::run(dunedaq::dataformats::TriggerRecord& tr, RunningMode, std::string kafka_address)
 {
-  m_run_mark = true;
   dunedaq::dqm::Decoder dec;
   auto wibframes = dec.decode(tr);
   // std::uint64_t timestamp = 0; // NOLINT(build/unsigned)
+  m_run_mark.store(true);
 
   for (auto fr : wibframes) {
 
@@ -90,15 +87,9 @@ FourierContainer::run(dunedaq::dataformats::TriggerRecord& tr, RunningMode, std:
   //
   // }
 
-  m_run_mark = false;
+  m_run_mark.store(false);
 
   // clean();
-}
-
-bool
-FourierContainer::is_running()
-{
-  return m_run_mark;
 }
 
 void
