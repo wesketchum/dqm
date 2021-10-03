@@ -156,11 +156,6 @@ DQMProcessor::RequestMaker()
     // Save pointer to delete the thread later
     std::thread* previous_thread = fr->second.running_thread;
 
-    // TLOG() << "TIME: next_time" << next_time.time_since_epoch().count();
-
-    // TLOG() << "MAIN LOOP" << " Instance of " << fr->second.between_time << " seconds" << (algo == &hist1s) << " " <<
-    // (algo == &hist5s);
-
     // Sleep until the next time
     std::this_thread::sleep_until(next_time);
     // We don't want to run if the run has stopped
