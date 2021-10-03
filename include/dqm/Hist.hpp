@@ -39,9 +39,9 @@ class Hist
 
 public:
   double m_low, m_high, m_step_size;
-  int m_nentries;
-  double m_sum, m_sum_sq, m_mean, m_std;
-  bool m_mean_set, m_std_set;
+  int m_nentries = 0;
+  double m_sum = 0, m_sum_sq = 0, m_mean, m_std;
+  bool m_mean_set = false, m_std_set = false;
 
   int m_steps;
   std::vector<int> m_entries;
@@ -149,6 +149,7 @@ void
 Hist::clean()
 {
   m_sum = 0;
+  m_sum_sq = 0;
   m_nentries = 0;
   for (auto& elem : m_entries) {
     elem = 0;
@@ -168,7 +169,7 @@ double
 Hist::std()
 {
   if (m_std_set) return m_std;
-  m_mean = this->mean();
+  m_mean = mean();
   m_std = (m_sum_sq + m_nentries * m_mean * m_mean - 2 * m_sum * m_mean) / sqrt(m_nentries - 1);
   m_std_set = true;
   return m_std;
