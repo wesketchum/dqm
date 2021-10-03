@@ -30,7 +30,7 @@ public:
 };
 
 void
-ChannelMapFiller::run(dunedaq::dataformats::TriggerRecord& tr, ChannelMap& map, RunningMode mode, std::string kafka_address)
+ChannelMapFiller::run(dunedaq::dataformats::TriggerRecord& tr, ChannelMap& map, RunningMode, std::string)
 {
   m_is_running.store(true);
   map.fill(tr);
