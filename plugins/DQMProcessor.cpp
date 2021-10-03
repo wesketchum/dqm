@@ -16,7 +16,9 @@
 #include "DQMProcessor.hpp"
 #include "HistContainer.hpp"
 #include "FourierContainer.hpp"
+#include "ChannelMapFiller.hpp"
 
+// DUNE-DAQ includes
 #include "appfwk/DAQSource.hpp"
 #include "dataformats/ComponentRequest.hpp"
 #include "dataformats/Fragment.hpp"
@@ -25,6 +27,7 @@
 #include "dataformats/wib/WIBFrame.hpp"
 #include "dfmessages/TriggerDecision.hpp"
 
+// C++ includes
 #include <chrono>
 #include <map>
 #include <memory>
@@ -127,17 +130,30 @@ DQMProcessor::RequestMaker()
     m_links.push_back({ dataformats::GeoID::SystemType::kTPC, 0, static_cast<unsigned int>(i) });
   }
 
+  // Map that holds the tasks and times when to do them
   std::map<std::chrono::time_point<std::chrono::system_clock>, AnalysisInstance> map;
 
   std::unique_ptr<dataformats::TriggerRecord> element;
 
   // Instances of analysis modules
-  HistContainer hist("hist1s", 256, 100, 0, 5000);
+
+  // Raw event display
+  HistContainer hist("hist1s", 256, 100, 0, 5000, false);
+  // Mean and RMS
+  HistContainer mean_rms("hist1s", 256, 100, 0, 5000, true);
+  // Fourier transform
   FourierContainer fourier("fourier10s", 256, 0, 10);
 
+  // Fills the channel map at the beggining of a run
+  ChannelMapFiller chfiller("channelmapfiller");
+
   // Initial tasks
-  map[std::chrono::system_clock::now()] = {&hist, m_standard_dqm_hist.how_often, m_standard_dqm_hist.unavailable_time, nullptr, "Histogram every " + std::to_string(m_standard_dqm_hist.how_often) + " s"};
-  map[std::chrono::system_clock::now()] = {&fourier, m_standard_dqm_fourier.how_often, m_standard_dqm_fourier.unavailable_time, nullptr, "Fourier every " + std::to_string(m_standard_dqm_fourier.how_often) + " s"};
+  // Add some offset time to let the other parts of the DAQ start
+  // Typically the first and maybe second requests of data fails
+  map[std::chrono::system_clock::now() + std::chrono::seconds(10)] = {&hist, m_standard_dqm_hist.how_often, m_standard_dqm_hist.unavailable_time, nullptr, "Histogram every " + std::to_string(m_standard_dqm_hist.how_often) + " s"};
+  map[std::chrono::system_clock::now() + std::chrono::seconds(10)] = {&mean_rms, m_standard_dqm_hist.how_often, m_standard_dqm_hist.unavailable_time, nullptr, "Histogram every " + std::to_string(m_standard_dqm_hist.how_often) + " s"};
+  map[std::chrono::system_clock::now() + std::chrono::seconds(10)] = {&fourier, m_standard_dqm_fourier.how_often, m_standard_dqm_fourier.unavailable_time, nullptr, "Fourier every " + std::to_string(m_standard_dqm_fourier.how_often) + " s"};
+  map[std::chrono::system_clock::now() + std::chrono::seconds(2)] = {&chfiller, 2, 1, nullptr, "Channel map filler"};
 
   // Main loop, running forever
   while (m_run_marker) {
@@ -150,16 +166,23 @@ DQMProcessor::RequestMaker()
     auto next_time = fr->first;
     AnalysisModule* algo = fr->second.mod;
 
+    // If the channel map filler has already run and has worked then remove the entry
+    // and keep running
+    if (fr->second.mod == &chfiller and m_map.is_filled()) {
+      map.erase(fr);
+      continue;
+    }
+
     // Save pointer to delete the thread later
     std::thread* previous_thread = fr->second.running_thread;
 
     // Sleep until the next time
     std::this_thread::sleep_until(next_time);
-    // We don't want to run if the run has stopped
+
+    // We don't want to run if the run has stopped after sleeping for a while
     if (!m_run_marker) {
       break;
     }
-
 
     // Make sure that the process is not running and a request can be made
     // otherwise we wait for more time
@@ -171,10 +194,10 @@ DQMProcessor::RequestMaker()
       map.erase(fr);
       continue;
     }
+
     // Before creating a request check that there
     // There has been a bug where the timestamp was retrieved before there were any timestamps
     // obtaining an invalid timestamps
-
     auto timestamp = m_time_est->get_timestamp_estimate();
     if (timestamp == dfmessages::TypeDefaults::s_invalid_timestamp) {
       // Some sleep is needed because at the beginning there are no valid timestamps
@@ -210,7 +233,7 @@ DQMProcessor::RequestMaker()
     TLOG_DEBUG(10) << "Data popped from the queue";
 
     std::thread* current_thread =
-      new std::thread(&AnalysisModule::run, std::ref(*algo), std::ref(*element), m_running_mode, m_kafka_address);
+      new std::thread(&AnalysisModule::run, std::ref(*algo), std::ref(*element), std::ref(m_map), m_running_mode, m_kafka_address);
 
     // Add a new entry for the current instance
     map[std::chrono::system_clock::now() +
