@@ -73,6 +73,7 @@ private:
 
   // Configuration parameters
   dqmprocessor::StandardDQM m_standard_dqm_hist;
+  dqmprocessor::StandardDQM m_standard_dqm_mean_rms;
   dqmprocessor::StandardDQM m_standard_dqm_fourier;
 
   using timesync_source_qt = appfwk::DAQSource<dfmessages::TimeSync>;

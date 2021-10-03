@@ -44,9 +44,11 @@ local dqmprocessor = {
     conf: s.record("Conf", [
         s.field("mode", self.string,
                 doc="'debug' if in debug mode"),
-        s.field("sdqm_hist", self.standard_dqm,
+        s.field("sdqm_hist", self.standard_dqm,      # This one is for the raw event display
                 doc="Standard dqm"),
-        s.field("sdqm_fourier", self.standard_dqm, # This one is for fourier
+        s.field("sdqm_mean_rms", self.standard_dqm,  # This one is for the Mean and RMS
+                doc="Standard dqm"),
+        s.field("sdqm_fourier", self.standard_dqm,   # This one is for fourier transforms
                 doc="Fourier"),
         s.field("kafka_address", self.string,
                 doc="Address used for sending to the kafka broker"),

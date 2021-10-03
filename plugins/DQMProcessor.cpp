@@ -83,6 +83,7 @@ DQMProcessor::do_configure(const nlohmann::json& args)
   // ("trigger_decision_q_dqm");
   m_kafka_address = conf.kafka_address;
   m_standard_dqm_hist = conf.sdqm_hist;
+  m_standard_dqm_mean_rms = conf.sdqm_mean_rms;
   m_standard_dqm_fourier = conf.sdqm_fourier;
 
   m_link_idx = conf.link_idx;
