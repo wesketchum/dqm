@@ -37,7 +37,6 @@ public:
   void run(dunedaq::dataformats::TriggerRecord& tr, RunningMode mode = RunningMode::kNormal, std::string kafka_address="");
   void transmit(std::string &kafka_address, const std::string& topicname, int run_num, time_t timestamp);
   // void clean();
-  // void save_and_clean(uint64_t timestamp); // NOLINT(build/unsigned)
 
 };
 
@@ -128,22 +127,6 @@ FourierContainer::transmit(std::string& kafka_address, const std::string& topicn
 //   for (int ich = 0; ich < m_size; ++ich) {
 //     fouriervec[ich].clean();
 //   }
-// }
-
-// void
-// FourierContainer::save_and_clean(uint64_t timestamp) // NOLINT(build/unsigned)
-// {
-//   std::ofstream file;
-//   file.open("Hist/" + m_name + "-" + std::to_string(filename_index) + ".txt", std::ios_base::app);
-//   file << timestamp << std::endl;
-
-//   for (int ich = 0; ich < m_size; ++ich) {
-//     file << fouriervec[ich].m_sum << " ";
-//   }
-//   file << std::endl;
-//   file.close();
-
-//   clean();
 // }
 
 } // namespace dunedaq::dqm
