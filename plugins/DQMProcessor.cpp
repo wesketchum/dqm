@@ -121,6 +121,7 @@ DQMProcessor::RequestMaker()
     AnalysisModule* mod;
     double between_time;
     double default_unavailable_time;
+    int number_of_frames;
     std::thread* running_thread;
     std::string name;
   };
@@ -144,38 +145,58 @@ DQMProcessor::RequestMaker()
   HistContainer mean_rms("hist1s", 256, 100, 0, 5000, true);
   // Fourier transform
   FourierContainer fourier("fourier10s", 256, 0, 10);
-
   // Fills the channel map at the beggining of a run
   ChannelMapFiller chfiller("channelmapfiller");
 
   // Initial tasks
   // Add some offset time to let the other parts of the DAQ start
   // Typically the first and maybe second requests of data fails
-  map[std::chrono::system_clock::now() + std::chrono::seconds(10)] = {&hist, m_standard_dqm_hist.how_often, m_standard_dqm_hist.unavailable_time, nullptr, "Histogram every " + std::to_string(m_standard_dqm_hist.how_often) + " s"};
-  map[std::chrono::system_clock::now() + std::chrono::seconds(10)] = {&mean_rms, m_standard_dqm_hist.how_often, m_standard_dqm_hist.unavailable_time, nullptr, "Histogram every " + std::to_string(m_standard_dqm_hist.how_often) + " s"};
-  map[std::chrono::system_clock::now() + std::chrono::seconds(10)] = {&fourier, m_standard_dqm_fourier.how_often, m_standard_dqm_fourier.unavailable_time, nullptr, "Fourier every " + std::to_string(m_standard_dqm_fourier.how_often) + " s"};
-  map[std::chrono::system_clock::now() + std::chrono::seconds(2)] = {&chfiller, 2, 1, nullptr, "Channel map filler"};
+  map[std::chrono::system_clock::now() + std::chrono::seconds(10)] = {&hist,
+                                                                      m_standard_dqm_hist.how_often,
+                                                                      m_standard_dqm_hist.unavailable_time,
+                                                                      m_standard_dqm_hist.num_frames,
+                                                                      nullptr,
+                                                                      "Histogram every " + std::to_string(m_standard_dqm_hist.how_often) + " s"};
+  map[std::chrono::system_clock::now() + std::chrono::seconds(10)] = {&mean_rms,
+                                                                      m_standard_dqm_mean_rms.how_often,
+                                                                      m_standard_dqm_mean_rms.unavailable_time,
+                                                                      m_standard_dqm_mean_rms.num_frames,
+                                                                      nullptr,
+                                                                      "Histogram every " + std::to_string(m_standard_dqm_hist.how_often) + " s"};
+  map[std::chrono::system_clock::now() + std::chrono::seconds(10)] = {&fourier,
+                                                                      m_standard_dqm_fourier.how_often,
+                                                                      m_standard_dqm_fourier.unavailable_time,
+                                                                      m_standard_dqm_fourier.num_frames,
+                                                                      nullptr,
+                                                                      "Fourier every " + std::to_string(m_standard_dqm_fourier.how_often) + " s"};
+  map[std::chrono::system_clock::now() + std::chrono::seconds(2)] =  {&chfiller,
+                                                                      2,
+                                                                      1,
+                                                                      1, //Request only one frame for each link
+                                                                      nullptr,
+                                                                      "Channel map filler"};
 
   // Main loop, running forever
   while (m_run_marker) {
 
-    auto fr = map.begin();
-    if (fr == map.end()) {
+    auto task = map.begin();
+    if (task == map.end()) {
       TLOG() << "Empty map! This should never happen!";
       break;
     }
-    auto next_time = fr->first;
-    AnalysisModule* algo = fr->second.mod;
+    auto next_time = task->first;
+    auto analysis_instance = task->second;
+    AnalysisModule* algo = analysis_instance.mod;
 
     // If the channel map filler has already run and has worked then remove the entry
     // and keep running
-    if (fr->second.mod == &chfiller and m_map.is_filled()) {
-      map.erase(fr);
+    if (analysis_instance.mod == &chfiller and m_map.is_filled()) {
+      map.erase(task);
       continue;
     }
 
     // Save pointer to delete the thread later
-    std::thread* previous_thread = fr->second.running_thread;
+    std::thread* previous_thread = analysis_instance.running_thread;
 
     // Sleep until the next time
     std::this_thread::sleep_until(next_time);
@@ -190,9 +211,9 @@ DQMProcessor::RequestMaker()
     if (algo->is_running()) {
       TLOG() << "ALGORITHM already running";
       map[std::chrono::system_clock::now() +
-          std::chrono::milliseconds(static_cast<int>(fr->second.default_unavailable_time) * 1000)] = {
-        algo, fr->second.between_time, fr->second.default_unavailable_time, previous_thread, fr->second.name};
-      map.erase(fr);
+          std::chrono::milliseconds(static_cast<int>(analysis_instance.default_unavailable_time) * 1000)] = {algo,
+        analysis_instance.between_time, analysis_instance.default_unavailable_time, analysis_instance.number_of_frames, previous_thread, analysis_instance.name};
+      map.erase(task);
       continue;
     }
 
@@ -208,7 +229,7 @@ DQMProcessor::RequestMaker()
     }
 
     // Now it's the time to do something
-    auto request = CreateRequest(m_links);
+    auto request = CreateRequest(m_links, analysis_instance.number_of_frames);
 
     try {
       m_sink->push(request, m_sink_timeout);
@@ -238,12 +259,13 @@ DQMProcessor::RequestMaker()
 
     // Add a new entry for the current instance
     map[std::chrono::system_clock::now() +
-        std::chrono::milliseconds(static_cast<int>(fr->second.between_time) * 1000)] = {
-      algo, fr->second.between_time, fr->second.default_unavailable_time, current_thread, fr->second.name
+        std::chrono::milliseconds(static_cast<int>(analysis_instance.between_time) * 1000)] = {
+      algo, analysis_instance.between_time, analysis_instance.default_unavailable_time,
+      analysis_instance.number_of_frames, current_thread, analysis_instance.name
     };
 
     // Delete the entry we just used and find the next one
-    map.erase(fr);
+    map.erase(task);
 
     // Delete thread
     if (previous_thread != nullptr) {
@@ -272,7 +294,6 @@ DQMProcessor::CreateRequest(std::vector<dfmessages::GeoID>& m_links)
   decision.trigger_timestamp = timestamp;
   decision.readout_type = dfmessages::ReadoutType::kMonitoring;
 
-  int number_of_frames = 1;
   int window_size = number_of_frames * 25;
 
   for (auto& link : m_links) {
