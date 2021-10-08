@@ -51,12 +51,6 @@ public:
   void clean();
 
   double get_transform(int index);
-
-  // void save(const std::string& filename) const;
-  // void save(std::ofstream& filehandle) const;
-
-  // void save_fourier(const std::string& filename) const;
-  // void save_fourier(std::ofstream& filehandle) const;
 };
 
 Fourier::Fourier(double inc, int npoints) // NOLINT(build/unsigned)
@@ -104,7 +98,6 @@ Fourier::compute_fourier_normalized()
     output[k] = 2. / m_npoints * abs(output[k]);
     m_transform.push_back(abs(output[k]));
   }
-
 }
 
 double
@@ -131,57 +124,13 @@ Fourier::fill(double value) // NOLINT(build/unsigned)
 {
   m_data.push_back(value);
 }
+
 void
 Fourier::clean()
 {
   m_data.clear();
   m_transform.clear();
 }
-
-// void
-// Fourier::save(const std::string& filename) const
-// {
-//   std::ofstream file;
-//   file.open(filename);
-//   file << m_start << " " << m_end << " " << m_inc_size << " " << m_npoints << " " << std::endl;
-//   for (auto x : m_data) {
-//     file << x << " ";
-//   }
-//   file << std::endl;
-// }
-
-// void
-// Fourier::save(std::ofstream& filehandle) const
-// {
-//   filehandle << m_start << " " << m_end << " " << m_inc_size << " " << m_npoints << " " << std::endl;
-//   for (auto x : m_data) {
-//     filehandle << x << " ";
-//   }
-//   filehandle << std::endl;
-// }
-
-// void
-// Fourier::save_fourier(const std::string& filename) const
-// {
-//   std::ofstream file;
-//   file.open(filename);
-//   file << m_start << " " << m_end << " " << m_inc_size << " " << m_npoints << " " << m_rebin_factor << std::endl;
-//   for (auto x : m_fourier_transform) {
-//     file << x << " ";
-//   }
-//   file << std::endl;
-// }
-
-// void
-// Fourier::save_fourier(std::ofstream& filehandle) const
-// {
-//   filehandle << m_start << " " << m_end << " " << m_inc_size << " " << m_npoints << " " << m_rebin_factor << std::endl;
-//   for (auto x : m_fourier_transform) {
-//     filehandle << x << " ";
-//   }
-//   filehandle << std::endl;
-// }
-
 
 } // namespace dunedaq::dqm
 
