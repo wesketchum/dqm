@@ -166,7 +166,6 @@ def generate(
                         )),
             ] + [
                 ('dqmprocessor', dqmprocessor.Conf(
-                        mode='normal', # normal or debug
                         sdqm_hist=dqmprocessor.StandardDQM(how_often=60, unavailable_time=10, num_frames=50),
                         sdqm_mean_rms=dqmprocessor.StandardDQM(how_often=10, unavailable_time=1, num_frames=100),
                         sdqm_fourier=dqmprocessor.StandardDQM(how_often=60 * 20, unavailable_time=60, num_frames=100),
