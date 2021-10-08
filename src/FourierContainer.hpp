@@ -37,6 +37,7 @@ public:
   void run(dunedaq::dataformats::TriggerRecord& tr, RunningMode mode = RunningMode::kNormal, std::string kafka_address="");
   void transmit(std::string &kafka_address, const std::string& topicname, int run_num, time_t timestamp);
   // void clean();
+  void clean();
 
 };
 
@@ -121,13 +122,13 @@ FourierContainer::transmit(std::string& kafka_address, const std::string& topicn
   // clean();
 }
 
-// void
-// FourierContainer::clean()
-// {
-//   for (int ich = 0; ich < m_size; ++ich) {
-//     fouriervec[ich].clean();
-//   }
-// }
+void
+FourierContainer::clean()
+{
+  for (int ich = 0; ich < m_size; ++ich) {
+    fouriervec[ich].clean();
+  }
+}
 
 } // namespace dunedaq::dqm
 
