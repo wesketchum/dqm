@@ -71,16 +71,6 @@ void
 DQMProcessor::do_configure(const nlohmann::json& args)
 {
   auto conf = args.get<dqmprocessor::Conf>();
-  if (conf.mode == "debug" || conf.mode == "local processing") {
-    m_running_mode = RunningMode::kLocalProcessing;
-  } else if (conf.mode == "normal") {
-    m_running_mode = RunningMode::kNormal;
-  } else {
-    TLOG() << "Invalid value for mode, supported values are 'debug', 'local processing' and 'normal'";
-  }
-  // m_source = std::unique_ptr<appfwk::DAQSource < std::unique_ptr<dataformats::TriggerRecord >>>
-  // ("trigger_record_q_dqm"); m_sink = std::unique_ptr<appfwk::DAQSink < dfmessages::TriggerDecision >>
-  // ("trigger_decision_q_dqm");
   m_kafka_address = conf.kafka_address;
   m_standard_dqm_hist = conf.sdqm_hist;
   m_standard_dqm_mean_rms = conf.sdqm_mean_rms;

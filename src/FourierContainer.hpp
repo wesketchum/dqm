@@ -34,9 +34,8 @@ class FourierContainer : public AnalysisModule
 public:
   FourierContainer(std::string name, int size, double inc, int npoints);
 
-  void run(dunedaq::dataformats::TriggerRecord& tr, RunningMode mode = RunningMode::kNormal, std::string kafka_address="");
-  void transmit(std::string &kafka_address, const std::string& topicname, int run_num, time_t timestamp);
-  // void clean();
+  void run(dunedaq::dataformats::TriggerRecord& tr, ChannelMap& map, std::string kafka_address="");
+  void transmit(std::string &kafka_address, ChannelMap& map, const std::string& topicname, int run_num, time_t timestamp);
   void clean();
 
 };
@@ -50,7 +49,7 @@ public:
 }
 
 void
-FourierContainer::run(dunedaq::dataformats::TriggerRecord& tr, RunningMode, std::string kafka_address)
+FourierContainer::run(dunedaq::dataformats::TriggerRecord& tr, ChannelMap& map, std::string kafka_address)
 {
   dunedaq::dqm::Decoder dec;
   auto wibframes = dec.decode(tr);

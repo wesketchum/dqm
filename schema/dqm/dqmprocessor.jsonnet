@@ -14,9 +14,6 @@ local s = moo.oschema.schema(ns);
 // Object structure used by the test/fake producer module
 local dqmprocessor = {
 
-    string : s.string("RunningMode",
-                      doc="A string field"),
-
     time : s.number("Time", "f4", doc="A time"),
 
     count : s.number("Count", "i4",

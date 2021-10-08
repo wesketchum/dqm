@@ -23,12 +23,12 @@ class ChannelMapFiller : public AnalysisModule{
 
 public:
   ChannelMapFiller(std::string name);
-  void run(dunedaq::dataformats::TriggerRecord& tr, ChannelMap& map, RunningMode mode, std::string kafka_address);
+  void run(dunedaq::dataformats::TriggerRecord& tr, ChannelMap& map, std::string kafka_address);
 
 };
 
 void
-ChannelMapFiller::run(dunedaq::dataformats::TriggerRecord& tr, ChannelMap& map, RunningMode, std::string)
+ChannelMapFiller::run(dunedaq::dataformats::TriggerRecord& tr, ChannelMap& map, std::string)
 {
   m_run_mark.store(true);
   map.fill(tr);

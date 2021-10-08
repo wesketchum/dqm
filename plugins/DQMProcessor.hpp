@@ -12,7 +12,6 @@
 #ifndef DQM_PLUGINS_DQMPROCESSOR_HPP_
 #define DQM_PLUGINS_DQMPROCESSOR_HPP_
 
-#include "dqm/Types.hpp"
 #include "ChannelMap.hpp"
 
 #include "appfwk/DAQModule.hpp"
@@ -68,8 +67,6 @@ private:
 
   std::chrono::milliseconds m_sink_timeout{ 1000 };
   std::chrono::milliseconds m_source_timeout{ 1000 };
-
-  RunningMode m_running_mode;
 
   // Configuration parameters
   dqmprocessor::StandardDQM m_standard_dqm_hist;

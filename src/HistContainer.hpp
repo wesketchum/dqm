@@ -14,7 +14,6 @@
 #include "Exporter.hpp"
 #include "ChannelMap.hpp"
 #include "dqm/Hist.hpp"
-#include "dqm/Types.hpp"
 
 #include "dataformats/TriggerRecord.hpp"
 
@@ -39,7 +38,7 @@ class HistContainer : public AnalysisModule
 public:
   HistContainer(std::string name, int nhist, int steps, double low, double high, bool only_mean=false);
 
-  void run(dunedaq::dataformats::TriggerRecord& tr, ChannelMap& map, RunningMode mode = RunningMode::kNormal, std::string kafka_address="");
+  void run(dunedaq::dataformats::TriggerRecord& tr, ChannelMap& map, std::string kafka_address="");
   void transmit(std::string &kafka_address, ChannelMap& map, const std::string& topicname, int run_num, time_t timestamp);
   void transmit_mean_and_rms(std::string &kafka_address, ChannelMap& map, const std::string& topicname, int run_num, time_t timestamp);
   void clean();
@@ -57,7 +56,7 @@ HistContainer::HistContainer(std::string name, int nhist, int steps, double low,
 }
 
 void
-HistContainer::run(dunedaq::dataformats::TriggerRecord& tr, ChannelMap& map, RunningMode mode, std::string kafka_address)
+HistContainer::run(dunedaq::dataformats::TriggerRecord& tr, ChannelMap& map, std::string kafka_address)
 {
   m_run_mark.store(true);
   dunedaq::dqm::Decoder dec;

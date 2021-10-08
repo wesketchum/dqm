@@ -8,7 +8,6 @@
 #ifndef DQM_SRC_ANALYSISMODULE_HPP_
 #define DQM_SRC_ANALYSISMODULE_HPP_
 
-#include "dqm/Types.hpp"
 #include "ChannelMap.hpp"
 
 #include "dataformats/TriggerRecord.hpp"
@@ -23,7 +22,7 @@ public:
   std::atomic<bool> m_run_mark = false;
 
   virtual bool is_running();
-  virtual void run(dataformats::TriggerRecord& record, dqm::ChannelMap& map, RunningMode mode, std::string kafka_address) = 0;
+  virtual void run(dataformats::TriggerRecord& record, dqm::ChannelMap& map, std::string kafka_address) = 0;
 };
 
 bool
