@@ -47,6 +47,7 @@ public:
   CArray compute_fourier_normalized();
   CArray compute_fourier_def();
   std::vector<double> get_frequencies();
+  void clean();
 
   // void save(const std::string& filename) const;
   // void save(std::ofstream& filehandle) const;
@@ -230,6 +231,12 @@ void
 Fourier::fill(double value) // NOLINT(build/unsigned)
 {
   m_data.push_back(value);
+}
+void
+Fourier::clean()
+{
+  m_data.clear();
+  m_transform.clear();
 }
 
 // void
