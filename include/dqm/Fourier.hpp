@@ -39,15 +39,18 @@ public:
   double m_inc_size;
   int m_npoints;
   std::vector<double> m_data;
+  std::vector<double> m_transform;
 
   Fourier(double inc, int npoints);
 
   void fill(double value);
   CArray compute_fourier();
-  CArray compute_fourier_normalized();
+  void compute_fourier_normalized();
   CArray compute_fourier_def();
   std::vector<double> get_frequencies();
   void clean();
+
+  double get_transform(int index);
 
   // void save(const std::string& filename) const;
   // void save(std::ofstream& filehandle) const;
@@ -202,16 +205,32 @@ Fourier::compute_fourier_def()
 
 }
 
-CArray
+void
 Fourier::compute_fourier_normalized()
 {
   CArray output = compute_fourier_def();
 
   // Only until m_data.size() / 2, the others correspond to the negative frequencies
-  for (size_t k = 0; k < m_data.size() / 2; ++k)
+  for (size_t k = 0; k < m_data.size() / 2; ++k) {
     output[k] = 2. / m_npoints * abs(output[k]);
-  return output;
+    m_transform.push_back(abs(output[k]));
+  }
+  // std::stringstream ss;
+  // for (auto& elem: m_data)
+  //   ss << elem << " ";
+  // TLOG() << "Input: " << ss.str();
+  // std::stringstream sso;
+  // for (auto& elem: output)
+  //   sso << abs(elem) << " ";
+  // TLOG() << "Output: " << sso.str();
+  // return output;
 
+}
+
+double
+Fourier::get_transform(int index)
+{
+  return m_transform[index];
 }
 
 
