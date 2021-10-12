@@ -18,7 +18,7 @@ namespace dunedaq::dqm
 class KafkaStream
 {
   public:
-    explicit KafkaStream( const std::string & param);
+    KafkaStream(const std::string & param);
     void kafka_exporter(std::string input, std::string topic);
     RdKafka::Producer *m_producer;
 };
