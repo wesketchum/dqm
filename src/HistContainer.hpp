@@ -124,8 +124,11 @@ HistContainer::transmit(std::string& kafka_address, ChannelMap& map, const std::
     std::stringstream output;
     output << datasource << ";" << dataname << ";" << run_num << ";" << subrun
            << ";" << event << ";" << timestamp << ";" << metadata << ";"
-           << partition << ";" << app_name << ";" << 0 << ";";
-    output << "Plane " << key << "\n";
+           << partition << ";" << app_name << ";" << 0 << ";" << key << ";";
+    for (auto& [offch, ch] : value) {
+      output << offch << " ";
+    }
+    output << "\n";
     output << m_to_send[key];
     TLOG() << "Size of the string: " << output.str().size();
     KafkaExport(kafka_address, output.str(), topicname);
@@ -152,8 +155,11 @@ HistContainer::transmit_mean_and_rms(std::string& kafka_address, ChannelMap& map
     std::stringstream output;
     output << datasource << ";" << dataname << ";" << run_num << ";" << subrun
            << ";" << event << ";" << timestamp << ";" << metadata << ";"
-           << partition << ";" << app_name << ";" << 0 << ";";
-    output << "Plane " << std::to_string(key) << "\n";
+           << partition << ";" << app_name << ";" << 0 << ";" << key << ";";
+    for (auto& [offch, ch] : value) {
+      output << offch << " ";
+    }
+    output << "\n";
     output << "Mean\n";
     for (auto& [offch, ch] : value) {
       output << histvec[ch].mean() << " ";
