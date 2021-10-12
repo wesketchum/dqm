@@ -8,7 +8,6 @@
  * received with this code.
  */
 // DQM includes
-#include "dqm/Types.hpp"
 #include "dqm/dqmprocessor/Nljs.hpp"
 #include "dqm/dqmprocessorinfo/InfoNljs.hpp"
 #include "dqm/dqmprocessor/Structs.hpp"
@@ -245,7 +244,7 @@ DQMProcessor::RequestMaker()
     TLOG_DEBUG(10) << "Data popped from the queue";
 
     std::thread* current_thread =
-      new std::thread(&AnalysisModule::run, std::ref(*algo), std::ref(*element), std::ref(m_map), m_running_mode, m_kafka_address);
+      new std::thread(&AnalysisModule::run, std::ref(*algo), std::ref(*element), std::ref(m_map), m_kafka_address);
 
     // Add a new entry for the current instance
     map[std::chrono::system_clock::now() +

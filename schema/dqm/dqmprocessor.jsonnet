@@ -11,8 +11,10 @@ local moo = import "moo.jsonnet";
 local ns = "dunedaq.dqm.dqmprocessor";
 local s = moo.oschema.schema(ns);
 
-// Object structure used by the test/fake producer module
+// Object structure used by the dqm processor plugin
 local dqmprocessor = {
+
+    string : s.string("string", doc="A string"),
 
     time : s.number("Time", "f4", doc="A time"),
 
@@ -39,8 +41,6 @@ local dqmprocessor = {
 
 
     conf: s.record("Conf", [
-        s.field("mode", self.string,
-                doc="'debug' if in debug mode"),
         s.field("sdqm_hist", self.standard_dqm,      # This one is for the raw event display
                 doc="Standard dqm"),
         s.field("sdqm_mean_rms", self.standard_dqm,  # This one is for the Mean and RMS

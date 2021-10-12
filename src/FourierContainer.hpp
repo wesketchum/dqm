@@ -13,7 +13,6 @@
 #include "Decoder.hpp"
 #include "Exporter.hpp"
 #include "dqm/Fourier.hpp"
-#include "dqm/Types.hpp"
 
 #include "dataformats/TriggerRecord.hpp"
 
