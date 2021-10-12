@@ -131,7 +131,7 @@ DQMProcessor::RequestMaker()
   // Raw event display
   HistContainer hist("raw_display", 256, 100, 0, 5000, false);
   // Mean and RMS
-  HistContainer mean_rms("hist1s", 256, 100, 0, 5000, true);
+  HistContainer mean_rms("rmsm_display", 256, 100, 0, 5000, true);
   // Fourier transform
   FourierContainer fourier("fft_display", 256, 500e-9, 200);
   // Fills the channel map at the beggining of a run
