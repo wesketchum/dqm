@@ -107,18 +107,6 @@ ChannelMap::fill(dataformats::TriggerRecord &tr){
 
   TLOG() << "Setting m_is_filled to true";
   m_is_filled = true;
-  // TLOG() << "This is the mapping";
-  // std::string a = "";
-  // for (int i =0; i < m_chmap.size(); ++i)
-  //   a += std::to_string(i) + " " + std::to_string(m_chmap[i]) + "\n";
-  // TLOG() << a;
-  // TLOG() << "This is the mapping";
-  // for (auto& [key, val] : m_map) {
-  //   a += "Plane " + std::to_string(key) + "\n";
-  //   for (auto& [offch, ch] : val)
-  //     a += std::to_string(offch) + " " + std::to_string(ch) + "\n";
-  // }
-  // TLOG() << a;
 
 }
 
