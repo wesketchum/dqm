@@ -15,6 +15,7 @@
 #include "readout/chmap/PdspChannelMapService.hpp"
 
 #include <stdlib.h>
+#include <set>
 
 namespace dunedaq::dqm {
 
@@ -88,16 +89,25 @@ ChannelMap::fill(dataformats::TriggerRecord &tr){
   if (wibframes.size() == 0)
     return;
 
-  // for (auto& fr : wibframes) {
-  auto fr = wibframes[0];
+  std::set<std::tuple<int, int, int>> frame_numbers;
+  for (auto& fr : wibframes) {
     TLOG() << "New frame";
+    int crate = fr->get_wib_header()->crate_no;
+    int slot = fr->get_wib_header()->slot_no;
+    int fiber = fr->get_wib_header()->fiber_no;
+    auto tmp = std::make_tuple<int, int, int>((int)crate, (int)slot, (int)fiber);
+    if (frame_numbers.find(tmp) == frame_numbers.end()) {
+      frame_numbers.insert(tmp);
+    }
+    else {
+      continue;
+    }
     for (int ich=0; ich < 256; ++ich) {
       auto channel = getOfflineChannel(*channelmap, fr, ich);
       auto plane = channelmap->PlaneFromOfflineChannel(channel);
       m_map[plane].push_back({channel, ich});
-      // m_chmap[ich] = channel;
     }
-  // }
+  }
 
   // Sort for each plane. Since the offline channel is the first
   // element of the pair, it is used first to sort
