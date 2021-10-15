@@ -11,6 +11,7 @@
 #include "dqm/dqmprocessor/Nljs.hpp"
 #include "dqm/dqmprocessorinfo/InfoNljs.hpp"
 #include "dqm/dqmprocessor/Structs.hpp"
+#include "Constants.hpp"
 
 #include "DQMProcessor.hpp"
 #include "HistContainer.hpp"
@@ -129,11 +130,11 @@ DQMProcessor::RequestMaker()
   // Instances of analysis modules
 
   // Raw event display
-  HistContainer hist("raw_display", 256, 100, 0, 5000, false);
+  HistContainer hist("raw_display", CHANNELS_PER_LINK * m_link_idx.size(), 100, 0, 5000, false);
   // Mean and RMS
-  HistContainer mean_rms("rmsm_display", 256, 100, 0, 5000, true);
+  HistContainer mean_rms("rmsm_display", CHANNELS_PER_LINK * m_link_idx.size(), 100, 0, 5000, true);
   // Fourier transform
-  FourierContainer fourier("fft_display", 256, 500e-9, 200);
+  FourierContainer fourier("fft_display", CHANNELS_PER_LINK * m_link_idx.size(), 500e-9, 200);
   // Fills the channel map at the beggining of a run
   ChannelMapFiller chfiller("channelmapfiller");
 
