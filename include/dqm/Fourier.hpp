@@ -75,8 +75,8 @@ Fourier::fourier_prep(const std::vector<double>& input) const
 CArray
 Fourier::compute_fourier_def()
 {
-  if (m_data.size() != m_npoints)
-    TLOG() << "The number of points in the data is different from the number of points specified";
+  //if (m_data.size() != m_npoints)
+  //  TLOG() << "The number of points in the data is different from the number of points specified, m_data.size() = " << m_data.size() << " and m_npoints = " << m_npoints;
   CArray output = CArray(0.0, m_data.size() / 2);
 
   // Only until m_data.size() / 2, the others correspond to the negative frequencies
