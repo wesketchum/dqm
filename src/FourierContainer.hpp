@@ -4,13 +4,14 @@
  * This is part of the DUNE DAQ , copyright 2020.
  * Licensing/copyright details are in the COPYING file that you should have
  * received with this code.
- */
+*/
 #ifndef DQM_SRC_FOURIERCONTAINER_HPP_
 #define DQM_SRC_FOURIERCONTAINER_HPP_
 
 // DQM
 #include "AnalysisModule.hpp"
 #include "ChannelMap.hpp"
+#include "Constants.hpp"
 #include "Decoder.hpp"
 #include "Exporter.hpp"
 #include "dqm/Fourier.hpp"
@@ -18,10 +19,10 @@
 #include "dataformats/TriggerRecord.hpp"
 
 #include <fstream>
-#include <iostream>
 #include <ostream>
 #include <string>
 #include <vector>
+#include <cstdlib>
 
 namespace dunedaq::dqm {
 
@@ -31,13 +32,17 @@ class FourierContainer : public AnalysisModule
   std::vector<Fourier> fouriervec;
   size_t m_size;
   int m_npoints;
+  std::map<int, int> m_index;
 
 public:
   FourierContainer(std::string name, int size, double inc, int npoints);
+  FourierContainer(std::string name, int size, std::vector<int>& link_idx, double inc, int npoints);
 
   void run(dunedaq::dataformats::TriggerRecord& tr, ChannelMap& map, std::string kafka_address="");
   void transmit(std::string &kafka_address, ChannelMap& map, const std::string& topicname, int run_num, time_t timestamp);
   void clean();
+  void fill(int ch, double value);
+  void fill(int ch, int link, double value);
 
 };
 
@@ -46,10 +51,26 @@ FourierContainer::FourierContainer(std::string name, int size, double inc, int n
     m_size(size),
     m_npoints(npoints)
 {
-  for (size_t i = 0; i < m_size; ++i)
+  for (size_t i = 0; i < m_size; ++i) {
     fouriervec.emplace_back(Fourier(inc, npoints));
+  }
 }
 
+
+FourierContainer::FourierContainer(std::string name, int size, std::vector<int>& link_idx, double inc, int npoints)
+  : m_name(name),
+    m_size(size),
+    m_npoints(npoints)
+{
+  for (size_t i = 0; i < m_size; ++i) {
+    fouriervec.emplace_back(Fourier(inc, npoints));
+  }
+  int channels = 0;
+  for (size_t i = 0; i < link_idx.size(); ++i) {
+    m_index[link_idx[i]] = channels;
+    channels += CHANNELS_PER_LINK;
+  }
+}
 void
 FourierContainer::run(dunedaq::dataformats::TriggerRecord& tr, ChannelMap& map, std::string kafka_address)
 {
@@ -58,14 +79,18 @@ FourierContainer::run(dunedaq::dataformats::TriggerRecord& tr, ChannelMap& map, 
   auto wibframes = dec.decode(tr);
   std::uint64_t timestamp = 0; // NOLINT(build/unsigned)
 
-  for (auto& fr : wibframes) {
-
-    for (size_t ich = 0; ich < m_size; ++ich)
-      fouriervec[ich].fill(fr->get_channel(ich));
+  for (auto& [key, value] : wibframes) {
+    TLOG() << "Filling fourier with key " << key;
+    for (auto& fr : value) {
+      for (size_t ich = 0; ich < CHANNELS_PER_LINK; ++ich) {
+        fill(ich, key, fr->get_channel(ich));
+      }
+    }
   }
 
-  for (size_t ich = 0; ich < m_size; ++ich)
+  for (size_t ich = 0; ich < m_size; ++ich) {
     fouriervec[ich].compute_fourier_normalized();
+  }
 
   transmit(kafka_address, map, "testdunedqm", tr.get_header_ref().get_run_number(), tr.get_header_ref().get_trigger_timestamp());
 
@@ -76,13 +101,14 @@ void
 FourierContainer::transmit(std::string &kafka_address, ChannelMap& map, const std::string& topicname, int run_num, time_t timestamp)
 {
   // Placeholders
-  std::string datasource = "TESTSOURCE";
   std::string dataname = m_name;
   std::string metadata = "";
   int subrun = 0;
   int event = 0;
-  std::string partition = "PARTITION";
-  std::string app_name = "APP_NAME";
+  std::string partition = getenv("DUNEDAQ_PARTITION");
+  std::string app_name = getenv("DUNEDAQ_APPLICATION_NAME");
+  std::string datasource = partition + "_" + app_name + "_" + std::to_string(run_num);
+  datasource = "TESTSOURCE";
 
   auto freq = fouriervec[0].get_frequencies();
   // One message is sent for every plane
@@ -103,7 +129,7 @@ FourierContainer::transmit(std::string &kafka_address, ChannelMap& map, const st
       }
       output << "\n";
     }
-    TLOG() << "Size of the string: " << output.str().size();
+    // TLOG() << "Size of the string: " << output.str().size();
     // TLOG() << output.str();
     KafkaExport(kafka_address, output.str(), topicname);
   }
@@ -114,10 +140,23 @@ FourierContainer::transmit(std::string &kafka_address, ChannelMap& map, const st
 void
 FourierContainer::clean()
 {
-  for (int ich = 0; ich < m_size; ++ich) {
+  for (size_t ich = 0; ich < m_size; ++ich) {
     fouriervec[ich].clean();
   }
 }
+
+void
+FourierContainer::fill(int ch, double value)
+{
+  fouriervec[ch].fill(value);
+}
+
+void
+FourierContainer::fill(int ch, int link, double value)
+{
+  fouriervec[ch + m_index[link]].fill(value);
+}
+
 
 } // namespace dunedaq::dqm
 
