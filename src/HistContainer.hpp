@@ -13,13 +13,11 @@
 #include "Decoder.hpp"
 #include "Exporter.hpp"
 #include "ChannelMap.hpp"
+#include "Constants.hpp"
 #include "dqm/Hist.hpp"
 
 #include "dataformats/TriggerRecord.hpp"
 
-#include <fstream>
-#include <iostream>
-#include <ostream>
 #include <string>
 #include <vector>
 #include <cstdlib>
@@ -33,16 +31,20 @@ class HistContainer : public AnalysisModule
   std::vector<Hist> histvec;
   int m_size;
   std::map<int, std::string> m_to_send;
+  std::map<int, int> m_index;
   bool m_only_mean_rms = false;
 
 public:
   HistContainer(std::string name, int nhist, int steps, double low, double high, bool only_mean=false);
+  HistContainer(std::string name, int nhist, std::vector<int>& link_idx, int steps, double low, double high, bool only_mean);
 
   void run(dunedaq::dataformats::TriggerRecord& tr, ChannelMap& map, std::string kafka_address="");
   void transmit(std::string &kafka_address, ChannelMap& map, const std::string& topicname, int run_num, time_t timestamp);
   void transmit_mean_and_rms(std::string &kafka_address, ChannelMap& map, const std::string& topicname, int run_num, time_t timestamp);
   void clean();
   void append_to_string(std::uint64_t timestamp, ChannelMap& map);
+  void fill(int ch, double value);
+  void fill(int ch, int link, double value);
 
 };
 
@@ -53,6 +55,21 @@ HistContainer::HistContainer(std::string name, int nhist, int steps, double low,
 {
   for (int i = 0; i < m_size; ++i)
     histvec.emplace_back(Hist(steps, low, high));
+}
+
+HistContainer::HistContainer(std::string name, int nhist, std::vector<int>& link_idx, int steps, double low, double high, bool only_mean)
+  : m_name(name)
+  , m_size(nhist)
+  , m_only_mean_rms(only_mean)
+{
+  for (int i = 0; i < m_size; ++i) {
+    histvec.emplace_back(Hist(steps, low, high));
+  }
+  int channels = 0;
+  for (size_t i = 0; i < link_idx.size(); ++i) {
+    m_index[link_idx[i]] = channels;
+    channels += CHANNELS_PER_LINK;
+  }
 }
 
 void
@@ -69,12 +86,28 @@ HistContainer::run(dunedaq::dataformats::TriggerRecord& tr, ChannelMap& map, std
   // and at the end the result is transmitted
   // If it's in the raw display mode then the result is saved for
   // every frame and sent at the end
-  for (auto fr : wibframes) {
-    auto timestamp = fr->get_wib_header()->get_timestamp();
 
-    for (int ich = 0; ich < m_size; ++ich) {
-      histvec[ich].fill(fr->get_channel(ich));
+  // Get all the keys
+  std::vector<int> keys;
+  for (auto& [key, value] : wibframes) {
+    keys.push_back(key);
+  }
+
+  // Fill for every frame, outer loop so it is done frame by frame
+  // This is needed for sending frame by frame
+  // The order does not matter for the mean and RMS
+  for (size_t ifr = 0; ifr < wibframes[keys[0]].size(); ++ifr) {
+    // Fill for every link
+    for (size_t ikey = 0; ikey < keys.size(); ++ikey) {
+      auto fr = wibframes[keys[ikey]][ifr];
+
+      auto timestamp = fr->get_wib_header()->get_timestamp();
+
+      for (int ich = 0; ich < CHANNELS_PER_LINK; ++ich) {
+        fill(ich, keys[ikey], fr->get_channel(ich));
+      }
     }
+    // After we are done with all the links, if needed save the info for later
     if (!m_only_mean_rms) {
       append_to_string(timestamp, map);
       clean();
@@ -109,13 +142,14 @@ void
 HistContainer::transmit(std::string& kafka_address, ChannelMap& map, const std::string& topicname, int run_num, time_t timestamp)
 {
   // Placeholders
-  std::string datasource = "TESTSOURCE";
   std::string dataname = m_name;
   std::string metadata = "";
   int subrun = 0;
   int event = 0;
-  std::string partition = "PARTITION";
-  std::string app_name = "APP_NAME";
+  std::string partition = getenv("DUNEDAQ_PARTITION");
+  std::string app_name = getenv("DUNEDAQ_APPLICATION_NAME");
+  std::string datasource = partition + "_" + app_name + "_" + std::to_string(run_num);
+  datasource = "TESTSOURCE";
 
   // One message is sent for every plane
   auto channel_order = map.get_map();
@@ -130,6 +164,7 @@ HistContainer::transmit(std::string& kafka_address, ChannelMap& map, const std::
     }
     output << "\n";
     output << m_to_send[key];
+    TLOG() << output.str();
     TLOG() << "Size of the string: " << output.str().size();
     KafkaExport(kafka_address, output.str(), topicname);
   }
@@ -141,13 +176,15 @@ void
 HistContainer::transmit_mean_and_rms(std::string& kafka_address, ChannelMap& map, const std::string& topicname, int run_num, time_t timestamp)
 {
   // Placeholders
-  std::string datasource = "TESTSOURCE";
   std::string dataname = m_name;
   std::string metadata = "";
   int subrun = 0;
   int event = 0;
-  std::string partition = "PARTITION";
-  std::string app_name = "APP_NAME";
+  std::string partition = getenv("DUNEDAQ_PARTITION");
+  std::string app_name = getenv("DUNEDAQ_APPLICATION_NAME");
+  std::string datasource = partition + "_" + app_name + "_" + std::to_string(run_num);
+  datasource = "TESTSOURCE";
+  // TLOG() << "DATASOURCE " << datasource;
 
   // One message is sent for every plane
   auto channel_order = map.get_map();
@@ -183,6 +220,18 @@ HistContainer::clean()
     histvec[ich].clean();
   }
 }
+
+void
+HistContainer::fill(int ch, double value)
+{
+  histvec[ch].fill(value);
+}
+
+void HistContainer::fill(int ch, int link, double value)
+{
+  histvec[ch + m_index[link]].fill(value);
+}
+
 
 } // namespace dunedaq::dqm
 
