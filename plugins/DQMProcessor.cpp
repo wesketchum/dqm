@@ -130,13 +130,13 @@ DQMProcessor::RequestMaker()
   // Instances of analysis modules
 
   // Raw event display
-  HistContainer hist("raw_display", CHANNELS_PER_LINK * m_link_idx.size(), 100, 0, 5000, false);
+  HistContainer hist("raw_display", CHANNELS_PER_LINK * m_link_idx.size(), m_link_idx, 100, 0, 5000, false);
   // Mean and RMS
-  HistContainer mean_rms("rmsm_display", CHANNELS_PER_LINK * m_link_idx.size(), 100, 0, 5000, true);
+  HistContainer mean_rms("rmsm_display", CHANNELS_PER_LINK * m_link_idx.size(), m_link_idx, 100, 0, 5000, true);
   // Fourier transform
   // The Delta of time between frames is the inverse of the sampling frequency (clock frequency)
   // but because we are sampling every TICKS_BETWEEN_TIMESTAMP ticks we have to multiply by that
-  FourierContainer fourier("fft_display", CHANNELS_PER_LINK * m_link_idx.size(), 1 / m_clock_frequency * TICKS_BETWEEN_TIMESTAMP, 200);
+  FourierContainer fourier("fft_display", CHANNELS_PER_LINK * m_link_idx.size(), m_link_idx, 1. / m_clock_frequency * TICKS_BETWEEN_TIMESTAMP, m_standard_dqm_fourier.num_frames);
   // Fills the channel map at the beggining of a run
   ChannelMapFiller chfiller("channelmapfiller");
 
