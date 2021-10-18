@@ -81,7 +81,6 @@ FourierContainer::run(dunedaq::dataformats::TriggerRecord& tr, ChannelMap& map, 
   std::uint64_t timestamp = 0; // NOLINT(build/unsigned)
 
   for (auto& [key, value] : wibframes) {
-    TLOG() << "Filling fourier with key " << key;
     for (auto& fr : value) {
       for (size_t ich = 0; ich < CHANNELS_PER_LINK; ++ich) {
         fill(ich, key, fr->get_channel(ich));
