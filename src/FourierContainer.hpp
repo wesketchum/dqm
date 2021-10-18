@@ -113,19 +113,21 @@ FourierContainer::transmit(std::string &kafka_address, ChannelMap& map, const st
   auto freq = fouriervec[0].get_frequencies();
   // One message is sent for every plane
   auto channel_order = map.get_map();
-  for (auto& [key, value] : channel_order) {
+  for (auto& [plane, map] : channel_order) {
     std::stringstream output;
     output << datasource << ";" << dataname << ";" << run_num << ";" << subrun
            << ";" << event << ";" << timestamp << ";" << metadata << ";"
-           << partition << ";" << app_name << ";" << 0 << ";" << key << ";";
-    for (auto& [offch, ch] : value) {
+           << partition << ";" << app_name << ";" << 0 << ";" << plane << ";";
+    for (auto& [offch, pair] : map) {
       output << offch << " ";
     }
     output << "\n";
     for (int i=0; i < freq.size(); ++i) {
       output << freq[i] << "\n";
-      for (auto& [offch, ch] : value) {
-        output << fouriervec[ch].get_transform(i) << " ";
+      for (auto& [offch, pair] : map) {
+        int link = pair.first;
+        int ch = pair.second;
+        output << fouriervec[ch + CHANNELS_PER_LINK * link].get_transform(i) << " ";
       }
       output << "\n";
     }

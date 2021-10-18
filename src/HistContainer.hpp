@@ -129,12 +129,14 @@ void
 HistContainer::append_to_string(std::uint64_t timestamp, ChannelMap& map)
 {
   auto channel_order = map.get_map();
-  for (auto& [key, value] : channel_order) {
-    m_to_send[key] += std::to_string(timestamp) + "\n";
-    for (auto& [offch, ch] : value) {
-      m_to_send[key] += std::to_string(static_cast<int>(histvec[ch].m_sum)) + " ";
+  for (auto& [plane, map] : channel_order) {
+    m_to_send[plane] += std::to_string(timestamp) + "\n";
+    for (auto& [offch, pair] : map) {
+      int link = pair.first;
+      int ch = pair.second;
+      m_to_send[plane] += std::to_string(static_cast<int>(histvec[ch + CHANNELS_PER_LINK * link].m_sum)) + " ";
     }
-    m_to_send[key] += "\n";
+    m_to_send[plane] += "\n";
   }
 }
 
@@ -188,23 +190,27 @@ HistContainer::transmit_mean_and_rms(std::string& kafka_address, ChannelMap& map
 
   // One message is sent for every plane
   auto channel_order = map.get_map();
-  for (auto& [key, value] : channel_order) {
+  for (auto& [plane, map] : channel_order) {
     std::stringstream output;
     output << datasource << ";" << dataname << ";" << run_num << ";" << subrun
            << ";" << event << ";" << timestamp << ";" << metadata << ";"
-           << partition << ";" << app_name << ";" << 0 << ";" << key << ";";
-    for (auto& [offch, ch] : value) {
+           << partition << ";" << app_name << ";" << 0 << ";" << plane << ";";
+    for (auto& [offch, pair] : map) {
       output << offch << " ";
     }
     output << "\n";
     output << "Mean\n";
-    for (auto& [offch, ch] : value) {
-      output << histvec[ch].mean() << " ";
+    for (auto& [offch, pair] : map) {
+      int link = pair.first;
+      int ch = pair.second;
+      output << histvec[ch + CHANNELS_PER_LINK * link].mean() << " ";
     }
     output << "\n";
     output << "RMS\n";
-    for (auto& [offch, ch] : value) {
-      output << histvec[ch].std() << " ";
+    for (auto& [offch, pair] : map) {
+      int link = pair.first;
+      int ch = pair.second;
+      output << histvec[ch + CHANNELS_PER_LINK * link].std() << " ";
     }
     output << "\n";
     // TLOG() << output.str();

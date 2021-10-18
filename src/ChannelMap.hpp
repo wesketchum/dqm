@@ -10,6 +10,7 @@
 
 // DQM
 #include "Decoder.hpp"
+#include "Constants.hpp"
 
 #include "dataformats/TriggerRecord.hpp"
 #include "readout/chmap/PdspChannelMapService.hpp"
@@ -26,7 +27,8 @@ unsigned int getOfflineChannel(swtpg::PdspChannelMapService& channelMap, // NOLI
 class ChannelMap {
   std::vector<int> m_chmap;
   std::vector<int> m_planemap;
-  std::map<int, std::vector<std::pair<int, int>>> m_map;
+
+  std::map<int, std::map<int, std::pair<int, int>>> m_map;
   bool m_is_filled = false;
 
 public:
@@ -35,7 +37,7 @@ public:
   int get_plane(int channel);
   bool is_filled();
   void fill(dataformats::TriggerRecord &tr);
-  std::map<int, std::vector<std::pair<int, int>>> get_map();
+  std::map<int, std::map<int, std::pair<int, int>>> get_map();
 };
 
 ChannelMap::ChannelMap()
@@ -54,7 +56,7 @@ ChannelMap::get_plane(int channel){
   return m_planemap[channel];
 }
 
-std::map<int, std::vector<std::pair<int, int>>>
+std::map<int, std::map<int, std::pair<int, int>>>
 ChannelMap::get_map(){
   return m_map;
 }
@@ -80,7 +82,6 @@ ChannelMap::fill(dataformats::TriggerRecord &tr){
   std::string channel_map_rce = std::string(path) + "/config/protoDUNETPCChannelMap_RCE_v4.txt";
   std::string channel_map_felix = std::string(path) + "/config/protoDUNETPCChannelMap_FELIX_v4.txt";
   channelmap.reset(new swtpg::PdspChannelMapService(channel_map_rce, channel_map_felix));
-  TLOG() << "Channel Map done";
 
   TLOG() << "Got " << wibframes.size() << " frames";
 
@@ -90,30 +91,28 @@ ChannelMap::fill(dataformats::TriggerRecord &tr){
     return;
 
   std::set<std::tuple<int, int, int>> frame_numbers;
-  for (auto& fr : wibframes) {
-    TLOG() << "New frame";
-    int crate = fr->get_wib_header()->crate_no;
-    int slot = fr->get_wib_header()->slot_no;
-    int fiber = fr->get_wib_header()->fiber_no;
-    auto tmp = std::make_tuple<int, int, int>((int)crate, (int)slot, (int)fiber);
-    if (frame_numbers.find(tmp) == frame_numbers.end()) {
-      frame_numbers.insert(tmp);
-    }
-    else {
-      continue;
-    }
-    for (int ich=0; ich < 256; ++ich) {
-      auto channel = getOfflineChannel(*channelmap, fr, ich);
-      auto plane = channelmap->PlaneFromOfflineChannel(channel);
-      m_map[plane].push_back({channel, ich});
+  for (auto& [key, value] : wibframes) {
+    // This is one link so we push back one element to m_map
+    for (auto& fr : value) {
+      TLOG() << "New frame";
+      int crate = fr->get_wib_header()->crate_no;
+      int slot = fr->get_wib_header()->slot_no;
+      int fiber = fr->get_wib_header()->fiber_no;
+      auto tmp = std::make_tuple<int, int, int>((int)crate, (int)slot, (int)fiber);
+      if (frame_numbers.find(tmp) == frame_numbers.end()) {
+        frame_numbers.insert(tmp);
+      }
+      else {
+        continue;
+      }
+      for (int ich=0; ich < CHANNELS_PER_LINK; ++ich) {
+        auto channel = getOfflineChannel(*channelmap, fr, ich);
+        auto plane = channelmap->PlaneFromOfflineChannel(channel);
+        m_map[plane][channel] = {key, ich};
+      }
     }
   }
-
-  // Sort for each plane. Since the offline channel is the first
-  // element of the pair, it is used first to sort
-  for (auto& [key, val] : m_map) {
-    std::sort(val.begin(), val.end());
-  }
+  TLOG() << "Channel mapping done, size of the map is " << m_map[0].size() << " " << m_map[1].size() << " " << m_map[2].size();
 
   TLOG() << "Setting m_is_filled to true";
   m_is_filled = true;
