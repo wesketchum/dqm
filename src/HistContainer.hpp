@@ -152,8 +152,6 @@ HistContainer::transmit(std::string& kafka_address, ChannelMap& map, const std::
   std::string partition = getenv("DUNEDAQ_PARTITION");
   std::string app_name = getenv("DUNEDAQ_APPLICATION_NAME");
   std::string datasource = partition + "_" + app_name + "_" + std::to_string(run_num);
-  datasource = "TESTSOURCE";
-
   // One message is sent for every plane
   auto channel_order = map.get_map();
 
@@ -167,7 +165,7 @@ HistContainer::transmit(std::string& kafka_address, ChannelMap& map, const std::
     }
     output << "\n";
     output << m_to_send[key];
-    TLOG() << output.str();
+    // TLOG() << output.str();
     TLOG() << "Size of the string: " << output.str().size();
     KafkaExport(kafka_address, output.str(), topicname);
   }
@@ -186,7 +184,7 @@ HistContainer::transmit_mean_and_rms(std::string& kafka_address, ChannelMap& map
   std::string partition = getenv("DUNEDAQ_PARTITION");
   std::string app_name = getenv("DUNEDAQ_APPLICATION_NAME");
   std::string datasource = partition + "_" + app_name + "_" + std::to_string(run_num);
-  datasource = "TESTSOURCE";
+
   // TLOG() << "DATASOURCE " << datasource;
 
   // One message is sent for every plane

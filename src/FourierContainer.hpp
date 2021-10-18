@@ -109,7 +109,7 @@ FourierContainer::transmit(std::string &kafka_address, ChannelMap& map, const st
   std::string partition = getenv("DUNEDAQ_PARTITION");
   std::string app_name = getenv("DUNEDAQ_APPLICATION_NAME");
   std::string datasource = partition + "_" + app_name + "_" + std::to_string(run_num);
-  datasource = "TESTSOURCE";
+
 
   auto freq = fouriervec[0].get_frequencies();
   // One message is sent for every plane
