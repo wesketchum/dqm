@@ -151,7 +151,7 @@ HistContainer::transmit(std::string& kafka_address, ChannelMap& map, const std::
   int event = 0;
   std::string partition = getenv("DUNEDAQ_PARTITION");
   std::string app_name = getenv("DUNEDAQ_APPLICATION_NAME");
-  std::string datasource = partition + "_" + app_name + "_" + std::to_string(run_num);
+  std::string datasource = partition + "_" + app_name;
   // One message is sent for every plane
   auto channel_order = map.get_map();
 
@@ -183,7 +183,7 @@ HistContainer::transmit_mean_and_rms(std::string& kafka_address, ChannelMap& map
   int event = 0;
   std::string partition = getenv("DUNEDAQ_PARTITION");
   std::string app_name = getenv("DUNEDAQ_APPLICATION_NAME");
-  std::string datasource = partition + "_" + app_name + "_" + std::to_string(run_num);
+  std::string datasource = partition + "_" + app_name;
 
   // TLOG() << "DATASOURCE " << datasource;
 

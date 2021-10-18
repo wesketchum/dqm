@@ -108,7 +108,7 @@ FourierContainer::transmit(std::string &kafka_address, ChannelMap& map, const st
   int event = 0;
   std::string partition = getenv("DUNEDAQ_PARTITION");
   std::string app_name = getenv("DUNEDAQ_APPLICATION_NAME");
-  std::string datasource = partition + "_" + app_name + "_" + std::to_string(run_num);
+  std::string datasource = partition + "_" + app_name;
 
 
   auto freq = fouriervec[0].get_frequencies();
