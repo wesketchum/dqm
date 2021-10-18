@@ -43,6 +43,7 @@ public:
   void clean();
   void fill(int ch, double value);
   void fill(int ch, int link, double value);
+  int get_local_index(int ch, int link);
 
 };
 
@@ -127,7 +128,7 @@ FourierContainer::transmit(std::string &kafka_address, ChannelMap& map, const st
       for (auto& [offch, pair] : map) {
         int link = pair.first;
         int ch = pair.second;
-        output << fouriervec[ch + CHANNELS_PER_LINK * link].get_transform(i) << " ";
+        output << fouriervec[get_local_index(ch, link)].get_transform(i) << " ";
       }
       output << "\n";
     }
@@ -157,6 +158,12 @@ void
 FourierContainer::fill(int ch, int link, double value)
 {
   fouriervec[ch + m_index[link]].fill(value);
+}
+
+int
+FourierContainer::get_local_index(int ch, int link)
+{
+  return ch + m_index[link];
 }
 
 

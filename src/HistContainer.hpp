@@ -45,6 +45,7 @@ public:
   void append_to_string(std::uint64_t timestamp, ChannelMap& map);
   void fill(int ch, double value);
   void fill(int ch, int link, double value);
+  int get_local_index(int ch, int link);
 
 };
 
@@ -134,7 +135,7 @@ HistContainer::append_to_string(std::uint64_t timestamp, ChannelMap& map)
     for (auto& [offch, pair] : map) {
       int link = pair.first;
       int ch = pair.second;
-      m_to_send[plane] += std::to_string(static_cast<int>(histvec[ch + CHANNELS_PER_LINK * link].m_sum)) + " ";
+      m_to_send[plane] += std::to_string(static_cast<int>(histvec[get_local_index(ch, link)].m_sum)) + " ";
     }
     m_to_send[plane] += "\n";
   }
@@ -203,14 +204,14 @@ HistContainer::transmit_mean_and_rms(std::string& kafka_address, ChannelMap& map
     for (auto& [offch, pair] : map) {
       int link = pair.first;
       int ch = pair.second;
-      output << histvec[ch + CHANNELS_PER_LINK * link].mean() << " ";
+      output << histvec[get_local_index(ch, link)].mean() << " ";
     }
     output << "\n";
     output << "RMS\n";
     for (auto& [offch, pair] : map) {
       int link = pair.first;
       int ch = pair.second;
-      output << histvec[ch + CHANNELS_PER_LINK * link].std() << " ";
+      output << histvec[get_local_index(ch, link)].std() << " ";
     }
     output << "\n";
     // TLOG() << output.str();
@@ -233,9 +234,16 @@ HistContainer::fill(int ch, double value)
   histvec[ch].fill(value);
 }
 
-void HistContainer::fill(int ch, int link, double value)
+void
+HistContainer::fill(int ch, int link, double value)
 {
   histvec[ch + m_index[link]].fill(value);
+}
+
+int
+HistContainer::get_local_index(int ch, int link)
+{
+  return ch + m_index[link];
 }
 
 
