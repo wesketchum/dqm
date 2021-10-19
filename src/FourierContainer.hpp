@@ -38,8 +38,8 @@ public:
   FourierContainer(std::string name, int size, double inc, int npoints);
   FourierContainer(std::string name, int size, std::vector<int>& link_idx, double inc, int npoints);
 
-  void run(dunedaq::dataformats::TriggerRecord& tr, ChannelMap& map, std::string kafka_address="");
-  void transmit(std::string &kafka_address, ChannelMap& map, const std::string& topicname, int run_num, time_t timestamp);
+  void run(dunedaq::dataformats::TriggerRecord& tr, std::unique_ptr<ChannelMap> &map, std::string kafka_address="");
+  void transmit(std::string &kafka_address, std::unique_ptr<ChannelMap> &cmap, const std::string& topicname, int run_num, time_t timestamp);
   void clean();
   void fill(int ch, double value);
   void fill(int ch, int link, double value);
@@ -73,7 +73,7 @@ FourierContainer::FourierContainer(std::string name, int size, std::vector<int>&
   }
 }
 void
-FourierContainer::run(dunedaq::dataformats::TriggerRecord& tr, ChannelMap& map, std::string kafka_address)
+FourierContainer::run(dunedaq::dataformats::TriggerRecord& tr, std::unique_ptr<ChannelMap> &map, std::string kafka_address)
 {
   m_run_mark.store(true);
   dunedaq::dqm::Decoder dec;
@@ -98,7 +98,7 @@ FourierContainer::run(dunedaq::dataformats::TriggerRecord& tr, ChannelMap& map, 
 }
 
 void
-FourierContainer::transmit(std::string &kafka_address, ChannelMap& map, const std::string& topicname, int run_num, time_t timestamp)
+FourierContainer::transmit(std::string &kafka_address, std::unique_ptr<ChannelMap> &cmap, const std::string& topicname, int run_num, time_t timestamp)
 {
   // Placeholders
   std::string dataname = m_name;
@@ -112,7 +112,7 @@ FourierContainer::transmit(std::string &kafka_address, ChannelMap& map, const st
 
   auto freq = fouriervec[0].get_frequencies();
   // One message is sent for every plane
-  auto channel_order = map.get_map();
+  auto channel_order = cmap->get_map();
   for (auto& [plane, map] : channel_order) {
     std::stringstream output;
     output << datasource << ";" << dataname << ";" << run_num << ";" << subrun

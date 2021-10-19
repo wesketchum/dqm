@@ -41,6 +41,7 @@ local dqmprocessor = {
 
 
     conf: s.record("Conf", [
+        s.field("channel_map", self.string, doc='"HD" or "VD"'),
         s.field("sdqm_hist", self.standard_dqm,      # This one is for the raw event display
                 doc="Standard dqm"),
         s.field("sdqm_mean_rms", self.standard_dqm,  # This one is for the Mean and RMS

@@ -22,7 +22,7 @@ public:
   std::atomic<bool> m_run_mark = false;
 
   virtual bool is_running();
-  virtual void run(dataformats::TriggerRecord& record, dqm::ChannelMap& map, std::string kafka_address) = 0;
+  virtual void run(dataformats::TriggerRecord& record, std::unique_ptr<ChannelMap> &map, std::string kafka_address) = 0;
 };
 
 bool

@@ -38,11 +38,11 @@ public:
   HistContainer(std::string name, int nhist, int steps, double low, double high, bool only_mean=false);
   HistContainer(std::string name, int nhist, std::vector<int>& link_idx, int steps, double low, double high, bool only_mean);
 
-  void run(dunedaq::dataformats::TriggerRecord& tr, ChannelMap& map, std::string kafka_address="");
-  void transmit(std::string &kafka_address, ChannelMap& map, const std::string& topicname, int run_num, time_t timestamp);
-  void transmit_mean_and_rms(std::string &kafka_address, ChannelMap& map, const std::string& topicname, int run_num, time_t timestamp);
+  void run(dunedaq::dataformats::TriggerRecord& tr, std::unique_ptr<ChannelMap> &map, std::string kafka_address="");
+  void transmit(std::string &kafka_address, std::unique_ptr<ChannelMap> &map, const std::string& topicname, int run_num, time_t timestamp);
+  void transmit_mean_and_rms(std::string &kafka_address, std::unique_ptr<ChannelMap> &map, const std::string& topicname, int run_num, time_t timestamp);
   void clean();
-  void append_to_string(std::uint64_t timestamp, ChannelMap& map);
+  void append_to_string(std::uint64_t timestamp, std::unique_ptr<ChannelMap> &map);
   void fill(int ch, double value);
   void fill(int ch, int link, double value);
   int get_local_index(int ch, int link);
@@ -74,25 +74,31 @@ HistContainer::HistContainer(std::string name, int nhist, std::vector<int>& link
 }
 
 void
-HistContainer::run(dunedaq::dataformats::TriggerRecord& tr, ChannelMap& map, std::string kafka_address)
+HistContainer::run(dunedaq::dataformats::TriggerRecord& tr, std::unique_ptr<ChannelMap> &map, std::string kafka_address)
 {
   m_run_mark.store(true);
   dunedaq::dqm::Decoder dec;
   auto wibframes = dec.decode(tr);
 
-  std::uint64_t timestamp = 0; // NOLINT(build/unsigned)
-
-  // Main loop
-  // If only the mean and rms are to be sent all frames are processed
-  // and at the end the result is transmitted
-  // If it's in the raw display mode then the result is saved for
-  // every frame and sent at the end
+  if (wibframes.size() == 0) {
+    // throw issue
+    return;
+  }
 
   // Get all the keys
   std::vector<int> keys;
   for (auto& [key, value] : wibframes) {
     keys.push_back(key);
   }
+
+  uint64_t min_timestamp = wibframes[keys.front()].front()->get_wib_header()->get_timestamp();
+  uint64_t timestamp;
+
+  // Main loop
+  // If only the mean and rms are to be sent all frames are processed
+  // and at the end the result is transmitted
+  // If it's in the raw display mode then the result is saved for
+  // every frame and sent at the end
 
   // Fill for every frame, outer loop so it is done frame by frame
   // This is needed for sending frame by frame
@@ -103,6 +109,8 @@ HistContainer::run(dunedaq::dataformats::TriggerRecord& tr, ChannelMap& map, std
       auto fr = wibframes[keys[ikey]][ifr];
 
       auto timestamp = fr->get_wib_header()->get_timestamp();
+      // Timestamps are too big for them to be displayed nicely, subtract the minimum timestamp
+      timestamp = fr->get_wib_header()->get_timestamp() - min_timestamp;
 
       for (int ich = 0; ich < CHANNELS_PER_LINK; ++ich) {
         fill(ich, keys[ikey], fr->get_channel(ich));
@@ -127,9 +135,9 @@ HistContainer::run(dunedaq::dataformats::TriggerRecord& tr, ChannelMap& map, std
 }
 
 void
-HistContainer::append_to_string(std::uint64_t timestamp, ChannelMap& map)
+HistContainer::append_to_string(std::uint64_t timestamp, std::unique_ptr<ChannelMap> &cmap)
 {
-  auto channel_order = map.get_map();
+  auto channel_order = cmap->get_map();
   for (auto& [plane, map] : channel_order) {
     m_to_send[plane] += std::to_string(timestamp) + "\n";
     for (auto& [offch, pair] : map) {
@@ -142,7 +150,7 @@ HistContainer::append_to_string(std::uint64_t timestamp, ChannelMap& map)
 }
 
 void
-HistContainer::transmit(std::string& kafka_address, ChannelMap& map, const std::string& topicname, int run_num, time_t timestamp)
+HistContainer::transmit(std::string& kafka_address, std::unique_ptr<ChannelMap> &cmap, const std::string& topicname, int run_num, time_t timestamp)
 {
   // Placeholders
   std::string dataname = m_name;
@@ -153,7 +161,7 @@ HistContainer::transmit(std::string& kafka_address, ChannelMap& map, const std::
   std::string app_name = getenv("DUNEDAQ_APPLICATION_NAME");
   std::string datasource = partition + "_" + app_name;
   // One message is sent for every plane
-  auto channel_order = map.get_map();
+  auto channel_order = cmap->get_map();
 
   for (auto& [key, value] : channel_order) {
     std::stringstream output;
@@ -174,7 +182,7 @@ HistContainer::transmit(std::string& kafka_address, ChannelMap& map, const std::
 }
 
 void
-HistContainer::transmit_mean_and_rms(std::string& kafka_address, ChannelMap& map, const std::string& topicname, int run_num, time_t timestamp)
+HistContainer::transmit_mean_and_rms(std::string& kafka_address, std::unique_ptr<ChannelMap> &cmap, const std::string& topicname, int run_num, time_t timestamp)
 {
   // Placeholders
   std::string dataname = m_name;
@@ -188,7 +196,7 @@ HistContainer::transmit_mean_and_rms(std::string& kafka_address, ChannelMap& map
   // TLOG() << "DATASOURCE " << datasource;
 
   // One message is sent for every plane
-  auto channel_order = map.get_map();
+  auto channel_order = cmap->get_map();
   for (auto& [plane, map] : channel_order) {
     std::stringstream output;
     output << datasource << ";" << dataname << ";" << run_num << ";" << subrun

@@ -17,6 +17,7 @@
 #include "HistContainer.hpp"
 #include "FourierContainer.hpp"
 #include "ChannelMapFiller.hpp"
+#include "ChannelMapEmpty.hpp"
 
 // DUNE-DAQ includes
 #include "appfwk/DAQSource.hpp"
@@ -79,6 +80,8 @@ DQMProcessor::do_configure(const nlohmann::json& args)
   m_link_idx = conf.link_idx;
 
   m_clock_frequency = conf.clock_frequency;
+
+  m_channel_map = conf.channel_map;
 }
 
 void
@@ -90,6 +93,11 @@ DQMProcessor::do_start(const nlohmann::json& args)
 
   m_run_number.store(dataformats::run_number_t(
       args.at("run").get<dataformats::run_number_t>()));
+
+  // The channel map pointer is set to the empty channel map that is not filled
+  // and allows the first check to pass for it to be filled with the actual
+  // channel map
+  m_map.reset(new ChannelMapEmpty);
 
   m_running_thread.reset(new std::thread(&DQMProcessor::RequestMaker, this));
 }
@@ -138,7 +146,7 @@ DQMProcessor::RequestMaker()
   // but because we are sampling every TICKS_BETWEEN_TIMESTAMP ticks we have to multiply by that
   FourierContainer fourier("fft_display", CHANNELS_PER_LINK * m_link_idx.size(), m_link_idx, 1. / m_clock_frequency * TICKS_BETWEEN_TIMESTAMP, m_standard_dqm_fourier.num_frames);
   // Fills the channel map at the beggining of a run
-  ChannelMapFiller chfiller("channelmapfiller");
+  ChannelMapFiller chfiller("channelmapfiller", m_channel_map);
 
   // Initial tasks
   // Add some offset time to let the other parts of the DAQ start
@@ -182,7 +190,7 @@ DQMProcessor::RequestMaker()
 
     // If the channel map filler has already run and has worked then remove the entry
     // and keep running
-    if (analysis_instance.mod == &chfiller and m_map.is_filled()) {
+    if (analysis_instance.mod == &chfiller and m_map->is_filled()) {
       map.erase(task);
       continue;
     }

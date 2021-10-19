@@ -92,7 +92,8 @@ private:
   std::atomic<int> m_data_count{0};
   std::atomic<int> m_total_data_count{0};
 
-  ChannelMap m_map;
+  std::string m_channel_map;
+  std::unique_ptr<ChannelMap> m_map;
 
 };
 
