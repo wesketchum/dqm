@@ -108,7 +108,6 @@ HistContainer::run(dunedaq::dataformats::TriggerRecord& tr, std::unique_ptr<Chan
     for (size_t ikey = 0; ikey < keys.size(); ++ikey) {
       auto fr = wibframes[keys[ikey]][ifr];
 
-      auto timestamp = fr->get_wib_header()->get_timestamp();
       // Timestamps are too big for them to be displayed nicely, subtract the minimum timestamp
       timestamp = fr->get_wib_header()->get_timestamp() - min_timestamp;
 
