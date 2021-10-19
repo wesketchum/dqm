@@ -92,7 +92,7 @@ HistContainer::run(dunedaq::dataformats::TriggerRecord& tr, std::unique_ptr<Chan
   }
 
   uint64_t min_timestamp = wibframes[keys.front()].front()->get_wib_header()->get_timestamp();
-  uint64_t timestamp;
+  uint64_t timestamp = 0;
 
   // Main loop
   // If only the mean and rms are to be sent all frames are processed
