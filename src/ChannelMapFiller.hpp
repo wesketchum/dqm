@@ -10,7 +10,10 @@
 
 // DQM
 #include "AnalysisModule.hpp"
+// #include "ChannelMap.hpp"
 #include "ChannelMap.hpp"
+#include "ChannelMapHD.hpp"
+#include "ChannelMapVD.hpp"
 
 #include "dataformats/TriggerRecord.hpp"
 
@@ -20,23 +23,44 @@ namespace dunedaq::dqm {
 
 class ChannelMapFiller : public AnalysisModule{
   std::string m_name;
+  std::string m_cmap_name;
 
 public:
-  ChannelMapFiller(std::string name);
-  void run(dunedaq::dataformats::TriggerRecord& tr, ChannelMap& map, std::string kafka_address);
+  ChannelMapFiller(std::string name, std::string cmap_name);
+  void run(dunedaq::dataformats::TriggerRecord& tr, std::unique_ptr<ChannelMap> &map, std::string kafka_address);
 
 };
 
 void
-ChannelMapFiller::run(dunedaq::dataformats::TriggerRecord& tr, ChannelMap& map, std::string)
+ChannelMapFiller::run(dunedaq::dataformats::TriggerRecord& tr, std::unique_ptr<ChannelMap> &map, std::string)
 {
   m_run_mark.store(true);
-  map.fill(tr);
+
+  // Prevent running multiple times
+  if (map->is_filled()) {
+    return;
+  }
+
+  if (m_cmap_name == "HD") {
+    map.reset(new ChannelMapHD);
+  }
+  else if (m_cmap_name == "VD") {
+    map.reset(new ChannelMapVD);
+  }
+
+  map->fill(tr);
   m_run_mark.store(false);
 }
 
-ChannelMapFiller::ChannelMapFiller(std::string name)
-  : m_name(name) {
+ChannelMapFiller::ChannelMapFiller(std::string name, std::string cmap_name)
+  : m_name(name)
+{
+  if (cmap_name != "HD" && cmap_name != "VD") {
+    TLOG() << "Wrong channel map name";
+  }
+  else {
+    m_cmap_name = cmap_name;
+  }
 }
 
 } // namespace dunedaq::dqm
