@@ -60,11 +60,9 @@ ChannelMapHD::fill(dataformats::TriggerRecord &tr){
 
   TLOG() << "Going to make the ChannelMapHD";
   std::unique_ptr<swtpg::PdspChannelMapService> channelmap;
-  // auto test = getenv("READOUTSOURCE_DIR");
-  // if (test == NULL)
-  //   TLOG() << "NULL";
-  std::string path = "/cvmfs/dunedaq-development.opensciencegrid.org/nightly/N21-10-01/packages/readout/6b464ef/src";
-  // auto path = std::string(getenv("READOUTSOURCE_DIR"));
+  // There is one env variable $PACKAGE_SHARE for each
+  // DUNEDAQ package
+  std::string path = std::string(getenv("READOUT_SHARE"));
   std::string channel_map_rce = std::string(path) + "/config/protoDUNETPCChannelMap_RCE_v4.txt";
   std::string channel_map_felix = std::string(path) + "/config/protoDUNETPCChannelMap_FELIX_v4.txt";
   channelmap.reset(new swtpg::PdspChannelMapService(channel_map_rce, channel_map_felix));
