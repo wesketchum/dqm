@@ -27,13 +27,13 @@ class ChannelMapVD : public ChannelMap{
 
   std::map<int, std::map<int, std::pair<int, int>>> m_map;
 
-  // Three dimensional array of 4x2x256
+  // Three dimensional array of 4x2x256 holding the offline channel corresponding to each combination of 
+  // slot, fiber and frame channel
   vvvi vec;
   vvvi planevec; 
 
 public:
   ChannelMapVD();
-  bool is_filled();
   void fill(dataformats::TriggerRecord &tr);
   std::map<int, std::map<int, std::pair<int, int>>> get_map();
 };
@@ -59,7 +59,10 @@ ChannelMapVD::fill(dataformats::TriggerRecord &tr){
   int connector, connector_pin, ce_board, ceb_channel, asic, asic_channel;
   for (int i = 1; i <= 8; ++i) {
     std::ifstream csv;
-    csv.open("AB" + std::to_string(i) + ".csv");
+    // There is one env variable $PACKAGE_SHARE for each
+    // DUNEDAQ package
+    std::string path = std::string(std::getenv("DQM_SHARE"));
+    csv.open(path + "/config/" + "AB" + std::to_string(i) + ".csv");
     bool first_line = true;
     std::string line;
     while (getline(csv, line)) {
