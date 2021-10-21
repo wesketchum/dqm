@@ -78,7 +78,7 @@ FourierContainer::run(dunedaq::dataformats::TriggerRecord& tr, std::unique_ptr<C
   m_run_mark.store(true);
   dunedaq::dqm::Decoder dec;
   auto wibframes = dec.decode(tr);
-  std::uint64_t timestamp = 0; // NOLINT(build/unsigned)
+  // std::uint64_t timestamp = 0; // NOLINT(build/unsigned)
 
   for (auto& [key, value] : wibframes) {
     for (auto& fr : value) {
