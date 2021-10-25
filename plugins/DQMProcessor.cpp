@@ -170,8 +170,8 @@ DQMProcessor::RequestMaker()
                                                                       nullptr,
                                                                       "Fourier every " + std::to_string(m_standard_dqm_fourier.how_often) + " s"};
   map[std::chrono::system_clock::now() + std::chrono::seconds(2)] =  {&chfiller,
-                                                                      2,
-                                                                      1,
+                                                                      3,
+                                                                      3,
                                                                       1, //Request only one frame for each link
                                                                       nullptr,
                                                                       "Channel map filler"};
@@ -188,18 +188,19 @@ DQMProcessor::RequestMaker()
     auto analysis_instance = task->second;
     AnalysisModule* algo = analysis_instance.mod;
 
-    // If the channel map filler has already run and has worked then remove the entry
-    // and keep running
-    if (analysis_instance.mod == &chfiller and m_map->is_filled()) {
-      map.erase(task);
-      continue;
-    }
+    // Sleep until the next time
+    std::this_thread::sleep_until(next_time);
 
     // Save pointer to delete the thread later
     std::thread* previous_thread = analysis_instance.running_thread;
 
-    // Sleep until the next time
-    std::this_thread::sleep_until(next_time);
+    // If the channel map filler has already run and has worked then remove the entry
+    // and keep running
+    if (analysis_instance.mod == &chfiller and m_map->is_filled()) {
+      map.erase(task);
+      TLOG(5) << "Channel map already filled, removing entry and starting again";
+      continue;
+    }
 
     // We don't want to run if the run has stopped after sleeping for a while
     if (!m_run_marker) {
@@ -209,7 +210,7 @@ DQMProcessor::RequestMaker()
     // Make sure that the process is not running and a request can be made
     // otherwise we wait for more time
     if (algo->is_running()) {
-      TLOG() << "ALGORITHM already running";
+      TLOG(5) << "ALGORITHM "<< analysis_instance.name << " already running";
       map[std::chrono::system_clock::now() +
           std::chrono::milliseconds(static_cast<int>(analysis_instance.default_unavailable_time) * 1000)] = {algo,
         analysis_instance.between_time, analysis_instance.default_unavailable_time, analysis_instance.number_of_frames, previous_thread, analysis_instance.name};
@@ -253,9 +254,9 @@ DQMProcessor::RequestMaker()
     ++m_total_data_count;
 
     TLOG_DEBUG(10) << "Data popped from the queue";
-
-    std::thread* current_thread =
-      new std::thread(&AnalysisModule::run, std::ref(*algo), std::ref(*element), std::ref(m_map), m_kafka_address);
+    using memfunc_type = void (AnalysisModule::*)(std::unique_ptr<dataformats::TriggerRecord> record, std::unique_ptr<ChannelMap>& map, std::string kafka_address);
+    memfunc_type memfunc = &AnalysisModule::run;
+    std::thread* current_thread = new std::thread(memfunc, std::ref(*algo), std::move(element), std::ref(m_map), m_kafka_address);
 
     // Add a new entry for the current instance
     map[std::chrono::system_clock::now() +
@@ -273,6 +274,7 @@ DQMProcessor::RequestMaker()
         previous_thread->join();
         delete previous_thread; // TODO: rsipos -> Why is this a raw pointer on the thread? Move to unique_ptr.
       } else {
+        TLOG() << "Thread not joinable";
         // Should not be happening
       }
     }
