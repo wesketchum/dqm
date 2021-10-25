@@ -10,7 +10,6 @@
 
 #include <librdkafka/rdkafkacpp.h>
 #include <string>
-#include <vector>
 
 namespace dunedaq::dqm
 {
@@ -32,6 +31,7 @@ KafkaStream::KafkaStream(const std::string &param)
   RdKafka::Conf *conf = RdKafka::Conf::create(RdKafka::Conf::CONF_GLOBAL);
   conf->set("bootstrap.servers", brokers, errstr);
   conf->set("client.id", "dqm", errstr);
+  // conf->set("message.max.bytes", "1000000000", errstr);
   //Create producer instance
   m_producer = RdKafka::Producer::create(conf, errstr);
 }
