@@ -50,14 +50,13 @@ void
 ChannelMapHD::fill(dataformats::TriggerRecord &tr){
 
   if (is_filled()) {
-    TLOG() << "ChannelMapHD already filled";
+    TLOG(5) << "ChannelMapHD already filled";
     return;
   }
 
   dunedaq::dqm::Decoder dec;
   auto wibframes = dec.decode(tr);
 
-  TLOG() << "Going to make the ChannelMapHD";
   std::unique_ptr<swtpg::PdspChannelMapService> channelmap;
   // There is one env variable $PACKAGE_SHARE for each
   // DUNEDAQ package
@@ -66,7 +65,6 @@ ChannelMapHD::fill(dataformats::TriggerRecord &tr){
   std::string channel_map_felix = std::string(path) + "/config/protoDUNETPCChannelMap_FELIX_v4.txt";
   channelmap.reset(new swtpg::PdspChannelMapService(channel_map_rce, channel_map_felix));
 
-  TLOG() << "Got " << wibframes.size() << " frames";
 
   // If we get no frames then return and since
   // the map is not filled it will run again soon
@@ -94,9 +92,9 @@ ChannelMapHD::fill(dataformats::TriggerRecord &tr){
       }
     }
   }
-  TLOG() << "Channel mapping done, size of the map is " << m_map[0].size() << " " << m_map[1].size() << " " << m_map[2].size();
+  TLOG(10) << "Channel mapping done, size of the map is " << m_map[0].size() << " " << m_map[1].size() << " " << m_map[2].size();
 
-  TLOG() << "Setting m_is_filled to true";
+  TLOG(5) << "Channel Map for the HD created";
   m_is_filled = true;
 
 }
