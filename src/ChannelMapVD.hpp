@@ -119,14 +119,13 @@ ChannelMapVD::fill(dataformats::TriggerRecord &tr){
   }
 
   if (is_filled()) {
-    TLOG() << "ChannelMapVD already filled";
+    TLOG(5) << "ChannelMapVD already filled";
     return;
   }
 
   Decoder dec;
   auto wibframes = dec.decode(tr);
 
-  TLOG() << "Got " << wibframes.size() << " frames";
 
   // If we get no frames then return and since
   // the map is not filled it will run again soon
@@ -137,11 +136,9 @@ ChannelMapVD::fill(dataformats::TriggerRecord &tr){
   for (auto& [key, value] : wibframes) {
     // This is one link so we push back one element to m_map
     for (auto& fr : value) {
-      TLOG() << "New frame";
       int crate = fr->get_wib_header()->crate_no;
       int slot = fr->get_wib_header()->slot_no;
       int fiber = fr->get_wib_header()->fiber_no;
-      TLOG() << crate << " " << slot << " " << fiber;
       auto tmp = std::make_tuple<int, int, int>((int)crate, (int)slot, (int)fiber);
       if (frame_numbers.find(tmp) == frame_numbers.end()) {
         frame_numbers.insert(tmp);
@@ -158,9 +155,8 @@ ChannelMapVD::fill(dataformats::TriggerRecord &tr){
       }
     }
   }
-  TLOG() << "Channel mapping done, size of the map is " << m_map[0].size() << " " << m_map[1].size() << " " << m_map[2].size();
 
-  TLOG() << "Setting m_is_filled to true";
+  TLOG(5) << "Channel Map for the VD created";
   m_is_filled = true;
 }
 
