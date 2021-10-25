@@ -130,7 +130,7 @@ FourierContainer::transmit(std::string &kafka_address, std::unique_ptr<ChannelMa
       }
       output << "\n";
     }
-    TLOG(5) << "Size of the message in bytes: " << output.str().size();
+    TLOG_DEBUG(5) << "Size of the message in bytes: " << output.str().size();
     KafkaExport(kafka_address, output.str(), topicname);
   }
 

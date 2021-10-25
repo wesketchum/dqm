@@ -198,7 +198,7 @@ DQMProcessor::RequestMaker()
     // and keep running
     if (analysis_instance.mod == &chfiller and m_map->is_filled()) {
       map.erase(task);
-      TLOG(5) << "Channel map already filled, removing entry and starting again";
+      TLOG_DEBUG(5) << "Channel map already filled, removing entry and starting again";
       continue;
     }
 

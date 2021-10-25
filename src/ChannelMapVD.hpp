@@ -119,7 +119,7 @@ ChannelMapVD::fill(dataformats::TriggerRecord &tr){
   }
 
   if (is_filled()) {
-    TLOG(5) << "ChannelMapVD already filled";
+    TLOG_DEBUG(5) << "ChannelMapVD already filled";
     return;
   }
 
@@ -156,7 +156,7 @@ ChannelMapVD::fill(dataformats::TriggerRecord &tr){
     }
   }
 
-  TLOG(5) << "Channel Map for the VD created";
+  TLOG_DEBUG(5) << "Channel Map for the VD created";
   m_is_filled = true;
 }
 

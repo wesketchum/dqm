@@ -50,7 +50,7 @@ void
 ChannelMapHD::fill(dataformats::TriggerRecord &tr){
 
   if (is_filled()) {
-    TLOG(5) << "ChannelMapHD already filled";
+    TLOG_DEBUG(5) << "ChannelMapHD already filled";
     return;
   }
 
@@ -92,9 +92,9 @@ ChannelMapHD::fill(dataformats::TriggerRecord &tr){
       }
     }
   }
-  TLOG(10) << "Channel mapping done, size of the map is " << m_map[0].size() << " " << m_map[1].size() << " " << m_map[2].size();
+  TLOG_DEBUG(10) << "Channel mapping done, size of the map is " << m_map[0].size() << " " << m_map[1].size() << " " << m_map[2].size();
 
-  TLOG(5) << "Channel Map for the HD created";
+  TLOG_DEBUG(5) << "Channel Map for the HD created";
   m_is_filled = true;
 
 }
