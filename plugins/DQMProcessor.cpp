@@ -254,8 +254,8 @@ DQMProcessor::RequestMaker()
     ++m_total_data_count;
 
     TLOG_DEBUG(10) << "Data popped from the queue";
-    using memfunc_type = void (AnalysisModule::*)(std::unique_ptr<dataformats::TriggerRecord> record, std::unique_ptr<ChannelMap>& map, std::string kafka_address);
-    memfunc_type memfunc = &AnalysisModule::run;
+    using runfunc_type = void (AnalysisModule::*)(std::unique_ptr<dataformats::TriggerRecord> record, std::unique_ptr<ChannelMap>& map, std::string kafka_address);
+    runfunc_type memfunc = &AnalysisModule::run;
     std::thread* current_thread = new std::thread(memfunc, std::ref(*algo), std::move(element), std::ref(m_map), m_kafka_address);
 
     // Add a new entry for the current instance
