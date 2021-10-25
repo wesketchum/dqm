@@ -27,12 +27,12 @@ class ChannelMapFiller : public AnalysisModule{
 
 public:
   ChannelMapFiller(std::string name, std::string cmap_name);
-  void run(dunedaq::dataformats::TriggerRecord& tr, std::unique_ptr<ChannelMap> &map, std::string kafka_address);
+  void run(std::unique_ptr<dataformats::TriggerRecord> record, std::unique_ptr<ChannelMap> &map, std::string kafka_address);
 
 };
 
 void
-ChannelMapFiller::run(dunedaq::dataformats::TriggerRecord& tr, std::unique_ptr<ChannelMap> &map, std::string)
+ChannelMapFiller::run(std::unique_ptr<dataformats::TriggerRecord> record, std::unique_ptr<ChannelMap> &map, std::string)
 {
   m_run_mark.store(true);
 
@@ -48,7 +48,7 @@ ChannelMapFiller::run(dunedaq::dataformats::TriggerRecord& tr, std::unique_ptr<C
     map.reset(new ChannelMapVD);
   }
 
-  map->fill(tr);
+  map->fill(*record);
   m_run_mark.store(false);
 }
 

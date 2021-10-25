@@ -38,7 +38,7 @@ public:
   FourierContainer(std::string name, int size, double inc, int npoints);
   FourierContainer(std::string name, int size, std::vector<int>& link_idx, double inc, int npoints);
 
-  void run(dunedaq::dataformats::TriggerRecord& tr, std::unique_ptr<ChannelMap> &map, std::string kafka_address="");
+  void run(std::unique_ptr<dataformats::TriggerRecord> record, std::unique_ptr<ChannelMap> &map, std::string kafka_address="");
   void transmit(std::string &kafka_address, std::unique_ptr<ChannelMap> &cmap, const std::string& topicname, int run_num, time_t timestamp);
   void clean();
   void fill(int ch, double value);
@@ -57,7 +57,6 @@ FourierContainer::FourierContainer(std::string name, int size, double inc, int n
   }
 }
 
-
 FourierContainer::FourierContainer(std::string name, int size, std::vector<int>& link_idx, double inc, int npoints)
   : m_name(name),
     m_size(size),
@@ -73,11 +72,11 @@ FourierContainer::FourierContainer(std::string name, int size, std::vector<int>&
   }
 }
 void
-FourierContainer::run(dunedaq::dataformats::TriggerRecord& tr, std::unique_ptr<ChannelMap> &map, std::string kafka_address)
+FourierContainer::run(std::unique_ptr<dataformats::TriggerRecord> record, std::unique_ptr<ChannelMap> &map, std::string kafka_address)
 {
   m_run_mark.store(true);
   dunedaq::dqm::Decoder dec;
-  auto wibframes = dec.decode(tr);
+  auto wibframes = dec.decode(*record);
   // std::uint64_t timestamp = 0; // NOLINT(build/unsigned)
 
   for (auto& [key, value] : wibframes) {
@@ -92,7 +91,7 @@ FourierContainer::run(dunedaq::dataformats::TriggerRecord& tr, std::unique_ptr<C
     fouriervec[ich].compute_fourier_normalized();
   }
 
-  transmit(kafka_address, map, "testdunedqm", tr.get_header_ref().get_run_number(), tr.get_header_ref().get_trigger_timestamp());
+  transmit(kafka_address, map, "testdunedqm", record->get_header_ref().get_run_number(), record->get_header_ref().get_trigger_timestamp());
 
   m_run_mark.store(false);
 }

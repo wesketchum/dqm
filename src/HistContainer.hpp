@@ -38,7 +38,7 @@ public:
   HistContainer(std::string name, int nhist, int steps, double low, double high, bool only_mean=false);
   HistContainer(std::string name, int nhist, std::vector<int>& link_idx, int steps, double low, double high, bool only_mean);
 
-  void run(dunedaq::dataformats::TriggerRecord& tr, std::unique_ptr<ChannelMap> &map, std::string kafka_address="");
+  void run(std::unique_ptr<dataformats::TriggerRecord> record, std::unique_ptr<ChannelMap> &map, std::string kafka_address="");
   void transmit(std::string &kafka_address, std::unique_ptr<ChannelMap> &map, const std::string& topicname, int run_num, time_t timestamp);
   void transmit_mean_and_rms(std::string &kafka_address, std::unique_ptr<ChannelMap> &map, const std::string& topicname, int run_num, time_t timestamp);
   void clean();
@@ -74,14 +74,16 @@ HistContainer::HistContainer(std::string name, int nhist, std::vector<int>& link
 }
 
 void
-HistContainer::run(dunedaq::dataformats::TriggerRecord& tr, std::unique_ptr<ChannelMap> &map, std::string kafka_address)
+HistContainer::run(std::unique_ptr<dataformats::TriggerRecord> record, std::unique_ptr<ChannelMap> &map, std::string kafka_address)
 {
   m_run_mark.store(true);
   dunedaq::dqm::Decoder dec;
-  auto wibframes = dec.decode(tr);
+  auto wibframes = dec.decode(*record);
 
   if (wibframes.size() == 0) {
     // throw issue
+    m_run_mark.store(false);
+    TLOG() << "Found no frames";
     return;
   }
 
@@ -122,10 +124,10 @@ HistContainer::run(dunedaq::dataformats::TriggerRecord& tr, std::unique_ptr<Chan
     }
   }
   if (m_only_mean_rms) {
-    transmit_mean_and_rms(kafka_address, map, "testdunedqm", tr.get_header_ref().get_run_number(), tr.get_header_ref().get_trigger_timestamp());
+    transmit_mean_and_rms(kafka_address, map, "testdunedqm", record->get_header_ref().get_run_number(), record->get_header_ref().get_trigger_timestamp());
   }
   else {
-    transmit(kafka_address, map, "testdunedqm", tr.get_header_ref().get_run_number(), tr.get_header_ref().get_trigger_timestamp());
+    transmit(kafka_address, map, "testdunedqm", record->get_header_ref().get_run_number(), record->get_header_ref().get_trigger_timestamp());
   }
   clean();
 
