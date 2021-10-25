@@ -174,8 +174,7 @@ HistContainer::transmit(std::string& kafka_address, std::unique_ptr<ChannelMap> 
     }
     output << "\n";
     output << m_to_send[key];
-    // TLOG() << output.str();
-    TLOG() << "Size of the string: " << output.str().size();
+    TLOG(5) << "Size of the message in bytes: " << output.str().size();
     KafkaExport(kafka_address, output.str(), topicname);
   }
   m_to_send.clear();
@@ -221,7 +220,7 @@ HistContainer::transmit_mean_and_rms(std::string& kafka_address, std::unique_ptr
       output << histvec[get_local_index(ch, link)].std() << " ";
     }
     output << "\n";
-    // TLOG() << output.str();
+    TLOG(5) << "Size of the message in bytes: " << output.str().size();
     KafkaExport(kafka_address, output.str(), topicname);
   }
 
