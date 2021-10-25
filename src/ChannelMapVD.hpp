@@ -114,7 +114,6 @@ ChannelMapVD::fill(dataformats::TriggerRecord &tr){
         planevec[wib][link][channel] = 2;
       }
 
-      TLOG() << "Setting wib " << wib << " link " << link << " channel " << channel << " to offline channel " << vec[wib][link][channel] << " and plane " << planevec[wib][link][channel];
     }
 
   }
