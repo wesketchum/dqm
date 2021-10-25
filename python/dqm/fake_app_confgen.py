@@ -21,7 +21,8 @@ import dunedaq.cmdlib.cmd as basecmd # AddressedCmd,
 import dunedaq.rcif.cmd as rccmd # AddressedCmd, 
 import dunedaq.appfwk.cmd as cmd # AddressedCmd, 
 import dunedaq.appfwk.app as app # AddressedCmd, 
-import dunedaq.dfmodules.readoutconfig as rconf
+import dunedaq.dfmodules.triggerrecordbuilder as trb
+import dunedaq.readout.readoutconfig as rconf
 import dunedaq.readout.sourceemulatorconfig as sec
 import dunedaq.dqm.dqmprocessor as dqmprocessor
 
@@ -118,8 +119,8 @@ def generate(
 
     confcmd = mrccmd("conf", "INITIAL", "CONFIGURED",[
                 ("fake_source",sec.Conf(
-                            link_confs=[fcr.LinkConfiguration(
-                                geoid=fcr.GeoID(system="TPC", region=0, element=idx),
+                            link_confs=[sec.LinkConfiguration(
+                                geoid=sec.GeoID(system="TPC", region=0, element=idx),
                                 slowdown=DATA_RATE_SLOWDOWN_FACTOR,
                                 queue_name=f"output_{idx}"
                             ) for idx in range(NUMBER_OF_DATA_PRODUCERS)],
