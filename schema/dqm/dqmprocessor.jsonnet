@@ -11,11 +11,10 @@ local moo = import "moo.jsonnet";
 local ns = "dunedaq.dqm.dqmprocessor";
 local s = moo.oschema.schema(ns);
 
-// Object structure used by the test/fake producer module
+// Object structure used by the dqm processor plugin
 local dqmprocessor = {
 
-    string : s.string("RunningMode",
-                      doc="A string field"),
+    string : s.string("string", doc="A string"),
 
     time : s.number("Time", "f4", doc="A time"),
 
@@ -32,19 +31,23 @@ local dqmprocessor = {
                             doc="A list with indexes"),
 
     standard_dqm: s.record("StandardDQM", [
-        s.field("histogram_how_often", self.time, 1,
-                doc="Histograms are run every x seconds"),
-        s.field("histogram_unavailable_time", self.time, 1,
-                doc="When it's time to run the histograms but it's already running wait this time"),
-        s.field("histogram_frames", self.count, 1,
-                doc="How many frames we send in each instance of the histogram")
+        s.field("how_often", self.time, 1,
+                doc="Algorithm is run every x seconds"),
+        s.field("unavailable_time", self.time, 1,
+                doc="When it's time to run the algorithm but it's already running wait this time"),
+        s.field("num_frames", self.count, 1,
+                doc="How many frames do we process in each instance of the algorithm")
     ], doc="Standard DQM analysis"),
 
+
     conf: s.record("Conf", [
-        s.field("mode", self.string,
-                doc="'debug' if in debug mode"),
-        s.field("sdqm", self.standard_dqm,
-                doc="Test"),
+        s.field("channel_map", self.string, doc='"HD" or "VD"'),
+        s.field("sdqm_hist", self.standard_dqm,      # This one is for the raw event display
+                doc="Standard dqm"),
+        s.field("sdqm_mean_rms", self.standard_dqm,  # This one is for the Mean and RMS
+                doc="Standard dqm"),
+        s.field("sdqm_fourier", self.standard_dqm,   # This one is for fourier transforms
+                doc="Fourier"),
         s.field("kafka_address", self.string,
                 doc="Address used for sending to the kafka broker"),
         s.field("link_idx", self.index_list,

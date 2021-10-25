@@ -8,7 +8,7 @@
 #ifndef DQM_SRC_ANALYSISMODULE_HPP_
 #define DQM_SRC_ANALYSISMODULE_HPP_
 
-#include "dqm/Types.hpp"
+#include "ChannelMap.hpp"
 
 #include "dataformats/TriggerRecord.hpp"
 
@@ -19,9 +19,16 @@ namespace dunedaq::dqm {
 class AnalysisModule
 {
 public:
-  virtual bool is_running() = 0;
-  virtual void run(dataformats::TriggerRecord& record, RunningMode mode, std::string kafka_address) = 0;
+  std::atomic<bool> m_run_mark = false;
+
+  virtual bool is_running();
+  virtual void run(std::unique_ptr<dataformats::TriggerRecord> record, std::unique_ptr<ChannelMap> &map, std::string kafka_address) = 0;
 };
+
+bool
+AnalysisModule::is_running(){
+  return m_run_mark;
+}
 
 } // namespace dunedaq::dqm
 

@@ -12,7 +12,7 @@
 #ifndef DQM_PLUGINS_DQMPROCESSOR_HPP_
 #define DQM_PLUGINS_DQMPROCESSOR_HPP_
 
-#include "dqm/Types.hpp"
+#include "ChannelMap.hpp"
 
 #include "appfwk/DAQModule.hpp"
 #include "appfwk/DAQSink.hpp"
@@ -55,7 +55,7 @@ public:
   std::atomic<bool> m_run_marker;
 
   void RequestMaker();
-  dfmessages::TriggerDecision CreateRequest(std::vector<dfmessages::GeoID> m_links);
+  dfmessages::TriggerDecision CreateRequest(std::vector<dfmessages::GeoID>& m_links, int number_of_frames);
 
   void get_info(opmonlib::InfoCollector& ci, int /*level*/);
 
@@ -68,10 +68,10 @@ private:
   std::chrono::milliseconds m_sink_timeout{ 1000 };
   std::chrono::milliseconds m_source_timeout{ 1000 };
 
-  RunningMode m_running_mode;
-
   // Configuration parameters
-  dqmprocessor::StandardDQM m_standard_dqm;
+  dqmprocessor::StandardDQM m_standard_dqm_hist;
+  dqmprocessor::StandardDQM m_standard_dqm_mean_rms;
+  dqmprocessor::StandardDQM m_standard_dqm_fourier;
 
   using timesync_source_qt = appfwk::DAQSource<dfmessages::TimeSync>;
   std::unique_ptr<timesync_source_qt> m_timesync_source;
@@ -91,6 +91,9 @@ private:
   std::atomic<int> m_total_request_count{0};
   std::atomic<int> m_data_count{0};
   std::atomic<int> m_total_data_count{0};
+
+  std::string m_channel_map;
+  std::unique_ptr<ChannelMap> m_map;
 
 };
 

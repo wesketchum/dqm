@@ -22,37 +22,39 @@ namespace dqm {
 class Decoder
 {
 public:
-  std::vector<dataformats::WIBFrame*> decode(dunedaq::dataformats::TriggerRecord& record);
+  /**
+   * @brief Decode a Trigger Record
+   * @param record The Trigger Record to be decoded
+   * @return A map whose keys are the GeoID indexes and the values are
+   *         vectors of pointers to the wibframes
+   */
+  std::map<int, std::vector<dataformats::WIBFrame*>> decode(dunedaq::dataformats::TriggerRecord& record);
 };
 
-std::vector<dataformats::WIBFrame*>
+std::map<int, std::vector<dataformats::WIBFrame*>>
 decodewib(dataformats::TriggerRecord& record)
 {
   std::vector<std::unique_ptr<dataformats::Fragment>>& fragments = record.get_fragments_ref();
 
-  std::vector<dataformats::WIBFrame*> wib_frames;
+  std::map<int, std::vector<dataformats::WIBFrame*>> wibframes;
 
   for (auto& fragment : fragments) {
-    // There is some debugging code for timestamps, should be improved
+    auto id = fragment->get_element_id();
+    auto element_id = id.element_id;
     int num_chunks = (fragment->get_size() - sizeof(dataformats::FragmentHeader)) / sizeof(dataformats::WIBFrame);
-    // TLOG() << "Number of chunks being decoded: " << num_chunks;
-    // uint64_t mintimestamp = ULONG_LONG_MAX;
-    // uint64_t maxtimestamp = 0;
+    std::vector<dataformats::WIBFrame*> tmp;
     for (int i = 0; i < num_chunks; ++i) {
       dataformats::WIBFrame* frame =
         reinterpret_cast<dataformats::WIBFrame*>(static_cast<char*>(fragment->get_data()) + (i * 464)); // NOLINT
-      // uint64_t timestamp = frame->get_wib_header()->get_timestamp();
-      // mintimestamp = std::min(mintimestamp, timestamp);
-      // maxtimestamp = std::max(maxtimestamp, timestamp);
-      wib_frames.push_back(frame);
+      tmp.push_back(frame);
     }
-    // TLOG_DEBUG(TLVL_BOOKKEEPING) << "Min timestamp is " << mintimestamp << ", max timestamp is << maxtimestamp";
+    wibframes[element_id] = tmp;
   }
 
-  return wib_frames;
+  return wibframes;
 }
 
-std::vector<dataformats::WIBFrame*>
+std::map<int, std::vector<dataformats::WIBFrame*>>
 Decoder::decode(dataformats::TriggerRecord& record)
 {
   return decodewib(record);

@@ -11,8 +11,8 @@ moo.otypes.load_types('appfwk/cmd.jsonnet')
 moo.otypes.load_types('appfwk/app.jsonnet')
 
 moo.otypes.load_types('dfmodules/triggerrecordbuilder.jsonnet')
-moo.otypes.load_types('readout/fakecardreader.jsonnet')
-moo.otypes.load_types('readout/datalinkhandler.jsonnet')
+moo.otypes.load_types('readout/readoutconfig.jsonnet')
+moo.otypes.load_types('readout/sourceemulatorconfig.jsonnet')
 
 moo.otypes.load_types('dqm/dqmprocessor.jsonnet')
 
@@ -22,8 +22,8 @@ import dunedaq.rcif.cmd as rccmd # AddressedCmd,
 import dunedaq.appfwk.cmd as cmd # AddressedCmd, 
 import dunedaq.appfwk.app as app # AddressedCmd, 
 import dunedaq.dfmodules.triggerrecordbuilder as trb
-import dunedaq.readout.fakecardreader as fcr
-import dunedaq.readout.datalinkhandler as dlh
+import dunedaq.readout.readoutconfig as rconf
+import dunedaq.readout.sourceemulatorconfig as sec
 import dunedaq.dqm.dqmprocessor as dqmprocessor
 
 from appfwk.utils import mcmd, mrccmd, mspec
@@ -38,18 +38,13 @@ CLOCK_SPEED_HZ = 50000000;
 def generate(
         FRONTEND_TYPE='wib',
         NUMBER_OF_DATA_PRODUCERS=1,
-        DATA_RATE_SLOWDOWN_FACTOR=10,
-        RUN_NUMBER=333,
-        TRIGGER_RATE_HZ=1.0,
-        DATA_FILE="./frames.bin",
-        OUTPUT_PATH=".",
-        DISABLE_OUTPUT=False,
-        TOKEN_COUNT=10
+        NUMBER_OF_TP_PRODUCERS=0,
+        DATA_RATE_SLOWDOWN_FACTOR = 1,
+        ENABLE_SOFTWARE_TPG=False,
+        RUN_NUMBER = 333,
+        DATA_FILE="./frames.bin"
     ):
     
-    trigger_interval_ticks = math.floor((1/TRIGGER_RATE_HZ) *
-                                        CLOCK_SPEED_HZ/DATA_RATE_SLOWDOWN_FACTOR)
-
     # Define modules and queues
     queue_bare_specs = [
             app.QueueSpec(inst="time_sync_dqm_q", kind='FollyMPMCQueue', capacity=100),
@@ -79,7 +74,6 @@ def generate(
 
     mod_specs = [
         mspec("fake_source", "FakeCardReader", [
-
                         app.QueueInfo(name=f"output_{idx}", inst=f"{FRONTEND_TYPE}_link_{idx}", dir="output")
                             for idx in range(NUMBER_OF_DATA_PRODUCERS)
                         ]),
@@ -123,17 +117,10 @@ def generate(
         data=init_specs
     )
 
-    if TOKEN_COUNT > 0:
-        df_token_count = 0
-        trigemu_token_count = TOKEN_COUNT
-    else:
-        df_token_count = -1 * TOKEN_COUNT
-        trigemu_token_count = 0
-
     confcmd = mrccmd("conf", "INITIAL", "CONFIGURED",[
-                ("fake_source",fcr.Conf(
-                            link_confs=[fcr.LinkConfiguration(
-                                geoid=fcr.GeoID(system="TPC", region=0, element=idx),
+                ("fake_source",sec.Conf(
+                            link_confs=[sec.LinkConfiguration(
+                                geoid=sec.GeoID(system="TPC", region=0, element=idx),
                                 slowdown=DATA_RATE_SLOWDOWN_FACTOR,
                                 queue_name=f"output_{idx}"
                             ) for idx in range(NUMBER_OF_DATA_PRODUCERS)],
@@ -142,14 +129,33 @@ def generate(
 			                set_t0_to=0
                         )),
             ] + [
-                (f"datahandler_{idx}", dlh.Conf(
-                        source_queue_timeout_ms=QUEUE_POP_WAIT_MS,
-                        fake_trigger_flag=0,
-                        latency_buffer_size=3*CLOCK_SPEED_HZ/(25*12*DATA_RATE_SLOWDOWN_FACTOR),
-                        pop_limit_pct=0.8,
-                        pop_size_pct=0.1,
-                        apa_number=0,
-                        link_number=idx
+                (f"datahandler_{idx}", rconf.Conf(
+                        readoutmodelconf= rconf.ReadoutModelConf(
+                            source_queue_timeout_ms= QUEUE_POP_WAIT_MS,
+                            fake_trigger_flag=0,
+                            region_id = 0,
+                            element_id = idx,
+                        ),
+                        latencybufferconf= rconf.LatencyBufferConf(
+                            latency_buffer_size = 3*CLOCK_SPEED_HZ/(25*12*DATA_RATE_SLOWDOWN_FACTOR),
+                            region_id = 0,
+                            element_id = idx,
+                        ),
+                        rawdataprocessorconf= rconf.RawDataProcessorConf(
+                            region_id = 0,
+                            element_id = idx,
+                            enable_software_tpg = ENABLE_SOFTWARE_TPG,
+                        ),
+                        requesthandlerconf= rconf.RequestHandlerConf(
+                            latency_buffer_size = 3*CLOCK_SPEED_HZ/(25*12*DATA_RATE_SLOWDOWN_FACTOR),
+                            pop_limit_pct = 0.8,
+                            pop_size_pct = 0.1,
+                            region_id = 0,
+                            element_id = idx,
+                            output_file = f"output_{idx}.out",
+                            stream_buffer_size = 8388608,
+                            enable_raw_recording = True
+                        )
                         )) for idx in range(NUMBER_OF_DATA_PRODUCERS)
             ] + [
                 ("trb_dqm", trb.ConfParams(
@@ -160,8 +166,10 @@ def generate(
                         )),
             ] + [
                 ('dqmprocessor', dqmprocessor.Conf(
-                        mode='normal', # normal or debug
-                        sdqm=[1, 1, 1],
+                        channel_map='HD', # 'HD' for horizontal drift or 'VD' for vertical drift
+                        sdqm_hist=dqmprocessor.StandardDQM(how_often=60, unavailable_time=10, num_frames=50),
+                        sdqm_mean_rms=dqmprocessor.StandardDQM(how_often=10, unavailable_time=1, num_frames=100),
+                        sdqm_fourier=dqmprocessor.StandardDQM(how_often=60 * 20, unavailable_time=60, num_frames=100),
                         kafka_address='dqmbroadcast:9092',
                         link_idx=list(range(NUMBER_OF_DATA_PRODUCERS)),
                         clock_frequency=CLOCK_SPEED_HZ
@@ -172,7 +180,7 @@ def generate(
     jstr = json.dumps(confcmd.pod(), indent=4, sort_keys=True)
     print(jstr)
 
-    startpars = rccmd.StartParams(run=RUN_NUMBER, trigger_interval_ticks=trigger_interval_ticks, disable_data_storage=DISABLE_OUTPUT)
+    startpars = rccmd.StartParams(run=RUN_NUMBER)
     startcmd = mrccmd("start", "CONFIGURED", "RUNNING", [
             ("fake_source", startpars),
             ("datahandler_.*", startpars),
@@ -228,19 +236,17 @@ if __name__ == '__main__':
     import click
 
     @click.command(context_settings=CONTEXT_SETTINGS)
+    @click.option('-f', '--frontend-type', type=click.Choice(['wib', 'wib2', 'pds_queue', 'pds_list'], case_sensitive=True), default='wib')
     @click.option('-n', '--number-of-data-producers', default=1)
-    @click.option('-e', '--emulator-mode', is_flag=True)
+    @click.option('-t', '--number-of-tp-producers', default=0)
     @click.option('-s', '--data-rate-slowdown-factor', default=10)
+    @click.option('-g', '--enable-software-tpg', is_flag=True)
     @click.option('-r', '--run-number', default=333)
-    @click.option('-t', '--trigger-rate-hz', default=1.0)
     @click.option('-d', '--data-file', type=click.Path(), default='./frames.bin')
-    @click.option('-o', '--output-path', type=click.Path(), default='.')
-    @click.option('--disable-data-storage', is_flag=True)
-    @click.option('-c', '--token-count', default=10)
     @click.argument('json_file', type=click.Path(), default='dqm.json')
-    def cli(number_of_data_producers, emulator_mode, data_rate_slowdown_factor,
-            run_number, trigger_rate_hz, data_file, output_path, disable_data_storage,
-            token_count, json_file):
+    def cli(frontend_type, number_of_data_producers, number_of_tp_producers,
+            data_rate_slowdown_factor, enable_software_tpg, run_number, data_file,
+            json_file):
         """
           JSON_FILE: Input raw data file.
           JSON_FILE: Output json configuration file.
@@ -248,14 +254,13 @@ if __name__ == '__main__':
 
         with open(json_file, 'w') as f:
             f.write(generate(
-                    NUMBER_OF_DATA_PRODUCERS=number_of_data_producers,
-                    DATA_RATE_SLOWDOWN_FACTOR=data_rate_slowdown_factor,
-                    RUN_NUMBER=run_number,
-                    TRIGGER_RATE_HZ=trigger_rate_hz,
-                    DATA_FILE=data_file,
-                    OUTPUT_PATH=output_path,
-                    DISABLE_OUTPUT=disable_data_storage,
-                    TOKEN_COUNT=token_count
+                    FRONTEND_TYPE = frontend_type,
+                    NUMBER_OF_DATA_PRODUCERS = number_of_data_producers,
+                    NUMBER_OF_TP_PRODUCERS = number_of_tp_producers,
+                    DATA_RATE_SLOWDOWN_FACTOR = data_rate_slowdown_factor,
+                    ENABLE_SOFTWARE_TPG = enable_software_tpg,
+                    RUN_NUMBER = run_number,
+                    DATA_FILE = data_file,
                 ))
 
         print(f"'{json_file}' generation completed.")

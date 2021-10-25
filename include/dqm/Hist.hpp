@@ -23,6 +23,7 @@
 #include <ostream>
 #include <string>
 #include <vector>
+#include <cmath>
 
 /**
  * Basic 1D histogram that counts entries
@@ -38,8 +39,9 @@ class Hist
 
 public:
   double m_low, m_high, m_step_size;
-  int m_nentries;
-  double m_sum;
+  int m_nentries = 0;
+  double m_sum = 0, m_sum_sq = 0, m_mean, m_std;
+  bool m_mean_set = false, m_std_set = false;
 
   int m_steps;
   std::vector<int> m_entries;
@@ -71,8 +73,11 @@ public:
   void save(std::ofstream& filehandle) const;
 
   bool is_running();
-  void run(dunedaq::dataformats::TriggerRecord& tr);
   void clean();
+
+  double mean();
+  double std();
+
 };
 
 Hist::Hist(int steps, double low, double high)
@@ -107,6 +112,7 @@ Hist::fill(double x)
   m_entries[bin]++;
   m_nentries++;
   m_sum += x;
+  m_sum_sq += x * x;
   return bin;
 }
 
@@ -140,27 +146,33 @@ Hist::is_running()
 }
 
 void
-Hist::run(dunedaq::dataformats::TriggerRecord& tr)
-{
-  dunedaq::dqm::Decoder dec;
-  auto wibframes = dec.decode(tr);
-
-  for (auto fr : wibframes) {
-    for (int ich = 0; ich < 256; ++ich) {
-      this->fill(fr->get_channel(ich));
-    }
-  }
-  this->save("Hist/hist.txt");
-}
-
-void
 Hist::clean()
 {
   m_sum = 0;
+  m_sum_sq = 0;
   m_nentries = 0;
   for (auto& elem : m_entries) {
     elem = 0;
   }
+}
+
+double
+Hist::mean()
+{
+  if (m_mean_set) return m_mean;
+  m_mean = m_sum / m_nentries;
+  m_mean_set = true;
+  return m_mean;
+}
+
+double
+Hist::std()
+{
+  if (m_std_set) return m_std;
+  m_mean = mean();
+  m_std = sqrt( (m_sum_sq + m_nentries * m_mean * m_mean - 2 * m_sum * m_mean) / (m_nentries - 1) );
+  m_std_set = true;
+  return m_std;
 }
 
 } // namespace dunedaq::dqm
