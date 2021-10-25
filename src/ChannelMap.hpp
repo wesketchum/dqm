@@ -38,10 +38,13 @@ ChannelMap::~ChannelMap() {
 
 std::map<int, std::map<int, std::pair<int, int>>>
 ChannelMap::get_map(){
+  //throw issue
+  std::map<int, std::map<int, std::pair<int, int>>> ret;
+  return ret;
 }
 
 void
-ChannelMap::fill(dataformats::TriggerRecord &tr){
+ChannelMap::fill(dataformats::TriggerRecord&){
   //throw issue
 }
 

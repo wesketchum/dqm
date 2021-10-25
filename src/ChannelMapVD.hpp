@@ -78,9 +78,11 @@ ChannelMapVD::fill(dataformats::TriggerRecord &tr){
 
       getline(ss, str, ',');
       connector = std::stoi(str);
+      (void)connector; // Silences unused warning, does nothing
 
       getline(ss, str, ',');
       connector_pin = std::stoi(str);
+      (void)connector_pin; // Silences unused warning, does nothing
 
       getline(ss, str, ',');
       ce_board = std::stoi(str);
@@ -90,9 +92,11 @@ ChannelMapVD::fill(dataformats::TriggerRecord &tr){
 
       getline(ss, str, ',');
       asic = std::stoi(str);
+      (void)asic; // Silences unused warning, does nothing
 
       getline(ss, str, ',');
       asic_channel = std::stoi(str);
+      (void)asic_channel; // Silences unused warning, does nothing
 
       int wib = (ce_board - 1) % 4;
       int link = ((ce_board - 1) / 2) % 2;

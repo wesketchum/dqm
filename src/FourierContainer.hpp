@@ -121,7 +121,7 @@ FourierContainer::transmit(std::string &kafka_address, std::unique_ptr<ChannelMa
       output << offch << " ";
     }
     output << "\n";
-    for (int i=0; i < freq.size(); ++i) {
+    for (size_t i=0; i < freq.size(); ++i) {
       output << freq[i] << "\n";
       for (auto& [offch, pair] : map) {
         int link = pair.first;
