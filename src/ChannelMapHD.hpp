@@ -27,7 +27,6 @@ unsigned int getOfflineChannel(swtpg::PdspChannelMapService& channelMap, // NOLI
 
 class ChannelMapHD : public ChannelMap {
   std::map<int, std::map<int, std::pair<int, int>>> m_map;
-  bool m_is_filled = false;
 
 public:
   ChannelMapHD();
@@ -78,11 +77,9 @@ ChannelMapHD::fill(dataformats::TriggerRecord &tr){
   for (auto& [key, value] : wibframes) {
     // This is one link so we push back one element to m_map
     for (auto& fr : value) {
-      TLOG() << "New frame";
       int crate = fr->get_wib_header()->crate_no;
       int slot = fr->get_wib_header()->slot_no;
       int fiber = fr->get_wib_header()->fiber_no;
-      TLOG() << crate << " " << slot << " " << fiber;
       auto tmp = std::make_tuple<int, int, int>((int)crate, (int)slot, (int)fiber);
       if (frame_numbers.find(tmp) == frame_numbers.end()) {
         frame_numbers.insert(tmp);
