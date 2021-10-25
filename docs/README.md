@@ -43,11 +43,13 @@ And run with
   Use `--dqm-rawdisplay-params N M L` where N is how many
   seconds there are between running the raw display algorithm, M is the number of
   seconds that will be waited in case it is found to be running N seconds after
-  the previous time and L is the number of frames that will be displayed. 
-* Mean and RMS plot: The mean and RMS of the ADC for each channel
+  the previous time and L is the number of frames that this algorithm will run on. 
+* Mean and RMS plot: The mean and RMS of the ADC for each channel over a number
+  of frames
 
   Use `--dqm-meanrms-params N M L` where N, M and L have the same meaning as above.
-* Fourier transform: The fourier transform of the ADC for each channel
+* Fourier transform: The fourier transform of the ADC for each channel over a
+  number of frames
 
   Use `--dqm-fourier-params N M L` where N, M and L have the same meaning as above.
 
