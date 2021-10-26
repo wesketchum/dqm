@@ -226,7 +226,7 @@ int main(int argc, char **argv)
 
   desc.add_options()
     ("help,h", "Help screen")
-    ("broker,b", bpo::value<std::string>()->default_value("188.185.122.48:9092"), "Broker")
+    ("broker,b", bpo::value<std::string>()->default_value("127.0.0.1:9092"), "Broker")
     ("source,s", bpo::value<std::string>()->default_value("defaultSource"), "Source")
     ("rcemap,s", bpo::value<std::string>()->default_value("/config/protoDUNETPCChannelMap_RCE_v4.txt"), "RCE channels map")
     ("felixmap,s", bpo::value<std::string>()->default_value("/config/protoDUNETPCChannelMap_FELIX_v4.txt"), "FELIX channels map")
@@ -274,7 +274,7 @@ int main(int argc, char **argv)
   int num_trs = 1000;
   channelMap.reset(new swtpg::PdspChannelMapService(channel_map_rce, channel_map_felix));
 
-  //m_host = "188.185.122.48";
+  //m_host = "127.0.0.1";
   //m_port = "9092";
   //m_topic = "dunedqm-incomingadcfrequency";
   //Kafka server settings

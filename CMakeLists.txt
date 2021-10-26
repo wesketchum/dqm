@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.12)
-project(dqm VERSION 1.0.0)
+project(dqm VERSION 1.1.0)
 
 find_package(daq-cmake REQUIRED)
 
@@ -25,5 +25,9 @@ daq_add_application(trigger_transform trigger_transform.cxx LINK_LIBRARIES appfw
 # We put here the name of our class, and the libraries we want to link with
 
 daq_add_plugin(DQMProcessor duneDAQModule LINK_LIBRARIES appfwk::appfwk dataformats::dataformats readout::readout timinglibs::timinglibs RdKafka::rdkafka RdKafka::rdkafka++)
+
+# Unit tests
+
+daq_add_unit_test(Fourier_test LINK_LIBRARIES dataformats::dataformats readout::readout RdKafka::rdkafka++)
 
 daq_install()

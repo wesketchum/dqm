@@ -8,15 +8,18 @@
  * received with this code.
  */
 // DQM includes
-#include "dqm/Types.hpp"
 #include "dqm/dqmprocessor/Nljs.hpp"
 #include "dqm/dqmprocessorinfo/InfoNljs.hpp"
 #include "dqm/dqmprocessor/Structs.hpp"
+#include "Constants.hpp"
 
 #include "DQMProcessor.hpp"
-#include "Fourier.hpp"
 #include "HistContainer.hpp"
+#include "FourierContainer.hpp"
+#include "ChannelMapFiller.hpp"
+#include "ChannelMapEmpty.hpp"
 
+// DUNE-DAQ includes
 #include "appfwk/DAQSource.hpp"
 #include "dataformats/ComponentRequest.hpp"
 #include "dataformats/Fragment.hpp"
@@ -25,6 +28,7 @@
 #include "dataformats/wib/WIBFrame.hpp"
 #include "dfmessages/TriggerDecision.hpp"
 
+// C++ includes
 #include <chrono>
 #include <map>
 #include <memory>
@@ -68,22 +72,16 @@ void
 DQMProcessor::do_configure(const nlohmann::json& args)
 {
   auto conf = args.get<dqmprocessor::Conf>();
-  if (conf.mode == "debug" || conf.mode == "local processing") {
-    m_running_mode = RunningMode::kLocalProcessing;
-  } else if (conf.mode == "normal") {
-    m_running_mode = RunningMode::kNormal;
-  } else {
-    TLOG() << "Invalid value for mode, supported values are 'debug', 'local processing' and 'normal'";
-  }
-  // m_source = std::unique_ptr<appfwk::DAQSource < std::unique_ptr<dataformats::TriggerRecord >>>
-  // ("trigger_record_q_dqm"); m_sink = std::unique_ptr<appfwk::DAQSink < dfmessages::TriggerDecision >>
-  // ("trigger_decision_q_dqm");
   m_kafka_address = conf.kafka_address;
-  m_standard_dqm = args.get<dqmprocessor::StandardDQM>();
+  m_standard_dqm_hist = conf.sdqm_hist;
+  m_standard_dqm_mean_rms = conf.sdqm_mean_rms;
+  m_standard_dqm_fourier = conf.sdqm_fourier;
 
   m_link_idx = conf.link_idx;
 
   m_clock_frequency = conf.clock_frequency;
+
+  m_channel_map = conf.channel_map;
 }
 
 void
@@ -96,6 +94,11 @@ DQMProcessor::do_start(const nlohmann::json& args)
   m_run_number.store(dataformats::run_number_t(
       args.at("run").get<dataformats::run_number_t>()));
 
+  // The channel map pointer is set to the empty channel map that is not filled
+  // and allows the first check to pass for it to be filled with the actual
+  // channel map
+  m_map.reset(new ChannelMapEmpty);
+
   m_running_thread.reset(new std::thread(&DQMProcessor::RequestMaker, this));
 }
 
@@ -104,9 +107,6 @@ DQMProcessor::do_stop(const data_t&)
 {
   m_run_marker.store(false);
   m_running_thread->join();
-  // Delete the timestamp estimator
-  // Since it's not a plugin it runs forever until deleted
-  // m_time_est.reset(nullptr);
 }
 
 void
@@ -119,74 +119,108 @@ DQMProcessor::RequestMaker()
     AnalysisModule* mod;
     double between_time;
     double default_unavailable_time;
+    int number_of_frames;
     std::thread* running_thread;
     std::string name;
   };
 
-  // For now only one link
   std::vector<dataformats::GeoID> m_links;
 
   for (auto i: m_link_idx) {
     m_links.push_back({ dataformats::GeoID::SystemType::kTPC, 0, static_cast<unsigned int>(i) });
   }
 
+  // Map that holds the tasks and times when to do them
   std::map<std::chrono::time_point<std::chrono::system_clock>, AnalysisInstance> map;
 
   std::unique_ptr<dataformats::TriggerRecord> element;
 
   // Instances of analysis modules
-  HistContainer hist1s("hist1s", 256, 100, 0, 5000);
-  HistContainer hist5s("hist5s", 256, 50, 0, 5000);
-  HistContainer hist10s("hist10s", 256, 10, 0, 5000);
-  FourierLink fourier10s("fourier10s", 0, 10, 100);
+
+  // Raw event display
+  HistContainer hist("raw_display", CHANNELS_PER_LINK * m_link_idx.size(), m_link_idx, 100, 0, 5000, false);
+  // Mean and RMS
+  HistContainer mean_rms("rmsm_display", CHANNELS_PER_LINK * m_link_idx.size(), m_link_idx, 100, 0, 5000, true);
+  // Fourier transform
+  // The Delta of time between frames is the inverse of the sampling frequency (clock frequency)
+  // but because we are sampling every TICKS_BETWEEN_TIMESTAMP ticks we have to multiply by that
+  FourierContainer fourier("fft_display", CHANNELS_PER_LINK * m_link_idx.size(), m_link_idx, 1. / m_clock_frequency * TICKS_BETWEEN_TIMESTAMP, m_standard_dqm_fourier.num_frames);
+  // Fills the channel map at the beggining of a run
+  ChannelMapFiller chfiller("channelmapfiller", m_channel_map);
 
   // Initial tasks
-  map[std::chrono::system_clock::now()] = {&hist1s, m_standard_dqm.histogram_how_often, m_standard_dqm.histogram_unavailable_time, nullptr, "Histogram every " + std::to_string(m_standard_dqm.histogram_how_often) + " s"};
-  // map[std::chrono::system_clock::now()] = { &hist1s, 1, 1, nullptr, "Histogram every 1 s" };
-  // map[std::chrono::system_clock::now()] = {&hist5s, 5, 1, nullptr, "Histogram every 5 s"};
-  // map[std::chrono::system_clock::now()] = {&hist10s, 10, 1, nullptr, "Histogram every 10 s"};
+  // Add some offset time to let the other parts of the DAQ start
+  // Typically the first and maybe second requests of data fails
+  map[std::chrono::system_clock::now() + std::chrono::seconds(10)] = {&hist,
+                                                                      m_standard_dqm_hist.how_often,
+                                                                      m_standard_dqm_hist.unavailable_time,
+                                                                      m_standard_dqm_hist.num_frames,
+                                                                      nullptr,
+                                                                      "Histogram every " + std::to_string(m_standard_dqm_hist.how_often) + " s"};
+  map[std::chrono::system_clock::now() + std::chrono::seconds(10)] = {&mean_rms,
+                                                                      m_standard_dqm_mean_rms.how_often,
+                                                                      m_standard_dqm_mean_rms.unavailable_time,
+                                                                      m_standard_dqm_mean_rms.num_frames,
+                                                                      nullptr,
+                                                                      "Histogram every " + std::to_string(m_standard_dqm_hist.how_often) + " s"};
+  map[std::chrono::system_clock::now() + std::chrono::seconds(10)] = {&fourier,
+                                                                      m_standard_dqm_fourier.how_often,
+                                                                      m_standard_dqm_fourier.unavailable_time,
+                                                                      m_standard_dqm_fourier.num_frames,
+                                                                      nullptr,
+                                                                      "Fourier every " + std::to_string(m_standard_dqm_fourier.how_often) + " s"};
+  map[std::chrono::system_clock::now() + std::chrono::seconds(2)] =  {&chfiller,
+                                                                      3,
+                                                                      3,
+                                                                      1, //Request only one frame for each link
+                                                                      nullptr,
+                                                                      "Channel map filler"};
 
   // Main loop, running forever
   while (m_run_marker) {
 
-    auto fr = map.begin();
-    if (fr == map.end()) {
+    auto task = map.begin();
+    if (task == map.end()) {
       TLOG() << "Empty map! This should never happen!";
       break;
     }
-    auto next_time = fr->first;
-    AnalysisModule* algo = fr->second.mod;
-
-    // Save pointer to delete the thread later
-    std::thread* previous_thread = fr->second.running_thread;
-
-    // TLOG() << "TIME: next_time" << next_time.time_since_epoch().count();
-
-    // TLOG() << "MAIN LOOP" << " Instance of " << fr->second.between_time << " seconds" << (algo == &hist1s) << " " <<
-    // (algo == &hist5s);
+    auto next_time = task->first;
+    auto analysis_instance = task->second;
+    AnalysisModule* algo = analysis_instance.mod;
 
     // Sleep until the next time
     std::this_thread::sleep_until(next_time);
-    // We don't want to run if the run has stopped
+
+    // Save pointer to delete the thread later
+    std::thread* previous_thread = analysis_instance.running_thread;
+
+    // If the channel map filler has already run and has worked then remove the entry
+    // and keep running
+    if (analysis_instance.mod == &chfiller and m_map->is_filled()) {
+      map.erase(task);
+      TLOG_DEBUG(5) << "Channel map already filled, removing entry and starting again";
+      continue;
+    }
+
+    // We don't want to run if the run has stopped after sleeping for a while
     if (!m_run_marker) {
       break;
     }
 
-
     // Make sure that the process is not running and a request can be made
     // otherwise we wait for more time
     if (algo->is_running()) {
-      TLOG() << "ALGORITHM already running";
+      TLOG(5) << "ALGORITHM "<< analysis_instance.name << " already running";
       map[std::chrono::system_clock::now() +
-          std::chrono::milliseconds(static_cast<int>(fr->second.default_unavailable_time) * 1000)] = {
-        algo, fr->second.between_time, fr->second.default_unavailable_time, previous_thread, fr->second.name};
-      map.erase(fr);
+          std::chrono::milliseconds(static_cast<int>(analysis_instance.default_unavailable_time) * 1000)] = {algo,
+        analysis_instance.between_time, analysis_instance.default_unavailable_time, analysis_instance.number_of_frames, previous_thread, analysis_instance.name};
+      map.erase(task);
       continue;
     }
+
     // Before creating a request check that there
     // There has been a bug where the timestamp was retrieved before there were any timestamps
     // obtaining an invalid timestamps
-
     auto timestamp = m_time_est->get_timestamp_estimate();
     if (timestamp == dfmessages::TypeDefaults::s_invalid_timestamp) {
       // Some sleep is needed because at the beginning there are no valid timestamps
@@ -196,7 +230,7 @@ DQMProcessor::RequestMaker()
     }
 
     // Now it's the time to do something
-    auto request = CreateRequest(m_links);
+    auto request = CreateRequest(m_links, analysis_instance.number_of_frames);
 
     try {
       m_sink->push(request, m_sink_timeout);
@@ -220,18 +254,19 @@ DQMProcessor::RequestMaker()
     ++m_total_data_count;
 
     TLOG_DEBUG(10) << "Data popped from the queue";
-
-    std::thread* current_thread =
-      new std::thread(&AnalysisModule::run, std::ref(*algo), std::ref(*element), m_running_mode, m_kafka_address);
+    using runfunc_type = void (AnalysisModule::*)(std::unique_ptr<dataformats::TriggerRecord> record, std::unique_ptr<ChannelMap>& map, std::string kafka_address);
+    runfunc_type memfunc = &AnalysisModule::run;
+    std::thread* current_thread = new std::thread(memfunc, std::ref(*algo), std::move(element), std::ref(m_map), m_kafka_address);
 
     // Add a new entry for the current instance
     map[std::chrono::system_clock::now() +
-        std::chrono::milliseconds(static_cast<int>(fr->second.between_time) * 1000)] = {
-      algo, fr->second.between_time, fr->second.default_unavailable_time, current_thread, fr->second.name
+        std::chrono::milliseconds(static_cast<int>(analysis_instance.between_time) * 1000)] = {
+      algo, analysis_instance.between_time, analysis_instance.default_unavailable_time,
+      analysis_instance.number_of_frames, current_thread, analysis_instance.name
     };
 
     // Delete the entry we just used and find the next one
-    map.erase(fr);
+    map.erase(task);
 
     // Delete thread
     if (previous_thread != nullptr) {
@@ -239,6 +274,7 @@ DQMProcessor::RequestMaker()
         previous_thread->join();
         delete previous_thread; // TODO: rsipos -> Why is this a raw pointer on the thread? Move to unique_ptr.
       } else {
+        TLOG() << "Thread not joinable";
         // Should not be happening
       }
     }
@@ -248,7 +284,7 @@ DQMProcessor::RequestMaker()
 }
 
 dfmessages::TriggerDecision
-DQMProcessor::CreateRequest(std::vector<dfmessages::GeoID> m_links)
+DQMProcessor::CreateRequest(std::vector<dfmessages::GeoID>& m_links, int number_of_frames)
 {
   auto timestamp = m_time_est->get_timestamp_estimate();
   dfmessages::TriggerDecision decision;
@@ -260,8 +296,7 @@ DQMProcessor::CreateRequest(std::vector<dfmessages::GeoID> m_links)
   decision.trigger_timestamp = timestamp;
   decision.readout_type = dfmessages::ReadoutType::kMonitoring;
 
-  int number_of_frames = 1;
-  int window_size = number_of_frames * 25;
+  int window_size = number_of_frames * TICKS_BETWEEN_TIMESTAMP;
 
   for (auto& link : m_links) {
     // TLOG() << "ONE LINK";
