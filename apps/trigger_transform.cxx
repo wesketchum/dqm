@@ -222,7 +222,7 @@ int main(int argc, char **argv)
 
 
 
-  bpo::options_description desc{"example: --rcemap /config/protoDUNETPCChannelMap_RCE_v4.txt --felixmap /config/protoDUNETPCChannelMap_FELIX_v4.txt --broker 188.185.122.48:9092 --Source defaultSource --topic dunedqm-incomingadcfrequency --folder /eos/home-y/yadonon/TriggerRecords/ --interval 100"};
+  bpo::options_description desc{"example: --rcemap /config/protoDUNETPCChannelMap_RCE_v4.txt --felixmap /config/protoDUNETPCChannelMap_FELIX_v4.txt --broker 127.0.0.1:9092 --Source defaultSource --topic dunedqm-incomingadcfrequency --folder /eos/home-y/yadonon/TriggerRecords/ --interval 100"};
 
   desc.add_options()
     ("help,h", "Help screen")
