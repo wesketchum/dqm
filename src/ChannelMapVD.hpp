@@ -27,9 +27,10 @@ class ChannelMapVD : public ChannelMap{
 
   std::map<int, std::map<int, std::pair<int, int>>> m_map;
 
-  // Three dimensional array of 4x2x256 holding the offline channel corresponding to each combination of 
-  // slot, fiber and frame channel
-  vvvi vec;
+  // Three dimensional array of 4x2x256 (4 WIBS x 2 LINKS x 256 channels)
+  // holding the offline channel corresponding to each combination of slot,
+  // fiber and frame channel
+  vvvi channelvec;
   vvvi planevec; 
 
 public:
@@ -40,7 +41,7 @@ public:
 
 ChannelMapVD::ChannelMapVD()
 {
-  vec = vvvi(4, vvi(2, vi(256, -1)));
+  channelvec = vvvi(4, vvi(2, vi(256, -1)));
   planevec = vvvi(4, vvi(2, vi(256, -1)));
 }
 
@@ -98,11 +99,24 @@ ChannelMapVD::fill(dataformats::TriggerRecord &tr){
       asic_channel = std::stoi(str);
       (void)asic_channel; // Silences unused warning, does nothing
 
+      // Each CE board is connected to one connector of one WIB and each WIB has
+      // 4 connectors. CE board 1 maps to the connector 1 in WIB 1, CE board 2
+      // to the connector 2 of WIB 1 and so on. Numbering begins at 1 for CE
+      // boards but at zero for wibs
       int wib = (ce_board - 1) % 4;
-      int link = ((ce_board - 1) / 2) % 2;
-      int channel = ceb_channel;
 
-      vec[wib][link][channel] = std::stoi(strip_number.substr(1));
+      // Each WIB has two links so assuming that the first two connectors are
+      // connected to the first link and the last two connectors are connected
+      // to the second link we have (with link being either 0 or 1)
+      int link = ((ce_board - 1) / 2) % 2;
+
+      // CEB channel goes between 0 and 127 for each board so 0 - 127 will
+      // correspond to the first connector and 128 - 255 to the second connector
+      // If the ce_board is odd then it's the first connector and if it's even
+      // then it's the second connector
+      int channel = ceb_channel + 128 * ((ce_board - 1) % 2);
+
+      channelvec[wib][link][channel] = std::stoi(strip_number.substr(1));
 
       if (strip_number[0] == 'U') {
         planevec[wib][link][channel] = 0;
@@ -126,7 +140,6 @@ ChannelMapVD::fill(dataformats::TriggerRecord &tr){
   Decoder dec;
   auto wibframes = dec.decode(tr);
 
-
   // If we get no frames then return and since
   // the map is not filled it will run again soon
   if (wibframes.size() == 0)
@@ -147,9 +160,9 @@ ChannelMapVD::fill(dataformats::TriggerRecord &tr){
         continue;
       }
       for (int ich=0; ich < CHANNELS_PER_LINK; ++ich) {
-        // fiber takes the values 1 and 2 but it was indexed in vec and planevec
+        // fiber takes the values 1 and 2 but it was indexed in channelvec and planevec
         // beggining with 0 so we need to subtract 1
-        auto channel = vec[slot][fiber-1][ich];
+        auto channel = channelvec[slot][fiber-1][ich];
         auto plane = planevec[slot][fiber-1][ich];
         m_map[plane][channel] = {key, ich};
       }
