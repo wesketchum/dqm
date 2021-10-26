@@ -56,3 +56,18 @@ And run with
 ## Channel map
 To use the horizontal drift channel map (default) with nanorc use `--dqm-cmap HD`,
 to use the vertical drift channel map use `--dqm-cmap VD`.
+
+## Using the hdf5 to raw event display 
+The hdf5 to raw event display is an application included in the dqm. It uses an independent data reading and transformation approach, as well than an other kafka topic than the rest of DQM services. 
+
+Parameters are the following:
+
+broker, default value "127.0.0.1:9092", Kafka Broker adress
+topic, default value "dunedqm-incomingadcfrequency", Kafka topic
+source, default value "defaultSource", Data source name
+rcemap, default value "/config/protoDUNETPCChannelMap_RCE_v4.txt", RCE channels map location
+felixmap, default value "/config/protoDUNETPCChannelMap_FELIX_v4.txt", FELIX channels map location
+folder, default value "/eos/home-y/yadonon/TriggerRecords/", Folder containing the records
+interval, default value "100", Sampling interval of the WIB frames
+
+The application parses the folder containing the hdf5 files continuously and sends each new one to the display.
