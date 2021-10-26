@@ -9,8 +9,6 @@
 #define DQM_SRC_CHANNELMAPPER_HPP_
 
 // DQM
-#include "dqm/Types.hpp"
-
 #include "dataformats/TriggerRecord.hpp"
 
 #include "readout/chmap/PdspChannelMapService.cpp"
