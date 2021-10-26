@@ -11,7 +11,7 @@
 // DQM
 #include "dataformats/TriggerRecord.hpp"
 
-#include "readout/chmap/PdspChannelMapService.cpp"
+#include "readout/chmap/PdspChannelMapService.hpp"
 
 //Global channel map object to avoid repeated creation and deletion
 
