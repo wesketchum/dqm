@@ -77,7 +77,11 @@ void readDataset(std::string path_dataset, void *buff)
       {
         message_to_kafka = std::to_string(apa_count) + ";" + std::to_string(fragments_count) + ";" + std::to_string(interval_of_capture) + ";" + std::to_string(frag.get_run_number()) + ";" + std::to_string(frag.get_trigger_number()) + ";" + std::to_string(frag.get_element_id().region_id) + ";" + std::to_string(frag.get_element_id().element_id) + ";" + std::to_string(raw_data_packets) + ";" + data_Source_Name + ";";
 
-        auto wfptr_i = reinterpret_cast<dunedaq::dataformats::WIBFrame *>(frag.get_data() + i * sizeof(dunedaq::dataformats::WIBFrame));
+
+        auto wfptr_i = reinterpret_cast<dunedaq::dataformats::WIBFrame *>(static_cast<char*>(frag.get_data()) + i * sizeof(dunedaq::dataformats::WIBFrame));
+        //auto wfptr_i = reinterpret_cast<dunedaq::dataformats::WIBFrame *>(i * sizeof(dunedaq::dataformats::WIBFrame));
+
+        //auto wfptr_i = reinterpret_cast<dunedaq::dataformats::WIBFrame*>(frag.get_data());       
 
         //Adds wib frame id
         message_to_kafka += std::to_string(i/interval_of_capture) + "\n";
@@ -209,10 +213,10 @@ int main(int argc, char **argv)
 {
 
   std::string broker;
-  std::string string_folder;
+  std::string string_folder = "";
   std::string string_interval_of_capture;
 
-  char *folder;
+  char *folder = const_cast<char*>(string_folder.c_str());
   //char *folder = "/eos/home-y/yadonon/TriggerRecords/";
   //interval_of_capture = 100;
 
@@ -301,13 +305,16 @@ int main(int argc, char **argv)
   }
 
   DIR *dir; struct dirent *diread;
-  std::vector<std::string> files;
 
 
+
+
+  std::ofstream input_parsed_files("parsedfiles.txt", std::ios::app); 
 
 
   while (true)
   {
+    std::vector<std::string> files;
     try
     {
       if ((dir = opendir(folder)) != nullptr) 
@@ -321,45 +328,44 @@ int main(int argc, char **argv)
           ers::error(dunedaq::triggertransform::CannotOpenFolder(ERS_HERE, folder));
       }
 
+
       // Read from the text file
-      std::string parsed_file_strings;
-      std::ofstream input_parsed_files("parsedfiles.txt", std::ios::app); 
-      std::ifstream outut_parsed_files("parsedfiles.txt");
-      bool file_parsed = false;
+
 
       for (std::string file : files) 
       {
+        bool file_parsed = false;
+
+        std::ifstream outut_parsed_files("parsedfiles.txt");
+
+        std::string parsed_file_strings;
+
         try
         {
           if(file.find("hdf5") != std::string::npos )
           {
-            while (getline (outut_parsed_files, parsed_file_strings))
+            while (getline(outut_parsed_files, parsed_file_strings))
             {
               // Output the text from the file
-              if(parsed_file_strings == file)
-              {
+              //std::cout << "parsed_file_strings" << parsed_file_strings << "      file " << file << std::endl;
 
+              if(parsed_file_strings == file && parsed_file_strings != "")
+              {
                 file_parsed = true;
                 break;
-              }
-              
+              }              
             }
             if(!file_parsed)
             {
               
               //  HighFive::File file("/eos/home-y/yadonon/swtest_run000002_0000_glehmann_20211001T115720.hdf5", HighFive::File::ReadOnly);
               //  std::vector<std::string> data_path = traverseFile(file, num_trs);
-              //  std::cout << file << std::endl;
+              //std::cout << "Parsing file : " <<file << std::endl;
               HighFive::File h5file(file, HighFive::File::ReadOnly);
               std::vector<std::string> data_path = traverseFile(h5file, num_trs);
-              input_parsed_files << file << std::endl; 
-              std::cout << file << std::endl; 
+              input_parsed_files << file << std::endl ;
+              //file_parsed = true;
             }
-            else
-            {
-              std::cout << file << " ALLREADY PARSED" << std::endl; 
-            }
-            file_parsed = false;
           }
             
         }
@@ -367,15 +373,18 @@ int main(int argc, char **argv)
         {
           dunedaq::triggertransform::ErrorReadingFile(ERS_HERE, e.what());
         } 
+        outut_parsed_files.close();
+
       }
-      sleep(10); //Wait, then search if files have been added
-      input_parsed_files.close(); 
-      outut_parsed_files.close(); 
+      sleep(5); //Wait, then search if files have been added
     }
     catch(const std::exception& e)
     {
       dunedaq::triggertransform::CannotOpenFile(ERS_HERE, e.what());
     }
+
   }
+  input_parsed_files.close(); 
+
   return 0;
 }
