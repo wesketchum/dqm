@@ -11,7 +11,7 @@
 // DQM
 #include "Decoder.hpp"
 #include "Constants.hpp"
-#include "DQMIssues.hpp"
+#include "dqm/DQMIssues.hpp"
 
 #include "dataformats/TriggerRecord.hpp"
 

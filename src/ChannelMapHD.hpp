@@ -12,7 +12,7 @@
 #include "ChannelMap.hpp"
 #include "Decoder.hpp"
 #include "Constants.hpp"
-#include "DQMIssues.hpp"
+#include "dqm/DQMIssues.hpp"
 
 #include "dataformats/TriggerRecord.hpp"
 #include "readout/chmap/PdspChannelMapService.hpp"
@@ -128,7 +128,7 @@ unsigned int getOfflineChannel(swtpg::PdspChannelMapService& channelMap, // NOLI
   } else if (fiber == 2) {
     fiberloc = 3;
   } else {
-    TLOG() << " Fiber number " << fiber << " is expected to be 1 or 2 -- revisit logic";
+    throw ChannelMapError("Fiber number is expected to be 1 or 2, setting to 1");
     fiberloc = 1;
   }
 
