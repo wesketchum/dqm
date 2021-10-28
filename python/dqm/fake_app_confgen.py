@@ -166,6 +166,7 @@ def generate(
                         )),
             ] + [
                 ('dqmprocessor', dqmprocessor.Conf(
+                        region=0,
                         channel_map='HD', # 'HD' for horizontal drift or 'VD' for vertical drift
                         sdqm_hist=dqmprocessor.StandardDQM(how_often=60, unavailable_time=10, num_frames=50),
                         sdqm_mean_rms=dqmprocessor.StandardDQM(how_often=10, unavailable_time=1, num_frames=100),

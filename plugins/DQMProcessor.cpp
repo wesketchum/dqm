@@ -82,6 +82,8 @@ DQMProcessor::do_configure(const nlohmann::json& args)
   m_clock_frequency = conf.clock_frequency;
 
   m_channel_map = conf.channel_map;
+
+  m_region = conf.region;
 }
 
 void
@@ -127,7 +129,7 @@ DQMProcessor::RequestMaker()
   std::vector<dataformats::GeoID> m_links;
 
   for (auto i: m_link_idx) {
-    m_links.push_back({ dataformats::GeoID::SystemType::kTPC, 0, static_cast<unsigned int>(i) });
+    m_links.push_back({ dataformats::GeoID::SystemType::kTPC, m_region, static_cast<unsigned int>(i) });
   }
 
   // Map that holds the tasks and times when to do them
