@@ -12,6 +12,7 @@
 #include "ChannelMap.hpp"
 #include "Decoder.hpp"
 #include "Constants.hpp"
+#include "DQMIssues.hpp"
 
 #include "dataformats/TriggerRecord.hpp"
 #include "readout/chmap/PdspChannelMapService.hpp"
