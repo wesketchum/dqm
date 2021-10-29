@@ -93,7 +93,15 @@ HistContainer::run(std::unique_ptr<dataformats::TriggerRecord> record, std::uniq
     keys.push_back(key);
   }
 
-  uint64_t min_timestamp = wibframes[keys.front()].front()->get_wib_header()->get_timestamp();
+  uint64_t min_timestamp = 0;
+  // We run over all links until we find one that has a non-empty vector of frames
+  for (auto& key : keys) {
+    if (!wibframes[key].empty()) {
+      min_timestamp = wibframes[key].front()->get_wib_header()->get_timestamp();
+      break;
+
+    }
+  }
   uint64_t timestamp = 0;
 
   // Main loop
