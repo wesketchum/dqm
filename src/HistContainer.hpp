@@ -99,7 +99,6 @@ HistContainer::run(std::unique_ptr<dataformats::TriggerRecord> record, std::uniq
     if (!wibframes[key].empty()) {
       min_timestamp = wibframes[key].front()->get_wib_header()->get_timestamp();
       break;
-
     }
   }
   uint64_t timestamp = 0;
