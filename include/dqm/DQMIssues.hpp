@@ -12,11 +12,13 @@
 
 #include <string>
 
+#include "dfmessages/Types.hpp"
+
 namespace dunedaq {
 
 ERS_DECLARE_ISSUE(dqm,
                   ChannelMapError,
-                  "Channel Map parameter not valid" << error,
+                  "Channel Map parameter not valid:" << error,
                   ((std::string)error))
 
 ERS_DECLARE_ISSUE(dqm,
@@ -25,9 +27,24 @@ ERS_DECLARE_ISSUE(dqm,
                   ((std::string)env))
 
 ERS_DECLARE_ISSUE(dqm,
+                  CouldNotOpenFile,
+                  "Unable to open the file " << file,
+                  ((std::string)file))
+
+ERS_DECLARE_ISSUE(dqm,
                   InvalidTimestamp,
                   "The timestamp " << timestamp << " is not valid",
                   ((dfmessages::timestamp_t)timestamp))
+
+ERS_DECLARE_ISSUE(dqm,
+                  ProcessorError,
+                  "Error in DQMProcessor: ",
+                  ((std::string)error))
+
+// ERS_DECLARE_ISSUE(dqm,
+//                   UnsupportedDataType,
+//                   "Data type is not supported ",
+//                   (()))
 
 
 } // namespace dunedaq
