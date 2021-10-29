@@ -225,9 +225,10 @@ DQMProcessor::RequestMaker()
     // obtaining an invalid timestamps
     auto timestamp = m_time_est->get_timestamp_estimate();
     if (timestamp == dfmessages::TypeDefaults::s_invalid_timestamp) {
+      ers::warning(InvalidTimestamp(ERS_HERE, timestamp));
       // Some sleep is needed because at the beginning there are no valid timestamps
       // so it will be checking continuously if there is a valid one
-      std::this_thread::sleep_for(std::chrono::milliseconds(10));
+      std::this_thread::sleep_for(std::chrono::milliseconds(50));
       continue;
     }
 

@@ -24,6 +24,11 @@ ERS_DECLARE_ISSUE(dqm,
                   "Trying to get the env variable " << env << " did not work",
                   ((std::string)env))
 
+ERS_DECLARE_ISSUE(dqm,
+                  InvalidTimestamp,
+                  "The timestamp " << timestamp << " is not valid",
+                  ((dfmessages::timestamp_t)timestamp))
+
 
 } // namespace dunedaq
 
