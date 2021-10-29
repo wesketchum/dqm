@@ -66,7 +66,7 @@ ChannelMapVD::fill(dataformats::TriggerRecord &tr){
     auto env = std::getenv("DQM_SHARE");
     // Make sure the env variable can be retrieved
     if (env == nullptr) {
-      throw InvalidEnvVariable(ERS_HERE, "READOUT_SHARE");
+      ers::error(InvalidEnvVariable(ERS_HERE, "READOUT_SHARE"));
       return;
     }
 

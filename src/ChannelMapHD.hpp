@@ -64,7 +64,7 @@ ChannelMapHD::fill(dataformats::TriggerRecord &tr){
   auto env = getenv("READOUT_SHARE");
   // Make sure the env variable can be retrieved
   if (env == nullptr) {
-    throw InvalidEnvVariable(ERS_HERE, "READOUT_SHARE");
+    ers::error(InvalidEnvVariable(ERS_HERE, "READOUT_SHARE"));
     return;
   }
   std::string path = std::string(env);
@@ -128,7 +128,7 @@ unsigned int getOfflineChannel(swtpg::PdspChannelMapService& channelMap, // NOLI
   } else if (fiber == 2) {
     fiberloc = 3;
   } else {
-    throw ChannelMapError(ERS_HERE, "Fiber number is expected to be 1 or 2, setting to 1");
+    ers::error(ChannelMapError(ERS_HERE, "Fiber number is expected to be 1 or 2, setting to 1"));
     fiberloc = 1;
   }
 
