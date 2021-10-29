@@ -103,7 +103,7 @@ ChannelMapVD::fill(dataformats::TriggerRecord &tr){
       // 4 connectors. CE board 1 maps to the connector 1 in WIB 1, CE board 2
       // to the connector 2 of WIB 1 and so on. Numbering begins at 1 for CE
       // boards but at zero for wibs
-      int wib = (ce_board - 1) % 4;
+      int wib = (ce_board - 1) / 4;
 
       // Each WIB has two links so assuming that the first two connectors are
       // connected to the first link and the last two connectors are connected
@@ -167,6 +167,11 @@ ChannelMapVD::fill(dataformats::TriggerRecord &tr){
         m_map[plane][channel] = {key, ich};
       }
     }
+  }
+
+  // Delete the default value to make sure it's not sent
+  if (m_map.find(-1) != m_map.end()) {
+    m_map.erase(-1);
   }
 
   TLOG_DEBUG(5) << "Channel Map for the VD created";
