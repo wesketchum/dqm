@@ -12,6 +12,7 @@
 #include "ChannelMap.hpp"
 #include "Decoder.hpp"
 #include "Constants.hpp"
+#include "dqm/DQMIssues.hpp"
 
 #include "dataformats/TriggerRecord.hpp"
 #include "readout/chmap/PdspChannelMapService.hpp"
@@ -60,9 +61,15 @@ ChannelMapHD::fill(dataformats::TriggerRecord &tr){
   std::unique_ptr<swtpg::PdspChannelMapService> channelmap;
   // There is one env variable $PACKAGE_SHARE for each
   // DUNEDAQ package
-  std::string path = std::string(getenv("READOUT_SHARE"));
-  std::string channel_map_rce = std::string(path) + "/config/protoDUNETPCChannelMap_RCE_v4.txt";
-  std::string channel_map_felix = std::string(path) + "/config/protoDUNETPCChannelMap_FELIX_v4.txt";
+  auto env = getenv("READOUT_SHARE");
+  // Make sure the env variable can be retrieved
+  if (env == nullptr) {
+    ers::error(InvalidEnvVariable(ERS_HERE, "READOUT_SHARE"));
+    return;
+  }
+  std::string path = std::string(env);
+  std::string channel_map_rce = path + "/config/protoDUNETPCChannelMap_RCE_v4.txt";
+  std::string channel_map_felix = path + "/config/protoDUNETPCChannelMap_FELIX_v4.txt";
   channelmap.reset(new swtpg::PdspChannelMapService(channel_map_rce, channel_map_felix));
 
 
@@ -121,7 +128,7 @@ unsigned int getOfflineChannel(swtpg::PdspChannelMapService& channelMap, // NOLI
   } else if (fiber == 2) {
     fiberloc = 3;
   } else {
-    TLOG() << " Fiber number " << fiber << " is expected to be 1 or 2 -- revisit logic";
+    ers::error(ChannelMapError(ERS_HERE, "Fiber number is expected to be 1 or 2, setting to 1"));
     fiberloc = 1;
   }
 

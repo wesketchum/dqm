@@ -11,6 +11,7 @@
 // DQM
 #include "Decoder.hpp"
 #include "Constants.hpp"
+#include "dqm/DQMIssues.hpp"
 
 #include "dataformats/TriggerRecord.hpp"
 
@@ -62,7 +63,14 @@ ChannelMapVD::fill(dataformats::TriggerRecord &tr){
     std::ifstream csv;
     // There is one env variable $PACKAGE_SHARE for each
     // DUNEDAQ package
-    std::string path = std::string(std::getenv("DQM_SHARE"));
+    auto env = std::getenv("DQM_SHARE");
+    // Make sure the env variable can be retrieved
+    if (env == nullptr) {
+      ers::error(InvalidEnvVariable(ERS_HERE, "READOUT_SHARE"));
+      return;
+    }
+
+    std::string path = std::string(env);
     csv.open(path + "/config/" + "AB" + std::to_string(i) + ".csv");
     bool first_line = true;
     std::string line;
