@@ -9,7 +9,7 @@
 #define DQM_SRC_CHANNELMAPPER_HPP_
 
 // DQM
-#include "dataformats/TriggerRecord.hpp"
+#include "daqdataformats/TriggerRecord.hpp"
 
 #include "readout/chmap/PdspChannelMapService.hpp"
 
@@ -29,7 +29,7 @@ namespace dunedaq::dqm
 {
 
 unsigned int getOfflineChannel(swtpg::PdspChannelMapService& channelMap, 
-                               const dunedaq::dataformats::WIBFrame* frame,
+                               const dunedaq::detdataformats::WIBFrame* frame,
                                unsigned int ch) // NOLINT(build/unsigned)
 {
   // handle 256 channels on two fibers -- use the channel

@@ -14,7 +14,7 @@
 #include "Constants.hpp"
 #include "dqm/DQMIssues.hpp"
 
-#include "dataformats/TriggerRecord.hpp"
+#include "daqdataformats/TriggerRecord.hpp"
 #include "readout/chmap/PdspChannelMapService.hpp"
 
 #include <stdlib.h>
@@ -23,7 +23,7 @@
 namespace dunedaq::dqm {
 
 unsigned int getOfflineChannel(swtpg::PdspChannelMapService& channelMap, // NOLINT(build/unsigned)
-                               const dunedaq::dataformats::WIBFrame* frame,
+                               const dunedaq::detdataformats::WIBFrame* frame,
                                unsigned int ch);
 
 class ChannelMapHD : public ChannelMap {
@@ -34,7 +34,7 @@ public:
   int get_channel(int channel);
   int get_plane(int channel);
   bool is_filled();
-  void fill(dataformats::TriggerRecord &tr);
+  void fill(daqdataformats::TriggerRecord &tr);
   std::map<int, std::map<int, std::pair<int, int>>> get_map();
 };
 
@@ -48,7 +48,7 @@ ChannelMapHD::get_map(){
 }
 
 void
-ChannelMapHD::fill(dataformats::TriggerRecord &tr){
+ChannelMapHD::fill(daqdataformats::TriggerRecord &tr){
 
   if (is_filled()) {
     TLOG_DEBUG(5) << "ChannelMapHD already filled";
@@ -112,7 +112,7 @@ ChannelMapHD::is_filled() {
 }
 
 unsigned int getOfflineChannel(swtpg::PdspChannelMapService& channelMap, // NOLINT(build/unsigned)
-                               const dunedaq::dataformats::WIBFrame* frame,
+                               const dunedaq::detdataformats::WIBFrame* frame,
                                unsigned int ch) // NOLINT(build/unsigned)
 {
   // handle 256 channels on two fibers -- use the channel

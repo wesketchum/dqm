@@ -6,8 +6,8 @@
 #include <highfive/H5Object.hpp>
 #include <librdkafka/rdkafkacpp.h>
 #include <ers/StreamFactory.hpp>
-#include "dataformats/TriggerRecord.hpp"
-#include "dataformats/wib/WIBFrame.hpp"
+#include "daqdataformats/TriggerRecord.hpp"
+#include "detdataformats/wib/WIBFrame.hpp"
 #include "boost/program_options.hpp"
 #include "dqm/ChannelMapper.hpp"
 #include <stdlib.h>     //for using the function sleep
@@ -59,15 +59,15 @@ void readDataset(std::string path_dataset, void *buff)
   std::string tr_header = "TriggerRecordHeader";
   if (path_dataset.find(tr_header) == std::string::npos)
   {
-    dunedaq::dataformats::Fragment frag(buff, dunedaq::dataformats::Fragment::BufferAdoptionMode::kReadOnlyMode);
+    dunedaq::daqdataformats::Fragment frag(buff, dunedaq::daqdataformats::Fragment::BufferAdoptionMode::kReadOnlyMode);
     // Here I can now look into the raw data
     // As an example, we print a couple of attributes of the Fragment header and then dump the first WIB frame.
-    if (frag.get_fragment_type() == dunedaq::dataformats::FragmentType::kTPCData)
+    if (frag.get_fragment_type() == dunedaq::daqdataformats::FragmentType::kTPCData)
     {
 
       // Get pointer to the first WIB frame
-      //auto wfptr = reinterpret_cast<dunedaq::dataformats::WIBFrame *>(frag.get_data());
-      size_t raw_data_packets = (frag.get_size() - sizeof(dunedaq::dataformats::FragmentHeader)) / sizeof(dunedaq::dataformats::WIBFrame);
+      //auto wfptr = reinterpret_cast<dunedaq::detdataformats::WIBFrame *>(frag.get_data());
+      size_t raw_data_packets = (frag.get_size() - sizeof(dunedaq::daqdataformats::FragmentHeader)) / sizeof(dunedaq::detdataformats::WIBFrame);
 
       //Message to be sent by kafka
       //Sends first informations about the trigger record and then about the WIB frame sent
@@ -78,10 +78,10 @@ void readDataset(std::string path_dataset, void *buff)
         message_to_kafka = std::to_string(apa_count) + ";" + std::to_string(fragments_count) + ";" + std::to_string(interval_of_capture) + ";" + std::to_string(frag.get_run_number()) + ";" + std::to_string(frag.get_trigger_number()) + ";" + std::to_string(frag.get_element_id().region_id) + ";" + std::to_string(frag.get_element_id().element_id) + ";" + std::to_string(raw_data_packets) + ";" + data_Source_Name + ";";
 
 
-        auto wfptr_i = reinterpret_cast<dunedaq::dataformats::WIBFrame *>(static_cast<char*>(frag.get_data()) + i * sizeof(dunedaq::dataformats::WIBFrame));
-        //auto wfptr_i = reinterpret_cast<dunedaq::dataformats::WIBFrame *>(i * sizeof(dunedaq::dataformats::WIBFrame));
+        auto wfptr_i = reinterpret_cast<dunedaq::detdataformats::WIBFrame *>(static_cast<char*>(frag.get_data()) + i * sizeof(dunedaq::detdataformats::WIBFrame));
+        //auto wfptr_i = reinterpret_cast<dunedaq::detdataformats::WIBFrame *>(i * sizeof(dunedaq::detdataformats::WIBFrame));
 
-        //auto wfptr_i = reinterpret_cast<dunedaq::dataformats::WIBFrame*>(frag.get_data());       
+        //auto wfptr_i = reinterpret_cast<dunedaq::detdataformats::WIBFrame*>(frag.get_data());       
 
         //Adds wib frame id
         message_to_kafka += std::to_string(i/interval_of_capture) + "\n";

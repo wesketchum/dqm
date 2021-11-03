@@ -8,9 +8,9 @@
 #ifndef DQM_SRC_DECODER_HPP_
 #define DQM_SRC_DECODER_HPP_
 
-#include "dataformats/Fragment.hpp"
-#include "dataformats/TriggerRecord.hpp"
-#include "dataformats/wib/WIBFrame.hpp"
+#include "daqdataformats/Fragment.hpp"
+#include "daqdataformats/TriggerRecord.hpp"
+#include "detdataformats/wib/WIBFrame.hpp"
 
 #include <climits>
 #include <memory>
@@ -28,24 +28,24 @@ public:
    * @return A map whose keys are the GeoID indexes and the values are
    *         vectors of pointers to the wibframes
    */
-  std::map<int, std::vector<dataformats::WIBFrame*>> decode(dunedaq::dataformats::TriggerRecord& record);
+  std::map<int, std::vector<detdataformats::WIBFrame*>> decode(dunedaq::daqdataformats::TriggerRecord& record);
 };
 
-std::map<int, std::vector<dataformats::WIBFrame*>>
-decodewib(dataformats::TriggerRecord& record)
+std::map<int, std::vector<detdataformats::WIBFrame*>>
+decodewib(daqdataformats::TriggerRecord& record)
 {
-  std::vector<std::unique_ptr<dataformats::Fragment>>& fragments = record.get_fragments_ref();
+  std::vector<std::unique_ptr<daqdataformats::Fragment>>& fragments = record.get_fragments_ref();
 
-  std::map<int, std::vector<dataformats::WIBFrame*>> wibframes;
+  std::map<int, std::vector<detdataformats::WIBFrame*>> wibframes;
 
   for (auto& fragment : fragments) {
     auto id = fragment->get_element_id();
     auto element_id = id.element_id;
-    int num_chunks = (fragment->get_size() - sizeof(dataformats::FragmentHeader)) / sizeof(dataformats::WIBFrame);
-    std::vector<dataformats::WIBFrame*> tmp;
+    int num_chunks = (fragment->get_size() - sizeof(daqdataformats::FragmentHeader)) / sizeof(detdataformats::WIBFrame);
+    std::vector<detdataformats::WIBFrame*> tmp;
     for (int i = 0; i < num_chunks; ++i) {
-      dataformats::WIBFrame* frame =
-        reinterpret_cast<dataformats::WIBFrame*>(static_cast<char*>(fragment->get_data()) + (i * 464)); // NOLINT
+      detdataformats::WIBFrame* frame =
+        reinterpret_cast<detdataformats::WIBFrame*>(static_cast<char*>(fragment->get_data()) + (i * 464)); // NOLINT
       tmp.push_back(frame);
     }
     wibframes[element_id] = tmp;
@@ -54,8 +54,8 @@ decodewib(dataformats::TriggerRecord& record)
   return wibframes;
 }
 
-std::map<int, std::vector<dataformats::WIBFrame*>>
-Decoder::decode(dataformats::TriggerRecord& record)
+std::map<int, std::vector<detdataformats::WIBFrame*>>
+Decoder::decode(daqdataformats::TriggerRecord& record)
 {
   return decodewib(record);
 }

@@ -13,7 +13,7 @@
 #include "Constants.hpp"
 #include "dqm/DQMIssues.hpp"
 
-#include "dataformats/TriggerRecord.hpp"
+#include "daqdataformats/TriggerRecord.hpp"
 
 #include <stdlib.h>
 #include <set>
@@ -36,7 +36,7 @@ class ChannelMapVD : public ChannelMap{
 
 public:
   ChannelMapVD();
-  void fill(dataformats::TriggerRecord &tr);
+  void fill(daqdataformats::TriggerRecord &tr);
   std::map<int, std::map<int, std::pair<int, int>>> get_map();
 };
 
@@ -52,7 +52,7 @@ ChannelMapVD::get_map(){
 }
 
 void
-ChannelMapVD::fill(dataformats::TriggerRecord &tr){
+ChannelMapVD::fill(daqdataformats::TriggerRecord &tr){
 
   // Read each csv file
   // They have the following format

@@ -13,7 +13,7 @@
 #include "Decoder.hpp"
 #include "Exporter.hpp"
 
-#include "dataformats/TriggerRecord.hpp"
+#include "daqdataformats/TriggerRecord.hpp"
 
 #include <chrono>
 #include <cstdlib>
