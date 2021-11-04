@@ -8,6 +8,8 @@
 #ifndef DQM_SRC_CHANNELMAP_HPP_
 #define DQM_SRC_CHANNELMAP_HPP_
 
+#include "detchannelmaps/TPCChannelMap.hpp"
+
 // DQM
 #include "daqdataformats/TriggerRecord.hpp"
 
@@ -16,6 +18,7 @@ namespace dunedaq::dqm {
 class ChannelMap {
 
 public:
+  std::shared_ptr<dunedaq::detchannelmaps::TPCChannelMap> m_chmap_service;
   bool m_is_filled = false;
 
   ChannelMap();

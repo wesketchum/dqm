@@ -15,16 +15,12 @@
 #include "dqm/DQMIssues.hpp"
 
 #include "daqdataformats/TriggerRecord.hpp"
-#include "readout/chmap/PdspChannelMapService.hpp"
+#include "detchannelmaps/TPCChannelMap.hpp"
 
 #include <stdlib.h>
 #include <set>
 
 namespace dunedaq::dqm {
-
-unsigned int getOfflineChannel(swtpg::PdspChannelMapService& channelMap, // NOLINT(build/unsigned)
-                               const dunedaq::detdataformats::WIBFrame* frame,
-                               unsigned int ch);
 
 class ChannelMapHD : public ChannelMap {
   std::map<int, std::map<int, std::pair<int, int>>> m_map;
@@ -40,16 +36,18 @@ public:
 
 ChannelMapHD::ChannelMapHD()
 {
+  m_chmap_service = dunedaq::detchannelmaps::make_map("ProtoDUNESP1ChannelMap");
 }
 
 std::map<int, std::map<int, std::pair<int, int>>>
-ChannelMapHD::get_map(){
+ChannelMapHD::get_map()
+{
   return m_map;
 }
 
 void
-ChannelMapHD::fill(daqdataformats::TriggerRecord &tr){
-
+ChannelMapHD::fill(daqdataformats::TriggerRecord &tr)
+{
   if (is_filled()) {
     TLOG_DEBUG(5) << "ChannelMapHD already filled";
     return;
@@ -57,21 +55,6 @@ ChannelMapHD::fill(daqdataformats::TriggerRecord &tr){
 
   dunedaq::dqm::Decoder dec;
   auto wibframes = dec.decode(tr);
-
-  std::unique_ptr<swtpg::PdspChannelMapService> channelmap;
-  // There is one env variable $PACKAGE_SHARE for each
-  // DUNEDAQ package
-  auto env = getenv("READOUT_SHARE");
-  // Make sure the env variable can be retrieved
-  if (env == nullptr) {
-    ers::error(InvalidEnvVariable(ERS_HERE, "READOUT_SHARE"));
-    return;
-  }
-  std::string path = std::string(env);
-  std::string channel_map_rce = path + "/config/protoDUNETPCChannelMap_RCE_v4.txt";
-  std::string channel_map_felix = path + "/config/protoDUNETPCChannelMap_FELIX_v4.txt";
-  channelmap.reset(new swtpg::PdspChannelMapService(channel_map_rce, channel_map_felix));
-
 
   // If we get no frames then return and since
   // the map is not filled it will run again soon
@@ -93,8 +76,8 @@ ChannelMapHD::fill(daqdataformats::TriggerRecord &tr){
         continue;
       }
       for (int ich=0; ich < CHANNELS_PER_LINK; ++ich) {
-        auto channel = getOfflineChannel(*channelmap, fr, ich);
-        auto plane = channelmap->PlaneFromOfflineChannel(channel);
+        auto channel = m_chmap_service->get_offline_channel_from_crate_slot_fiber_chan(crate, slot, fiber, ich);
+        auto plane = m_chmap_service->get_plane_from_offline_channel(channel);
         m_map[plane][channel] = {key, ich};
       }
     }
@@ -107,42 +90,9 @@ ChannelMapHD::fill(daqdataformats::TriggerRecord &tr){
 }
 
 bool
-ChannelMapHD::is_filled() {
-  return m_is_filled;
-}
-
-unsigned int getOfflineChannel(swtpg::PdspChannelMapService& channelMap, // NOLINT(build/unsigned)
-                               const dunedaq::detdataformats::WIBFrame* frame,
-                               unsigned int ch) // NOLINT(build/unsigned)
+ChannelMapHD::is_filled()
 {
-  // handle 256 channels on two fibers -- use the channel
-  // map that assumes 128 chans per fiber (=FEMB) (Copied
-  // from PDSPTPCRawDecoder_module.cc)
-  int crate = frame->get_wib_header()->crate_no;
-  int slot = frame->get_wib_header()->slot_no;
-  int fiber = frame->get_wib_header()->fiber_no;
-
-  unsigned int fiberloc = 0; // NOLINT(build/unsigned)
-  if (fiber == 1) {
-    fiberloc = 1;
-  } else if (fiber == 2) {
-    fiberloc = 3;
-  } else {
-    ers::error(ChannelMapError(ERS_HERE, "Fiber number is expected to be 1 or 2, setting to 1"));
-    fiberloc = 1;
-  }
-
-  unsigned int chloc = ch; // NOLINT(build/unsigned)
-  if (chloc > 127) {
-    chloc -= 128;
-    fiberloc++;
-  }
-
-  unsigned int crateloc = crate; // NOLINT(build/unsigned)
-  unsigned int offline =         // NOLINT(build/unsigned)
-    channelMap.GetOfflineNumberFromDetectorElements(
-      crateloc, slot, fiberloc, chloc, swtpg::PdspChannelMapService::kFELIX);
-  return offline;
+  return m_is_filled;
 }
 
 } // namespace dunedaq::dqm
