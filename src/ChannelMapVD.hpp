@@ -45,7 +45,7 @@ ChannelMapVD::ChannelMapVD()
 {
   channelvec = vvvi(4, vvi(2, vi(256, -1)));
   planevec = vvvi(4, vvi(2, vi(256, -1)));
-  m_chmap_service = dunedaq::detchannelmaps::make_map("ProtoDUNESP1ChannelMap");
+  m_chmap_service = dunedaq::detchannelmaps::make_map("VDColdboxChannelMap");
 }
 
 std::map<int, std::map<int, std::pair<int, int>>>
