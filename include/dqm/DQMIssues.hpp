@@ -41,6 +41,11 @@ ERS_DECLARE_ISSUE(dqm,
                   "Error in DQMProcessor: ",
                   ((std::string)error))
 
+ERS_DECLARE_ISSUE(dqm,
+                  InvalidData,
+                  "Data was not valid: ",
+                  ((std::string)error))
+
 // ERS_DECLARE_ISSUE(dqm,
 //                   UnsupportedDataType,
 //                   "Data type is not supported ",
