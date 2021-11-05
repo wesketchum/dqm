@@ -33,13 +33,15 @@ class FourierContainer : public AnalysisModule
   size_t m_size;
   int m_npoints;
   std::map<int, int> m_index;
+  bool m_global_mode;
 
 public:
   FourierContainer(std::string name, int size, double inc, int npoints);
-  FourierContainer(std::string name, int size, std::vector<int>& link_idx, double inc, int npoints);
+  FourierContainer(std::string name, int size, std::vector<int>& link_idx, double inc, int npoints, bool global_mode=false);
 
   void run(std::unique_ptr<daqdataformats::TriggerRecord> record, std::unique_ptr<ChannelMap> &map, std::string kafka_address="");
   void transmit(std::string &kafka_address, std::unique_ptr<ChannelMap> &cmap, const std::string& topicname, int run_num, time_t timestamp);
+  void transmit_global(std::string &kafka_address, std::unique_ptr<ChannelMap> &cmap, const std::string& topicname, int run_num, time_t timestamp);
   void clean();
   void fill(int ch, double value);
   void fill(int ch, int link, double value);
@@ -57,10 +59,11 @@ FourierContainer::FourierContainer(std::string name, int size, double inc, int n
   }
 }
 
-FourierContainer::FourierContainer(std::string name, int size, std::vector<int>& link_idx, double inc, int npoints)
+  FourierContainer::FourierContainer(std::string name, int size, std::vector<int>& link_idx, double inc, int npoints, bool global_mode)
   : m_name(name),
     m_size(size),
-    m_npoints(npoints)
+    m_npoints(npoints),
+    m_global_mode(global_mode)
 {
   for (size_t i = 0; i < m_size; ++i) {
     fouriervec.emplace_back(Fourier(inc, npoints));
@@ -79,19 +82,39 @@ FourierContainer::run(std::unique_ptr<daqdataformats::TriggerRecord> record, std
   auto wibframes = dec.decode(*record);
   // std::uint64_t timestamp = 0; // NOLINT(build/unsigned)
 
-  for (auto& [key, value] : wibframes) {
-    for (auto& fr : value) {
-      for (size_t ich = 0; ich < CHANNELS_PER_LINK; ++ich) {
-        fill(ich, key, fr->get_channel(ich));
+
+  // Global mode means adding everything in one channel
+  if (!m_global_mode) {
+    for (auto& [key, value] : wibframes) {
+      for (auto& fr : value) {
+        for (size_t ich = 0; ich < CHANNELS_PER_LINK; ++ich) {
+          fill(ich, key, fr->get_channel(ich));
+        }
       }
     }
+  }
+  else {
+    double sum = 0;
+    for (auto& [key, value] : wibframes) {
+      for (auto& fr : value) {
+        for (size_t ich = 0; ich < CHANNELS_PER_LINK; ++ich) {
+          sum += fr->get_channel(ich);
+        }
+      }
+    }
+    fill(0, sum);
   }
 
   for (size_t ich = 0; ich < m_size; ++ich) {
     fouriervec[ich].compute_fourier_normalized();
   }
 
-  transmit(kafka_address, map, "testdunedqm", record->get_header_ref().get_run_number(), record->get_header_ref().get_trigger_timestamp());
+  if (!m_global_mode) {
+    transmit(kafka_address, map, "testdunedqm", record->get_header_ref().get_run_number(), record->get_header_ref().get_trigger_timestamp());
+  }
+  else {
+    transmit_global(kafka_address, map, "testdunedqm", record->get_header_ref().get_run_number(), record->get_header_ref().get_trigger_timestamp());
+  }
 
   m_run_mark.store(false);
 }
@@ -132,6 +155,32 @@ FourierContainer::transmit(std::string &kafka_address, std::unique_ptr<ChannelMa
     }
     TLOG_DEBUG(5) << "Size of the message in bytes: " << output.str().size();
     KafkaExport(kafka_address, output.str(), topicname);
+  }
+
+  clean();
+}
+
+void
+FourierContainer::transmit_global(std::string &kafka_address, std::unique_ptr<ChannelMap> &cmap, const std::string& topicname, int run_num, time_t timestamp)
+{
+  // Placeholders
+  std::string dataname = m_name;
+  std::string metadata = "";
+  int subrun = 0;
+  int event = 0;
+  std::string partition = getenv("DUNEDAQ_PARTITION");
+  std::string app_name = getenv("DUNEDAQ_APPLICATION_NAME");
+  std::string datasource = partition + "_" + app_name;
+
+
+  auto freq = fouriervec[0].get_frequencies();
+  for (size_t i=0; i < freq.size(); ++i) {
+      output << freq[i] << " " << fouriervec[0].get_transform(i) << "\n";
+  }
+
+  TLOG_DEBUG(5) << "Size of the message in bytes: " << output.str().size();
+  KafkaExport(kafka_address, output.str(), topicname);
+
   }
 
   clean();
