@@ -46,12 +46,6 @@ ERS_DECLARE_ISSUE(dqm,
                   "Data was not valid: ",
                   ((std::string)error))
 
-// ERS_DECLARE_ISSUE(dqm,
-//                   UnsupportedDataType,
-//                   "Data type is not supported ",
-//                   (()))
-
-
 } // namespace dunedaq
 
 #endif // DQM_INCLUDE_DQM_DQMISSUES_HPP_
