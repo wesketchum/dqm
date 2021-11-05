@@ -76,6 +76,7 @@ DQMProcessor::do_configure(const nlohmann::json& args)
   m_standard_dqm_hist = conf.sdqm_hist;
   m_standard_dqm_mean_rms = conf.sdqm_mean_rms;
   m_standard_dqm_fourier = conf.sdqm_fourier;
+  m_standard_dqm_fourier_sum = conf.sdqm_fourier_sum;
 
   m_link_idx = conf.link_idx;
 
@@ -147,7 +148,8 @@ DQMProcessor::RequestMaker()
   // The Delta of time between frames is the inverse of the sampling frequency (clock frequency)
   // but because we are sampling every TICKS_BETWEEN_TIMESTAMP ticks we have to multiply by that
   FourierContainer fourier("fft_display", CHANNELS_PER_LINK * m_link_idx.size(), m_link_idx, 1. / m_clock_frequency * TICKS_BETWEEN_TIMESTAMP, m_standard_dqm_fourier.num_frames);
-  FourierContainer fourier_global("fft_display_global", 1, m_link_idx, 1. / m_clock_frequency * TICKS_BETWEEN_TIMESTAMP, 8192, true);
+  //Summed Fourier transform
+  FourierContainer fourier_global("fft_sums_display", 4, m_link_idx, 1. / m_clock_frequency * TICKS_BETWEEN_TIMESTAMP, m_standard_dqm_fourier_sum.num_frames, 8192, true);
   // Fills the channel map at the beggining of a run
   ChannelMapFiller chfiller("channelmapfiller", m_channel_map);
 
@@ -175,12 +177,13 @@ DQMProcessor::RequestMaker()
                                                                         m_standard_dqm_fourier.num_frames,
                                                                         nullptr,
                                                                         "Fourier every " + std::to_string(m_standard_dqm_fourier.how_often) + " s"};
-  map[std::chrono::system_clock::now() + std::chrono::seconds(10)] = {&fourier_global,
-                                                                      60,
-                                                                      10,
-                                                                      8192,
+  if (m_standard_dqm_fourier_sum.how_often > 0)
+    map[std::chrono::system_clock::now() + std::chrono::seconds(10)] = {&fouriersum,
+                                                                      m_standard_dqm_fourier_sum.how_often,
+                                                                      m_standard_dqm_fourier_sum.unavailable_time, 
+                                                                      m_standard_dqm_fourier_sum.num_frames,
                                                                       nullptr,
-                                                                      "Fourier (global version) every " + std::to_string(m_standard_dqm_fourier.how_often) + " s"};
+                                                                      "Summed Fourier every " + std::to_string(m_standard_dqm_fourier_sum.how_often) + " s"};
   map[std::chrono::system_clock::now() + std::chrono::seconds(2)] =  {&chfiller,
                                                                       3,
                                                                       3,
