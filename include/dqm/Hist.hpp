@@ -154,6 +154,8 @@ Hist::clean()
   for (auto& elem : m_entries) {
     elem = 0;
   }
+  m_std_set = false;
+  m_mean_set = false;
 }
 
 double
