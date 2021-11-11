@@ -15,7 +15,7 @@
 #include "ChannelMapHD.hpp"
 #include "ChannelMapVD.hpp"
 
-#include "dataformats/TriggerRecord.hpp"
+#include "daqdataformats/TriggerRecord.hpp"
 
 #include <string>
 
@@ -27,12 +27,12 @@ class ChannelMapFiller : public AnalysisModule{
 
 public:
   ChannelMapFiller(std::string name, std::string cmap_name);
-  void run(std::unique_ptr<dataformats::TriggerRecord> record, std::unique_ptr<ChannelMap> &map, std::string kafka_address);
+  void run(std::unique_ptr<daqdataformats::TriggerRecord> record, std::unique_ptr<ChannelMap> &map, std::string kafka_address);
 
 };
 
 void
-ChannelMapFiller::run(std::unique_ptr<dataformats::TriggerRecord> record, std::unique_ptr<ChannelMap> &map, std::string)
+ChannelMapFiller::run(std::unique_ptr<daqdataformats::TriggerRecord> record, std::unique_ptr<ChannelMap> &map, std::string)
 {
   m_run_mark.store(true);
 

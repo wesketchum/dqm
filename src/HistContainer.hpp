@@ -15,8 +15,9 @@
 #include "ChannelMap.hpp"
 #include "Constants.hpp"
 #include "dqm/Hist.hpp"
+#include "dqm/DQMIssues.hpp"
 
-#include "dataformats/TriggerRecord.hpp"
+#include "daqdataformats/TriggerRecord.hpp"
 
 #include <string>
 #include <vector>
@@ -38,7 +39,7 @@ public:
   HistContainer(std::string name, int nhist, int steps, double low, double high, bool only_mean=false);
   HistContainer(std::string name, int nhist, std::vector<int>& link_idx, int steps, double low, double high, bool only_mean);
 
-  void run(std::unique_ptr<dataformats::TriggerRecord> record, std::unique_ptr<ChannelMap> &map, std::string kafka_address="");
+  void run(std::unique_ptr<daqdataformats::TriggerRecord> record, std::unique_ptr<ChannelMap> &map, std::string kafka_address="");
   void transmit(std::string &kafka_address, std::unique_ptr<ChannelMap> &map, const std::string& topicname, int run_num, time_t timestamp);
   void transmit_mean_and_rms(std::string &kafka_address, std::unique_ptr<ChannelMap> &map, const std::string& topicname, int run_num, time_t timestamp);
   void clean();
@@ -74,7 +75,7 @@ HistContainer::HistContainer(std::string name, int nhist, std::vector<int>& link
 }
 
 void
-HistContainer::run(std::unique_ptr<dataformats::TriggerRecord> record, std::unique_ptr<ChannelMap> &map, std::string kafka_address)
+HistContainer::run(std::unique_ptr<daqdataformats::TriggerRecord> record, std::unique_ptr<ChannelMap> &map, std::string kafka_address)
 {
   m_run_mark.store(true);
   dunedaq::dqm::Decoder dec;
@@ -102,6 +103,16 @@ HistContainer::run(std::unique_ptr<dataformats::TriggerRecord> record, std::uniq
     }
   }
   uint64_t timestamp = 0;
+
+  // Check that all the wibframes vectors have the same size, if not, something
+  // bad has happened
+  auto size = wibframes.begin()->second.size();
+  for (auto& vec : wibframes) {
+    if (vec.second.size() != size) {
+      ers::error(InvalidData(ERS_HERE, "the size of the vector of frames is different for each link"));
+      return;
+    }
+  }
 
   // Main loop
   // If only the mean and rms are to be sent all frames are processed

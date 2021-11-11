@@ -8,14 +8,17 @@
 #ifndef DQM_SRC_CHANNELMAP_HPP_
 #define DQM_SRC_CHANNELMAP_HPP_
 
+#include "detchannelmaps/TPCChannelMap.hpp"
+
 // DQM
-#include "dataformats/TriggerRecord.hpp"
+#include "daqdataformats/TriggerRecord.hpp"
 
 namespace dunedaq::dqm {
 
 class ChannelMap {
 
 public:
+  std::shared_ptr<dunedaq::detchannelmaps::TPCChannelMap> m_chmap_service;
   bool m_is_filled = false;
 
   ChannelMap();
@@ -23,7 +26,7 @@ public:
   int get_channel(int channel);
   int get_plane(int channel);
   virtual bool is_filled();
-  virtual void fill(dataformats::TriggerRecord &tr);
+  virtual void fill(daqdataformats::TriggerRecord &tr);
   virtual std::map<int, std::map<int, std::pair<int, int>>> get_map();
 };
 
@@ -44,7 +47,7 @@ ChannelMap::get_map(){
 }
 
 void
-ChannelMap::fill(dataformats::TriggerRecord&){
+ChannelMap::fill(daqdataformats::TriggerRecord&){
   //throw issue
 }
 

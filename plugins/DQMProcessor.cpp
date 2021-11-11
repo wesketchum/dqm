@@ -21,11 +21,11 @@
 
 // DUNE-DAQ includes
 #include "appfwk/DAQSource.hpp"
-#include "dataformats/ComponentRequest.hpp"
-#include "dataformats/Fragment.hpp"
-#include "dataformats/GeoID.hpp"
-#include "dataformats/TriggerRecord.hpp"
-#include "dataformats/wib/WIBFrame.hpp"
+#include "daqdataformats/ComponentRequest.hpp"
+#include "daqdataformats/Fragment.hpp"
+#include "daqdataformats/GeoID.hpp"
+#include "daqdataformats/TriggerRecord.hpp"
+#include "detdataformats/wib/WIBFrame.hpp"
 #include "dfmessages/TriggerDecision.hpp"
 
 // C++ includes
@@ -93,8 +93,8 @@ DQMProcessor::do_start(const nlohmann::json& args)
 
   m_run_marker.store(true);
 
-  m_run_number.store(dataformats::run_number_t(
-      args.at("run").get<dataformats::run_number_t>()));
+  m_run_number.store(daqdataformats::run_number_t(
+      args.at("run").get<daqdataformats::run_number_t>()));
 
   // The channel map pointer is set to the empty channel map that is not filled
   // and allows the first check to pass for it to be filled with the actual
@@ -126,16 +126,16 @@ DQMProcessor::RequestMaker()
     std::string name;
   };
 
-  std::vector<dataformats::GeoID> m_links;
+  std::vector<daqdataformats::GeoID> m_links;
 
   for (auto i: m_link_idx) {
-    m_links.push_back({ dataformats::GeoID::SystemType::kTPC, m_region, static_cast<unsigned int>(i) });
+    m_links.push_back({ daqdataformats::GeoID::SystemType::kTPC, m_region, static_cast<unsigned int>(i) });
   }
 
   // Map that holds the tasks and times when to do them
   std::map<std::chrono::time_point<std::chrono::system_clock>, AnalysisInstance> map;
 
-  std::unique_ptr<dataformats::TriggerRecord> element;
+  std::unique_ptr<daqdataformats::TriggerRecord> element;
 
   // Instances of analysis modules
 
@@ -257,7 +257,7 @@ DQMProcessor::RequestMaker()
     ++m_total_data_count;
 
     TLOG_DEBUG(10) << "Data popped from the queue";
-    using runfunc_type = void (AnalysisModule::*)(std::unique_ptr<dataformats::TriggerRecord> record, std::unique_ptr<ChannelMap>& map, std::string kafka_address);
+    using runfunc_type = void (AnalysisModule::*)(std::unique_ptr<daqdataformats::TriggerRecord> record, std::unique_ptr<ChannelMap>& map, std::string kafka_address);
     runfunc_type memfunc = &AnalysisModule::run;
     std::thread* current_thread = new std::thread(memfunc, std::ref(*algo), std::move(element), std::ref(m_map), m_kafka_address);
 
@@ -292,7 +292,7 @@ DQMProcessor::CreateRequest(std::vector<dfmessages::GeoID>& m_links, int number_
   auto timestamp = m_time_est->get_timestamp_estimate();
   dfmessages::TriggerDecision decision;
 
-  static dataformats::trigger_number_t trigger_number = 1;
+  static daqdataformats::trigger_number_t trigger_number = 1;
 
   decision.trigger_number = trigger_number++;
   decision.run_number = m_run_number;
@@ -303,7 +303,7 @@ DQMProcessor::CreateRequest(std::vector<dfmessages::GeoID>& m_links, int number_
 
   for (auto& link : m_links) {
     // TLOG() << "ONE LINK";
-    dataformats::ComponentRequest request;
+    daqdataformats::ComponentRequest request;
     request.component = link;
     // Some offset is required to avoid having delayed requests in readout
     // which make the TRB to take longer and longer to create the trigger records

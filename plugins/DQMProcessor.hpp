@@ -17,7 +17,7 @@
 #include "appfwk/DAQModule.hpp"
 #include "appfwk/DAQSink.hpp"
 #include "appfwk/DAQSource.hpp"
-#include "dataformats/TriggerRecord.hpp"
+#include "daqdataformats/TriggerRecord.hpp"
 #include "dfmessages/TriggerDecision.hpp"
 #include "timinglibs/TimestampEstimator.hpp"
 
@@ -60,7 +60,7 @@ public:
   void get_info(opmonlib::InfoCollector& ci, int /*level*/);
 
 private:
-  using trigger_record_source_qt = appfwk::DAQSource<std::unique_ptr<dataformats::TriggerRecord>>;
+  using trigger_record_source_qt = appfwk::DAQSource<std::unique_ptr<daqdataformats::TriggerRecord>>;
   std::unique_ptr<trigger_record_source_qt> m_source;
   using trigger_decision_sink_qt = appfwk::DAQSink<dfmessages::TriggerDecision>;
   std::unique_ptr<trigger_decision_sink_qt> m_sink;
@@ -78,7 +78,7 @@ private:
 
   std::unique_ptr<timinglibs::TimestampEstimator> m_time_est;
 
-  std::atomic<dataformats::run_number_t> m_run_number;
+  std::atomic<daqdataformats::run_number_t> m_run_number;
 
   std::string m_kafka_address;
   std::vector<int> m_link_idx;

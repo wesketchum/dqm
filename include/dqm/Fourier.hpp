@@ -12,7 +12,7 @@
 #include "AnalysisModule.hpp"
 #include "Decoder.hpp"
 
-#include "dataformats/TriggerRecord.hpp"
+#include "daqdataformats/TriggerRecord.hpp"
 #include "logging/Logging.hpp"
 
 #include <complex>
