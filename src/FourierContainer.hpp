@@ -94,7 +94,7 @@ FourierContainer::run(std::unique_ptr<daqdataformats::TriggerRecord> record, std
     }
   }
 
-  // Global mode means adding everything in one channel
+  // Normal mode, fourier transform for every channel
   if (!m_global_mode) {
     for (auto& [key, value] : wibframes) {
       for (auto& fr : value) {
@@ -103,26 +103,40 @@ FourierContainer::run(std::unique_ptr<daqdataformats::TriggerRecord> record, std
         }
       }
     }
+    for (size_t ich = 0; ich < m_size; ++ich) {
+      fouriervec[ich].compute_fourier_normalized();
+    }
+    transmit(kafka_address, map, "testdunedqm", record->get_header_ref().get_run_number(), record->get_header_ref().get_trigger_timestamp());
+  }
+
+  // Global mode means adding everything in planes and then all together
   else {
-    double sum = 0;
-    for (auto& [key, value] : wibframes) {
-      for (auto& fr : value) {
-        for (size_t ich = 0; ich < CHANNELS_PER_LINK; ++ich) {
-          sum += fr->get_channel(ich);
+    // Initialize the vectors with zeroes, the last one can be done by summing
+    // the resulting transform
+    for (size_t i = 0; i < m_size - 1; ++i) {
+      fouriervec[i].m_data = std::vector<double> (m_npoints, 0);
+    }
+
+    auto channel_order = map->get_map();
+    for (auto& [plane, map] : channel_order) {
+      for (auto& [key, value] : wibframes) {
+        // for (auto& fr : value) {
+        for (size_t iframe = 0; iframe < value.size(); ++iframe) {
+          for (size_t ich = 0; ich < CHANNELS_PER_LINK; ++ich) {
+            fouriervec[plane].m_data[iframe] += value[iframe]->get_channel(ich);
+          }
         }
       }
     }
-    fill(0, sum);
-  }
-
-  for (size_t ich = 0; ich < m_size; ++ich) {
-    fouriervec[ich].compute_fourier_normalized();
-  }
-
-  if (!m_global_mode) {
-    transmit(kafka_address, map, "testdunedqm", record->get_header_ref().get_run_number(), record->get_header_ref().get_trigger_timestamp());
-  }
-  else {
+    for (size_t ich = 0; ich < m_size - 1; ++ich) {
+      fouriervec[ich].compute_fourier_normalized();
+    }
+    // The last one corresponds can be obtained as the sum of the ones for the planes
+    // since the fourier transform is linear
+    std::vector<double> transform(fouriervec[0].m_transform);
+    for (size_t i = 0; i < fouriervec[0].m_transform.size(); ++i) {
+      transform[i] += fouriervec[1].m_transform[i] + fouriervec[2].m_transform[i];
+    }
     transmit_global(kafka_address, map, "testdunedqm", record->get_header_ref().get_run_number(), record->get_header_ref().get_trigger_timestamp());
   }
 
@@ -140,7 +154,6 @@ FourierContainer::transmit(std::string &kafka_address, std::unique_ptr<ChannelMa
   std::string partition = getenv("DUNEDAQ_PARTITION");
   std::string app_name = getenv("DUNEDAQ_APPLICATION_NAME");
   std::string datasource = partition + "_" + app_name;
-
 
   auto freq = fouriervec[0].get_frequencies();
   // One message is sent for every plane
@@ -173,7 +186,6 @@ FourierContainer::transmit(std::string &kafka_address, std::unique_ptr<ChannelMa
 void
 FourierContainer::transmit_global(std::string &kafka_address, std::unique_ptr<ChannelMap> &cmap, const std::string& topicname, int run_num, time_t timestamp)
 {
-  // Placeholders
   std::string dataname = m_name;
   std::string metadata = "";
   int subrun = 0;
@@ -182,15 +194,28 @@ FourierContainer::transmit_global(std::string &kafka_address, std::unique_ptr<Ch
   std::string app_name = getenv("DUNEDAQ_APPLICATION_NAME");
   std::string datasource = partition + "_" + app_name;
 
-
   auto freq = fouriervec[0].get_frequencies();
-  for (size_t i=0; i < freq.size(); ++i) {
-      output << freq[i] << " " << fouriervec[0].get_transform(i) << "\n";
-  }
-
-  TLOG_DEBUG(5) << "Size of the message in bytes: " << output.str().size();
-  KafkaExport(kafka_address, output.str(), topicname);
-
+  // One message is sent for every plane
+  for (int plane = 0; plane < 4; plane++)
+  {
+    std::stringstream output;
+    output << datasource << ";" << dataname << ";" << run_num << ";" << subrun
+           << ";" << event << ";" << timestamp << ";" << metadata << ";"
+           << partition << ";" << app_name << ";" << 0 << ";" << plane << ";";
+    //output << "\n";
+    for (size_t i=0; i < freq.size(); ++i)
+    {
+      int integer_freq = (int) freq[i];
+      output << integer_freq << " ";
+    }
+    output << "\n";
+    output << "Summed FFT\n";
+    for (size_t i = 0; i < freq.size(); ++i)
+    {
+      output << fouriervec[plane].get_transform(i) << " ";
+    }
+    output << "\n";
+    KafkaExport(kafka_address, output.str(), topicname);
   }
 
   clean();
