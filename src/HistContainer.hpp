@@ -110,6 +110,7 @@ HistContainer::run(std::unique_ptr<daqdataformats::TriggerRecord> record, std::u
   for (auto& vec : wibframes) {
     if (vec.second.size() != size) {
       ers::error(InvalidData(ERS_HERE, "the size of the vector of frames is different for each link"));
+      m_run_mark.store(false);
       return;
     }
   }
