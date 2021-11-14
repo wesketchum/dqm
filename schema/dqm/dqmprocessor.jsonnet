@@ -31,11 +31,11 @@ local dqmprocessor = {
                             doc="A list with indexes"),
 
     standard_dqm: s.record("StandardDQM", [
-        s.field("how_often", self.time, 1,
+        s.field("how_often", self.time, 0,
                 doc="Algorithm is run every x seconds"),
-        s.field("unavailable_time", self.time, 1,
+        s.field("unavailable_time", self.time, 0,
                 doc="When it's time to run the algorithm but it's already running wait this time"),
-        s.field("num_frames", self.count, 1,
+        s.field("num_frames", self.count, 0,
                 doc="How many frames do we process in each instance of the algorithm")
     ], doc="Standard DQM analysis"),
 
