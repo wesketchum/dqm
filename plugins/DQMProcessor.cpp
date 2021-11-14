@@ -164,7 +164,7 @@ DQMProcessor::RequestMaker()
                                                                       m_standard_dqm_mean_rms.unavailable_time,
                                                                       m_standard_dqm_mean_rms.num_frames,
                                                                       nullptr,
-                                                                      "Mean/RMS every " + std::to_string(m_standard_dqm_hist.how_often) + " s"};
+                                                                      "Mean/RMS every " + std::to_string(m_standard_dqm_rms.how_often) + " s"};
   map[std::chrono::system_clock::now() + std::chrono::seconds(10)] = {&fourier,
                                                                       m_standard_dqm_fourier.how_often,
                                                                       m_standard_dqm_fourier.unavailable_time,
