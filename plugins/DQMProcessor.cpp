@@ -265,7 +265,7 @@ DQMProcessor::RequestMaker()
     std::thread* current_thread = new std::thread(memfunc, std::ref(*algo), std::move(element), std::ref(m_map), m_kafka_address);
 
     // Add a new entry for the current instance
-    TLOG() << "Starting to run " << analysis_instance.name;
+    TLOG() << "Starting to run \"" << analysis_instance.name << "\"";
     map[std::chrono::system_clock::now() +
         std::chrono::milliseconds(static_cast<int>(analysis_instance.between_time) * 1000)] = {
       algo, analysis_instance.between_time, analysis_instance.default_unavailable_time,
