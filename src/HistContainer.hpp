@@ -105,7 +105,7 @@ HistContainer::run(std::unique_ptr<daqdataformats::TriggerRecord> record, std::u
   uint64_t timestamp = 0;
 
   // Check that all the wibframes vectors have the same size, if not, something
-  // bad has happened
+  // bad has happened, for now don't do anything
   auto size = wibframes.begin()->second.size();
   for (auto& vec : wibframes) {
     if (vec.second.size() != size) {
