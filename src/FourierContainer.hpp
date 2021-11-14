@@ -83,6 +83,17 @@ FourierContainer::run(std::unique_ptr<daqdataformats::TriggerRecord> record, std
   // std::uint64_t timestamp = 0; // NOLINT(build/unsigned)
 
 
+  // Check that all the wibframes vectors have the same size, if not, something
+  // bad has happened, for now don't do anything
+  auto size = wibframes.begin()->second.size();
+  for (auto& vec : wibframes) {
+    if (vec.second.size() != size) {
+      ers::error(InvalidData(ERS_HERE, "the size of the vector of frames is different for each link"));
+      m_run_mark.store(false);
+      return;
+    }
+  }
+
   // Global mode means adding everything in one channel
   if (!m_global_mode) {
     for (auto& [key, value] : wibframes) {
@@ -92,7 +103,6 @@ FourierContainer::run(std::unique_ptr<daqdataformats::TriggerRecord> record, std
         }
       }
     }
-  }
   else {
     double sum = 0;
     for (auto& [key, value] : wibframes) {

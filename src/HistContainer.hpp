@@ -15,6 +15,7 @@
 #include "ChannelMap.hpp"
 #include "Constants.hpp"
 #include "dqm/Hist.hpp"
+#include "dqm/DQMIssues.hpp"
 
 #include "daqdataformats/TriggerRecord.hpp"
 
@@ -102,6 +103,17 @@ HistContainer::run(std::unique_ptr<daqdataformats::TriggerRecord> record, std::u
     }
   }
   uint64_t timestamp = 0;
+
+  // Check that all the wibframes vectors have the same size, if not, something
+  // bad has happened, for now don't do anything
+  auto size = wibframes.begin()->second.size();
+  for (auto& vec : wibframes) {
+    if (vec.second.size() != size) {
+      ers::error(InvalidData(ERS_HERE, "the size of the vector of frames is different for each link"));
+      m_run_mark.store(false);
+      return;
+    }
+  }
 
   // Main loop
   // If only the mean and rms are to be sent all frames are processed

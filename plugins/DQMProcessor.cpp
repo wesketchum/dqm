@@ -154,24 +154,27 @@ DQMProcessor::RequestMaker()
   // Initial tasks
   // Add some offset time to let the other parts of the DAQ start
   // Typically the first and maybe second requests of data fails
-  map[std::chrono::system_clock::now() + std::chrono::seconds(10)] = {&hist,
-                                                                      m_standard_dqm_hist.how_often,
-                                                                      m_standard_dqm_hist.unavailable_time,
-                                                                      m_standard_dqm_hist.num_frames,
-                                                                      nullptr,
-                                                                      "Histogram every " + std::to_string(m_standard_dqm_hist.how_often) + " s"};
-  map[std::chrono::system_clock::now() + std::chrono::seconds(10)] = {&mean_rms,
-                                                                      m_standard_dqm_mean_rms.how_often,
-                                                                      m_standard_dqm_mean_rms.unavailable_time,
-                                                                      m_standard_dqm_mean_rms.num_frames,
-                                                                      nullptr,
-                                                                      "Histogram every " + std::to_string(m_standard_dqm_hist.how_often) + " s"};
-  map[std::chrono::system_clock::now() + std::chrono::seconds(10)] = {&fourier,
-                                                                      m_standard_dqm_fourier.how_often,
-                                                                      m_standard_dqm_fourier.unavailable_time,
-                                                                      m_standard_dqm_fourier.num_frames,
-                                                                      nullptr,
-                                                                      "Fourier every " + std::to_string(m_standard_dqm_fourier.how_often) + " s"};
+  if (m_standard_dqm_hist.how_often > 0)
+    map[std::chrono::system_clock::now() + std::chrono::seconds(10)] = {&hist,
+                                                                        m_standard_dqm_hist.how_often,
+                                                                        m_standard_dqm_hist.unavailable_time,
+                                                                        m_standard_dqm_hist.num_frames,
+                                                                        nullptr,
+                                                                        "Histogram every " + std::to_string(m_standard_dqm_hist.how_often) + " s"};
+  if (m_standard_dqm_mean_rms.how_often > 0)
+    map[std::chrono::system_clock::now() + std::chrono::seconds(10)] = {&mean_rms,
+                                                                        m_standard_dqm_mean_rms.how_often,
+                                                                        m_standard_dqm_mean_rms.unavailable_time,
+                                                                        m_standard_dqm_mean_rms.num_frames,
+                                                                        nullptr,
+                                                                        "Mean and RMS every " + std::to_string(m_standard_dqm_mean_rms.how_often) + " s"};
+  if (m_standard_dqm_fourier.how_often > 0)
+    map[std::chrono::system_clock::now() + std::chrono::seconds(10)] = {&fourier,
+                                                                        m_standard_dqm_fourier.how_often,
+                                                                        m_standard_dqm_fourier.unavailable_time,
+                                                                        m_standard_dqm_fourier.num_frames,
+                                                                        nullptr,
+                                                                        "Fourier every " + std::to_string(m_standard_dqm_fourier.how_often) + " s"};
   map[std::chrono::system_clock::now() + std::chrono::seconds(10)] = {&fourier_global,
                                                                       60,
                                                                       10,
@@ -269,6 +272,7 @@ DQMProcessor::RequestMaker()
     std::thread* current_thread = new std::thread(memfunc, std::ref(*algo), std::move(element), std::ref(m_map), m_kafka_address);
 
     // Add a new entry for the current instance
+    TLOG() << "Starting to run \"" << analysis_instance.name << "\"";
     map[std::chrono::system_clock::now() +
         std::chrono::milliseconds(static_cast<int>(analysis_instance.between_time) * 1000)] = {
       algo, analysis_instance.between_time, analysis_instance.default_unavailable_time,
