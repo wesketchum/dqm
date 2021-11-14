@@ -148,8 +148,8 @@ DQMProcessor::RequestMaker()
   // The Delta of time between frames is the inverse of the sampling frequency (clock frequency)
   // but because we are sampling every TICKS_BETWEEN_TIMESTAMP ticks we have to multiply by that
   FourierContainer fourier("fft_display", CHANNELS_PER_LINK * m_link_idx.size(), m_link_idx, 1. / m_clock_frequency * TICKS_BETWEEN_TIMESTAMP, m_standard_dqm_fourier.num_frames);
-  //Summed Fourier transform
-  FourierContainer fourier_global("fft_sums_display", 4, m_link_idx, 1. / m_clock_frequency * TICKS_BETWEEN_TIMESTAMP, m_standard_dqm_fourier_sum.num_frames, 8192, true);
+  // Summed Fourier transform, assume the number of planes is 3 and one more to have the total one
+  FourierContainer fouriersum("fft_sums_display", 4, m_link_idx, 1. / m_clock_frequency * TICKS_BETWEEN_TIMESTAMP, m_standard_dqm_fourier_sum.num_frames, true);
   // Fills the channel map at the beggining of a run
   ChannelMapFiller chfiller("channelmapfiller", m_channel_map);
 

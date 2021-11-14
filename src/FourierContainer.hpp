@@ -137,6 +137,7 @@ FourierContainer::run(std::unique_ptr<daqdataformats::TriggerRecord> record, std
     for (size_t i = 0; i < fouriervec[0].m_transform.size(); ++i) {
       transform[i] += fouriervec[1].m_transform[i] + fouriervec[2].m_transform[i];
     }
+    fouriervec[m_size-1].m_transform = transform;
     transmit_global(kafka_address, map, "testdunedqm", record->get_header_ref().get_run_number(), record->get_header_ref().get_trigger_timestamp());
   }
 
