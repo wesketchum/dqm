@@ -164,7 +164,7 @@ DQMProcessor::RequestMaker()
                                                                       m_standard_dqm_mean_rms.unavailable_time,
                                                                       m_standard_dqm_mean_rms.num_frames,
                                                                       nullptr,
-                                                                      "Histogram every " + std::to_string(m_standard_dqm_hist.how_often) + " s"};
+                                                                      "Mean/RMS every " + std::to_string(m_standard_dqm_hist.how_often) + " s"};
   map[std::chrono::system_clock::now() + std::chrono::seconds(10)] = {&fourier,
                                                                       m_standard_dqm_fourier.how_often,
                                                                       m_standard_dqm_fourier.unavailable_time,
@@ -262,6 +262,7 @@ DQMProcessor::RequestMaker()
     std::thread* current_thread = new std::thread(memfunc, std::ref(*algo), std::move(element), std::ref(m_map), m_kafka_address);
 
     // Add a new entry for the current instance
+    TLOG() << "Starting to run " << analysis_instance.name;
     map[std::chrono::system_clock::now() +
         std::chrono::milliseconds(static_cast<int>(analysis_instance.between_time) * 1000)] = {
       algo, analysis_instance.between_time, analysis_instance.default_unavailable_time,
