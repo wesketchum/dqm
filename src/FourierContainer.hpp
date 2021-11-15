@@ -185,7 +185,7 @@ FourierContainer::transmit(std::string &kafka_address, std::unique_ptr<ChannelMa
 }
 
 void
-FourierContainer::transmit_global(std::string &kafka_address, std::unique_ptr<ChannelMap> &cmap, const std::string& topicname, int run_num, time_t timestamp)
+FourierContainer::transmit_global(std::string &kafka_address, std::unique_ptr<ChannelMap>& , const std::string& topicname, int run_num, time_t timestamp)
 {
   std::string dataname = m_name;
   std::string metadata = "";
