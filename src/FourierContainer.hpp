@@ -119,15 +119,17 @@ FourierContainer::run(std::unique_ptr<daqdataformats::TriggerRecord> record, std
 
     auto channel_order = map->get_map();
     for (auto& [plane, map] : channel_order) {
-      for (auto& [key, value] : wibframes) {
-        // for (auto& fr : value) {
-        for (size_t iframe = 0; iframe < value.size(); ++iframe) {
-          for (size_t ich = 0; ich < CHANNELS_PER_LINK; ++ich) {
-            fouriervec[plane].m_data[iframe] += value[iframe]->get_channel(ich);
+    }
+    for (auto& [plane, map] : channel_order) {
+      for (auto& [offch, pair] : map) {
+        int link = pair.first;
+        int ch = pair.second;
+        for (size_t iframe = 0; iframe < size; ++iframe) {
+            fouriervec[plane].m_data[iframe] += wibframes[link][iframe]->get_channel(ch);
           }
         }
       }
-    }
+
     for (size_t ich = 0; ich < m_size - 1; ++ich) {
       fouriervec[ich].compute_fourier_normalized();
     }
