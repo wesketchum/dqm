@@ -119,8 +119,6 @@ FourierContainer::run(std::unique_ptr<daqdataformats::TriggerRecord> record, std
 
     auto channel_order = map->get_map();
     for (auto& [plane, map] : channel_order) {
-    }
-    for (auto& [plane, map] : channel_order) {
       for (auto& [offch, pair] : map) {
         int link = pair.first;
         int ch = pair.second;
