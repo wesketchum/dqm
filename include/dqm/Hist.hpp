@@ -5,8 +5,8 @@
  * Licensing/copyright details are in the COPYING file that you should have
  * received with this code.
  */
-#ifndef DQM_SRC_HIST_HPP_
-#define DQM_SRC_HIST_HPP_
+#ifndef DQM_INCLUDE_DQM_HIST_HPP_
+#define DQM_INCLUDE_DQM_HIST_HPP_
 
 // DQM
 #include "AnalysisModule.hpp"
@@ -180,4 +180,4 @@ Hist::std()
 
 } // namespace dunedaq::dqm
 
-#endif // DQM_SRC_HIST_HPP_
+#endif // DQM_INCLUDE_DQM_HIST_HPP_

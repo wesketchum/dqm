@@ -13,6 +13,10 @@
 // DQM
 #include "daqdataformats/TriggerRecord.hpp"
 
+#include <map>
+#include <memory>
+#include <utility>
+
 namespace dunedaq::dqm {
 
 class ChannelMap

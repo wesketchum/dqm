@@ -34,6 +34,7 @@
 #include <memory>
 #include <string>
 #include <thread>
+#include <utility>
 #include <vector>
 
 namespace dunedaq {
@@ -117,11 +118,11 @@ DQMProcessor::RequestMaker()
   // Helper struct with the necessary information about an instance
   struct AnalysisInstance
   {
-    AnalysisModule* mod;
+    std::shared_ptr<AnalysisModule> mod;
     double between_time;
     double default_unavailable_time;
     int number_of_frames;
-    std::thread* running_thread;
+    std::shared_ptr<std::thread> running_thread;
     std::string name;
   };
 
@@ -139,26 +140,28 @@ DQMProcessor::RequestMaker()
   // Instances of analysis modules
 
   // Raw event display
-  HistContainer hist("raw_display", CHANNELS_PER_LINK * m_link_idx.size(), m_link_idx, 100, 0, 5000, false);
+  auto hist = std::make_shared<HistContainer>(
+    "raw_display", CHANNELS_PER_LINK * m_link_idx.size(), m_link_idx, 100, 0, 5000, false);
   // Mean and RMS
-  HistContainer mean_rms("rmsm_display", CHANNELS_PER_LINK * m_link_idx.size(), m_link_idx, 100, 0, 5000, true);
+  auto mean_rms = std::make_shared<HistContainer>(
+    "rmsm_display", CHANNELS_PER_LINK * m_link_idx.size(), m_link_idx, 100, 0, 5000, true);
   // Fourier transform
   // The Delta of time between frames is the inverse of the sampling frequency (clock frequency)
   // but because we are sampling every TICKS_BETWEEN_TIMESTAMP ticks we have to multiply by that
-  FourierContainer fourier("fft_display",
-                           CHANNELS_PER_LINK * m_link_idx.size(),
-                           m_link_idx,
-                           1. / m_clock_frequency * TICKS_BETWEEN_TIMESTAMP,
-                           m_standard_dqm_fourier.num_frames);
+  auto fourier = std::make_shared<FourierContainer>("fft_display",
+                                                    CHANNELS_PER_LINK * m_link_idx.size(),
+                                                    m_link_idx,
+                                                    1. / m_clock_frequency * TICKS_BETWEEN_TIMESTAMP,
+                                                    m_standard_dqm_fourier.num_frames);
   // Fills the channel map at the beggining of a run
-  ChannelMapFiller chfiller("channelmapfiller", m_channel_map);
+  auto chfiller = std::make_shared<ChannelMapFiller>("channelmapfiller", m_channel_map);
 
   // Initial tasks
   // Add some offset time to let the other parts of the DAQ start
   // Typically the first and maybe second requests of data fails
   if (m_standard_dqm_hist.how_often > 0)
     map[std::chrono::system_clock::now() + std::chrono::seconds(10)] = {
-      &hist,
+      hist,
       m_standard_dqm_hist.how_often,
       m_standard_dqm_hist.unavailable_time,
       m_standard_dqm_hist.num_frames,
@@ -167,7 +170,7 @@ DQMProcessor::RequestMaker()
     };
   if (m_standard_dqm_mean_rms.how_often > 0)
     map[std::chrono::system_clock::now() + std::chrono::seconds(10)] = {
-      &mean_rms,
+      mean_rms,
       m_standard_dqm_mean_rms.how_often,
       m_standard_dqm_mean_rms.unavailable_time,
       m_standard_dqm_mean_rms.num_frames,
@@ -176,17 +179,17 @@ DQMProcessor::RequestMaker()
     };
   if (m_standard_dqm_fourier.how_often > 0)
     map[std::chrono::system_clock::now() + std::chrono::seconds(10)] = {
-      &fourier,
+      fourier,
       m_standard_dqm_fourier.how_often,
       m_standard_dqm_fourier.unavailable_time,
       m_standard_dqm_fourier.num_frames,
       nullptr,
       "Fourier every " + std::to_string(m_standard_dqm_fourier.how_often) + " s"
     };
-  map[std::chrono::system_clock::now() + std::chrono::seconds(2)] = { &chfiller, 3,
+  map[std::chrono::system_clock::now() + std::chrono::seconds(2)] = { chfiller, 3,
                                                                       3,
                                                                       1, // Request only one frame for each link
-                                                                      nullptr,   "Channel map filler" };
+                                                                      nullptr,  "Channel map filler" };
 
   // Main loop, running forever
   while (m_run_marker) {
@@ -198,17 +201,17 @@ DQMProcessor::RequestMaker()
     }
     auto next_time = task->first;
     auto analysis_instance = task->second;
-    AnalysisModule* algo = analysis_instance.mod;
+    auto algo = analysis_instance.mod;
 
     // Sleep until the next time
     std::this_thread::sleep_until(next_time);
 
     // Save pointer to delete the thread later
-    std::thread* previous_thread = analysis_instance.running_thread;
+    auto previous_thread = analysis_instance.running_thread;
 
     // If the channel map filler has already run and has worked then remove the entry
     // and keep running
-    if (analysis_instance.mod == &chfiller and m_map->is_filled()) {
+    if (analysis_instance.mod == chfiller && m_map->is_filled()) {
       map.erase(task);
       TLOG_DEBUG(5) << "Channel map already filled, removing entry and starting again";
       continue;
@@ -277,8 +280,8 @@ DQMProcessor::RequestMaker()
                                                   std::unique_ptr<ChannelMap> & map,
                                                   std::string kafka_address);
     runfunc_type memfunc = &AnalysisModule::run;
-    std::thread* current_thread =
-      new std::thread(memfunc, std::ref(*algo), std::move(element), std::ref(m_map), m_kafka_address);
+    auto current_thread =
+      std::make_shared<std::thread>(memfunc, std::ref(*algo), std::move(element), std::ref(m_map), m_kafka_address);
 
     // Add a new entry for the current instance
     TLOG() << "Starting to run \"" << analysis_instance.name << "\"";
@@ -299,16 +302,21 @@ DQMProcessor::RequestMaker()
     if (previous_thread != nullptr) {
       if (previous_thread->joinable()) {
         previous_thread->join();
-        delete previous_thread; // TODO: rsipos -> Why is this a raw pointer on the thread? Move to unique_ptr.
       } else {
-        TLOG() << "Thread not joinable";
-        // Should not be happening
+        throw ProcessorError(ERS_HERE, "Thread not joinable");
       }
     }
   }
+
+  for (auto& task : map) {
+    if (task.second.running_thread && task.second.running_thread->joinable()) {
+      task.second.running_thread->join();
+    }
+  }
+
   // Delete the timestamp estimator after we are sure we won't need it
   m_time_est.reset(nullptr);
-}
+} // NOLINT Function length
 
 dfmessages::TriggerDecision
 DQMProcessor::CreateRequest(std::vector<dfmessages::GeoID>& m_links, int number_of_frames)
@@ -318,7 +326,8 @@ DQMProcessor::CreateRequest(std::vector<dfmessages::GeoID>& m_links, int number_
 
   static daqdataformats::trigger_number_t trigger_number = 1;
 
-  decision.trigger_number = trigger_number++;
+  decision.trigger_number = trigger_number;
+  trigger_number++;
   decision.run_number = m_run_number;
   decision.trigger_timestamp = timestamp;
   decision.readout_type = dfmessages::ReadoutType::kMonitoring;

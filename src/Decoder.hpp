@@ -13,6 +13,7 @@
 #include "detdataformats/wib/WIBFrame.hpp"
 
 #include <climits>
+#include <map>
 #include <memory>
 #include <vector>
 
@@ -45,8 +46,8 @@ decodewib(daqdataformats::TriggerRecord& record)
       (fragment->get_size() - sizeof(daqdataformats::FragmentHeader)) / sizeof(detdataformats::wib::WIBFrame);
     std::vector<detdataformats::wib::WIBFrame*> tmp;
     for (int i = 0; i < num_chunks; ++i) {
-      detdataformats::wib::WIBFrame* frame = reinterpret_cast<detdataformats::wib::WIBFrame*>(
-        static_cast<char*>(fragment->get_data()) + (i * 464)); // NOLINT
+      detdataformats::wib::WIBFrame* frame = reinterpret_cast<detdataformats::wib::WIBFrame*>( // NOLINT
+        static_cast<char*>(fragment->get_data()) + (i * 464));
       tmp.push_back(frame);
     }
     wibframes[element_id] = tmp;

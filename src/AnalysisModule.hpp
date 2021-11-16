@@ -13,6 +13,8 @@
 #include "daqdataformats/TriggerRecord.hpp"
 
 #include <atomic>
+#include <memory>
+#include <string>
 
 namespace dunedaq::dqm {
 

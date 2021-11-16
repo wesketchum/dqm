@@ -20,6 +20,8 @@
 #include "daqdataformats/TriggerRecord.hpp"
 
 #include <cstdlib>
+#include <map>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -58,7 +60,7 @@ public:
                              int run_num,
                              time_t timestamp);
   void clean();
-  void append_to_string(std::uint64_t timestamp, std::unique_ptr<ChannelMap>& map);
+  void append_to_string(std::uint64_t timestamp, std::unique_ptr<ChannelMap>& map); // NOLINT(build/unsigned)
   void fill(int ch, double value);
   void fill(int ch, int link, double value);
   int get_local_index(int ch, int link);
@@ -116,7 +118,7 @@ HistContainer::run(std::unique_ptr<daqdataformats::TriggerRecord> record,
     keys.push_back(key);
   }
 
-  uint64_t min_timestamp = 0;
+  uint64_t min_timestamp = 0; // NOLINT(build/unsigned)
   // We run over all links until we find one that has a non-empty vector of frames
   for (auto& key : keys) {
     if (!wibframes[key].empty()) {
@@ -124,7 +126,7 @@ HistContainer::run(std::unique_ptr<daqdataformats::TriggerRecord> record,
       break;
     }
   }
-  uint64_t timestamp = 0;
+  uint64_t timestamp = 0; // NOLINT(build/unsigned)
 
   // Check that all the wibframes vectors have the same size, if not, something
   // bad has happened, for now don't do anything
@@ -183,7 +185,7 @@ HistContainer::run(std::unique_ptr<daqdataformats::TriggerRecord> record,
 }
 
 void
-HistContainer::append_to_string(std::uint64_t timestamp, std::unique_ptr<ChannelMap>& cmap)
+HistContainer::append_to_string(std::uint64_t timestamp, std::unique_ptr<ChannelMap>& cmap) // NOLINT(build/unsigned)
 {
   auto channel_order = cmap->get_map();
   for (auto& [plane, map] : channel_order) {

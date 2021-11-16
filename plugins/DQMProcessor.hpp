@@ -83,7 +83,7 @@ private:
   std::string m_kafka_address;
   std::vector<int> m_link_idx;
 
-  uint16_t m_region;
+  uint16_t m_region; // NOLINT(build/unsigned)
   int m_clock_frequency;
 
   std::unique_ptr<std::thread> m_running_thread;

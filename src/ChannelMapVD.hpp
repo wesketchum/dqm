@@ -16,8 +16,12 @@
 #include "daqdataformats/TriggerRecord.hpp"
 #include "detchannelmaps/TPCChannelMap.hpp"
 
+#include <cstdlib>
+#include <map>
 #include <set>
-#include <stdlib.h>
+#include <tuple>
+#include <utility>
+#include <vector>
 
 namespace dunedaq::dqm {
 
@@ -79,7 +83,7 @@ ChannelMapVD::fill(daqdataformats::TriggerRecord& tr)
       int crate = fr->get_wib_header()->crate_no;
       int slot = fr->get_wib_header()->slot_no;
       int fiber = fr->get_wib_header()->fiber_no;
-      auto tmp = std::make_tuple<int, int, int>((int)crate, (int)slot, (int)fiber);
+      auto tmp = std::make_tuple(crate, slot, fiber);
       if (frame_numbers.find(tmp) == frame_numbers.end()) {
         frame_numbers.insert(tmp);
       } else {

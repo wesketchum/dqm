@@ -5,8 +5,8 @@
  * Licensing/copyright details are in the COPYING file that you should have
  * received with this code.
  */
-#ifndef DQM_SRC_CHANNELMAPPER_HPP_
-#define DQM_SRC_CHANNELMAPPER_HPP_
+#ifndef DQM_INCLUDE_DQM_CHANNELMAPPER_HPP_
+#define DQM_INCLUDE_DQM_CHANNELMAPPER_HPP_
 
 // DQM
 #include "daqdataformats/TriggerRecord.hpp"
@@ -81,6 +81,6 @@ GetPlane(swtpg::PdspChannelMapService& channelMap, unsigned int offline)
   return plane;
 }
 
-} // namespace dqm
+} // namespace dunedaq::dqm
 
-#endif // DQM_SRC_CHANNELMAPPER_HPP_
+#endif // DQM_INCLUDE_DQM_CHANNELMAPPER_HPP_

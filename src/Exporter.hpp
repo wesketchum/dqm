@@ -16,7 +16,7 @@ namespace dunedaq::dqm {
 class KafkaStream
 {
 public:
-  KafkaStream(const std::string& param);
+  explicit KafkaStream(const std::string& param);
   void kafka_exporter(std::string input, std::string topic);
   RdKafka::Producer* m_producer;
 };
@@ -61,6 +61,6 @@ KafkaExport(std::string& kafka_address, std::string input, std::string topic)
   stream.kafka_exporter(input, topic);
 }
 
-} // namespace dqm
+} // namespace dunedaq::dqm
 
 #endif // DQM_SRC_EXPORTER_HPP_

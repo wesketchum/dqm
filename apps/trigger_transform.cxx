@@ -1,18 +1,22 @@
 // * This is part of the DUNE DAQ Application Framework, copyright 2020.
 // * Licensing/copyright details are in the COPYING file that you should have received with this code.
-#include "boost/program_options.hpp"
 #include "daqdataformats/TriggerRecord.hpp"
 #include "detdataformats/wib/WIBFrame.hpp"
 #include "dqm/ChannelMapper.hpp"
-#include <dirent.h>
+
+#include "boost/program_options.hpp"
 #include <ers/StreamFactory.hpp>
-#include <fstream>
 #include <highfive/H5File.hpp>
 #include <highfive/H5Object.hpp>
-#include <iostream>
 #include <librdkafka/rdkafkacpp.h>
-#include <stdlib.h> //for using the function sleep
+
+#include <cstdlib>
+#include <dirent.h>
+#include <fstream>
+#include <iostream>
+#include <memory>
 #include <string>
+#include <vector>
 
 namespace bpo = boost::program_options;
 
@@ -69,7 +73,7 @@ readDataset(std::string path_dataset, void* buff)
                            std::to_string(frag.get_element_id().element_id) + ";" + std::to_string(raw_data_packets) +
                            ";" + data_Source_Name + ";";
 
-        auto wfptr_i = reinterpret_cast<dunedaq::detdataformats::wib::WIBFrame*>(
+        auto wfptr_i = reinterpret_cast<dunedaq::detdataformats::wib::WIBFrame*>( // NOLINT
           static_cast<char*>(frag.get_data()) + i * sizeof(dunedaq::detdataformats::wib::WIBFrame));
         // auto wfptr_i = reinterpret_cast<dunedaq::detdataformats::wib::WIBFrame *>(i *
         // sizeof(dunedaq::detdataformats::wib::WIBFrame));
@@ -217,17 +221,26 @@ main(int argc, char** argv)
     "dunedqm-incomingadcfrequency --folder /eos/home-y/yadonon/TriggerRecords/ --interval 100"
   };
 
-  desc.add_options()("help,h",
-                     "Help screen")("broker,b", bpo::value<std::string>()->default_value("127.0.0.1:9092"), "Broker")(
-    "source,s", bpo::value<std::string>()->default_value("defaultSource"), "Source")(
-    "rcemap,s",
-    bpo::value<std::string>()->default_value("/config/protoDUNETPCChannelMap_RCE_v4.txt"),
-    "RCE channels map")("felixmap,s",
-                        bpo::value<std::string>()->default_value("/config/protoDUNETPCChannelMap_FELIX_v4.txt"),
-                        "FELIX channels map")(
-    "topic,t", bpo::value<std::string>()->default_value("dunedqm-incomingadcfrequency"), "Topic")(
-    "folder,f", bpo::value<std::string>()->default_value("/eos/home-y/yadonon/TriggerRecords/"), "Folder")(
-    "interval,i", bpo::value<std::string>()->default_value("100"), "Inverval of capture");
+  desc.add_options()("help,h", "Help screen")(
+    "broker,b",
+    bpo::value<std::string>()->default_value("127.0.0.1:9092"),
+    "Broker")("source,s",
+              bpo::value<std::string>()->default_value("defaultSource"),
+              "Source")("rcemap,s",
+                        bpo::value<std::string>()->default_value("/config/protoDUNETPCChannelMap_RCE_v4.txt"),
+                        "RCE channels map")("felixmap,s",
+                                            bpo::value<std::string>()->default_value(
+                                              "/config/protoDUNETPCChannelMap_FELIX_v4.txt"),
+                                            "FELIX channels map")("topic,t",
+                                                                  bpo::value<std::string>()->default_value(
+                                                                    "dunedqm-incomingadcfrequency"),
+                                                                  "Topic")("folder,f",
+                                                                           bpo::value<std::string>()->default_value(
+                                                                             "/eos/home-y/yadonon/TriggerRecords/"),
+                                                                           "Folder")("interval,i",
+                                                                                     bpo::value<std::string>()
+                                                                                       ->default_value("100"),
+                                                                                     "Inverval of capture");
 
   bpo::variables_map vm;
 
@@ -350,4 +363,4 @@ main(int argc, char** argv)
   input_parsed_files.close();
 
   return 0;
-}
+} // NOLINT Function length

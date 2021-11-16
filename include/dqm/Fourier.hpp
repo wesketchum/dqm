@@ -5,8 +5,8 @@
  * Licensing/copyright details are in the COPYING file that you should have
  * received with this code.
  */
-#ifndef DQM_SRC_FOURIER_HPP_
-#define DQM_SRC_FOURIER_HPP_
+#ifndef DQM_INCLUDE_DQM_FOURIER_HPP_
+#define DQM_INCLUDE_DQM_FOURIER_HPP_
 
 // dqm
 #include "AnalysisModule.hpp"
@@ -65,7 +65,7 @@ Fourier::fourier_prep(const std::vector<double>& input) const
   for (size_t i = 0; i < input.size(); i++) {
     output[i] = input[i];
     if (i < 100)
-      std::cout << "Prep " << output[i] << " " << input[i] << std::endl;
+      TLOG()  << "Prep " << output[i] << " " << input[i];
   }
   return output;
 }
@@ -132,4 +132,4 @@ Fourier::clean()
 
 } // namespace dunedaq::dqm
 
-#endif // DQM_SRC_FOURIER_HPP_
+#endif // DQM_INCLUDE_DQM_FOURIER_HPP_
