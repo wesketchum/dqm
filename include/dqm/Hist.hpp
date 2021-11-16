@@ -16,6 +16,7 @@
 #include "daqdataformats/TriggerRecord.hpp"
 
 #include <chrono>
+#include <cmath>
 #include <cstdlib>
 #include <ctime>
 #include <fstream>
@@ -23,7 +24,6 @@
 #include <ostream>
 #include <string>
 #include <vector>
-#include <cmath>
 
 /**
  * Basic 1D histogram that counts entries
@@ -77,7 +77,6 @@ public:
 
   double mean();
   double std();
-
 };
 
 Hist::Hist(int steps, double low, double high)
@@ -161,7 +160,8 @@ Hist::clean()
 double
 Hist::mean()
 {
-  if (m_mean_set) return m_mean;
+  if (m_mean_set)
+    return m_mean;
   m_mean = m_sum / m_nentries;
   m_mean_set = true;
   return m_mean;
@@ -170,9 +170,10 @@ Hist::mean()
 double
 Hist::std()
 {
-  if (m_std_set) return m_std;
+  if (m_std_set)
+    return m_std;
   m_mean = mean();
-  m_std = sqrt( (m_sum_sq + m_nentries * m_mean * m_mean - 2 * m_sum * m_mean) / (m_nentries - 1) );
+  m_std = sqrt((m_sum_sq + m_nentries * m_mean * m_mean - 2 * m_sum * m_mean) / (m_nentries - 1));
   m_std_set = true;
   return m_std;
 }

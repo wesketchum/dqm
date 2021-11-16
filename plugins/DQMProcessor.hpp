@@ -88,14 +88,13 @@ private:
 
   std::unique_ptr<std::thread> m_running_thread;
 
-  std::atomic<int> m_request_count{0};
-  std::atomic<int> m_total_request_count{0};
-  std::atomic<int> m_data_count{0};
-  std::atomic<int> m_total_data_count{0};
+  std::atomic<int> m_request_count{ 0 };
+  std::atomic<int> m_total_request_count{ 0 };
+  std::atomic<int> m_data_count{ 0 };
+  std::atomic<int> m_total_data_count{ 0 };
 
   std::string m_channel_map;
   std::unique_ptr<ChannelMap> m_map;
-
 };
 
 } // namespace dunedaq::dqm

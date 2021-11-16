@@ -9,15 +9,15 @@
 #define DQM_SRC_CHANNELMAPVD_HPP_
 
 // DQM
-#include "Decoder.hpp"
 #include "Constants.hpp"
+#include "Decoder.hpp"
 #include "dqm/DQMIssues.hpp"
 
 #include "daqdataformats/TriggerRecord.hpp"
 #include "detchannelmaps/TPCChannelMap.hpp"
 
-#include <stdlib.h>
 #include <set>
+#include <stdlib.h>
 
 namespace dunedaq::dqm {
 
@@ -25,7 +25,8 @@ typedef std::vector<int> vi;
 typedef std::vector<vi> vvi;
 typedef std::vector<vvi> vvvi;
 
-class ChannelMapVD : public ChannelMap {
+class ChannelMapVD : public ChannelMap
+{
 
   std::map<int, std::map<int, std::pair<int, int>>> m_map;
 
@@ -33,11 +34,11 @@ class ChannelMapVD : public ChannelMap {
   // holding the offline channel corresponding to each combination of slot,
   // fiber and frame channel
   vvvi channelvec;
-  vvvi planevec; 
+  vvvi planevec;
 
 public:
   ChannelMapVD();
-  void fill(daqdataformats::TriggerRecord &tr);
+  void fill(daqdataformats::TriggerRecord& tr);
   std::map<int, std::map<int, std::pair<int, int>>> get_map();
 };
 
@@ -55,7 +56,7 @@ ChannelMapVD::get_map()
 }
 
 void
-ChannelMapVD::fill(daqdataformats::TriggerRecord &tr)
+ChannelMapVD::fill(daqdataformats::TriggerRecord& tr)
 {
 
   if (is_filled()) {
@@ -81,15 +82,14 @@ ChannelMapVD::fill(daqdataformats::TriggerRecord &tr)
       auto tmp = std::make_tuple<int, int, int>((int)crate, (int)slot, (int)fiber);
       if (frame_numbers.find(tmp) == frame_numbers.end()) {
         frame_numbers.insert(tmp);
-      }
-      else {
+      } else {
         continue;
       }
-      for (int ich=0; ich < CHANNELS_PER_LINK; ++ich) {
+      for (int ich = 0; ich < CHANNELS_PER_LINK; ++ich) {
         auto channel = m_chmap_service->get_offline_channel_from_crate_slot_fiber_chan(crate, slot, fiber, ich);
         auto plane = m_chmap_service->get_plane_from_offline_channel(channel);
-        
-        m_map[plane][channel] = {key, ich};
+
+        m_map[plane][channel] = { key, ich };
       }
     }
   }
