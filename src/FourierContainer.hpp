@@ -83,7 +83,7 @@ FourierContainer::run(std::unique_ptr<daqdataformats::TriggerRecord> record,
                       std::unique_ptr<ChannelMap>& map,
                       std::string kafka_address)
 {
-  m_run_mark.store(true);
+  set_is_running(true);
   dunedaq::dqm::Decoder dec;
   auto wibframes = dec.decode(*record);
   // std::uint64_t timestamp = 0; // NOLINT(build/unsigned)
@@ -94,7 +94,7 @@ FourierContainer::run(std::unique_ptr<daqdataformats::TriggerRecord> record,
   for (auto& vec : wibframes) {
     if (vec.second.size() != size) {
       ers::error(InvalidData(ERS_HERE, "the size of the vector of frames is different for each link"));
-      m_run_mark.store(false);
+      set_is_running(false);
       return;
     }
   }
@@ -117,7 +117,7 @@ FourierContainer::run(std::unique_ptr<daqdataformats::TriggerRecord> record,
            record->get_header_ref().get_run_number(),
            record->get_header_ref().get_trigger_timestamp());
 
-  m_run_mark.store(false);
+  set_is_running(false);
 }
 
 void

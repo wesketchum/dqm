@@ -103,13 +103,13 @@ HistContainer::run(std::unique_ptr<daqdataformats::TriggerRecord> record,
                    std::unique_ptr<ChannelMap>& map,
                    std::string kafka_address)
 {
-  m_run_mark.store(true);
+  set_is_running(true);
   dunedaq::dqm::Decoder dec;
   auto wibframes = dec.decode(*record);
 
   if (wibframes.size() == 0) {
     // throw issue
-    m_run_mark.store(false);
+    set_is_running(false);
     TLOG() << "Found no frames";
     return;
   }
@@ -136,7 +136,7 @@ HistContainer::run(std::unique_ptr<daqdataformats::TriggerRecord> record,
   for (auto& vec : wibframes) {
     if (vec.second.size() != size) {
       ers::error(InvalidData(ERS_HERE, "the size of the vector of frames is different for each link"));
-      m_run_mark.store(false);
+      set_is_running(false);
       return;
     }
   }
@@ -183,7 +183,7 @@ HistContainer::run(std::unique_ptr<daqdataformats::TriggerRecord> record,
   }
   clean();
 
-  m_run_mark.store(false);
+  set_is_running(false);
 }
 
 void

@@ -39,7 +39,7 @@ ChannelMapFiller::run(std::unique_ptr<daqdataformats::TriggerRecord> record,
                       std::unique_ptr<ChannelMap>& map,
                       std::string)
 {
-  m_run_mark.store(true);
+  set_is_running(true);
 
   // Prevent running multiple times
   if (map->is_filled()) {
@@ -53,7 +53,7 @@ ChannelMapFiller::run(std::unique_ptr<daqdataformats::TriggerRecord> record,
   }
 
   map->fill(*record);
-  m_run_mark.store(false);
+  set_is_running(false);
 }
 
 ChannelMapFiller::ChannelMapFiller(std::string name, std::string cmap_name)

@@ -223,7 +223,7 @@ DQMProcessor::RequestMaker()
 
     // Make sure that the process is not running and a request can be made
     // otherwise we wait for more time
-    if (algo->is_running()) {
+    if (algo->get_is_running()) {
       TLOG(5) << "ALGORITHM " << analysis_instance.name << " already running";
       map[std::chrono::system_clock::now() +
           std::chrono::milliseconds(static_cast<int>(analysis_instance.default_unavailable_time) * 1000)] = {

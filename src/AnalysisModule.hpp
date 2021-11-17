@@ -22,20 +22,18 @@ class AnalysisModule
 {
 public:
 
-  virtual bool is_running();
+  bool get_is_running() const { return m_is_running; }
+
   virtual void run(std::unique_ptr<daqdataformats::TriggerRecord> record,
                    std::unique_ptr<ChannelMap>& map,
                    std::string kafka_address) = 0;
 
 protected:
-  std::atomic<bool> m_run_mark = false;
-};
+  void set_is_running(bool status) { m_is_running = status; }
 
-bool
-AnalysisModule::is_running()
-{
-  return m_run_mark;
-}
+private:
+  std::atomic<bool> m_is_running = false;
+};
 
 } // namespace dunedaq::dqm
 
