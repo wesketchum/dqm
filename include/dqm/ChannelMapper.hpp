@@ -5,15 +5,17 @@
  * Licensing/copyright details are in the COPYING file that you should have
  * received with this code.
  */
-#ifndef DQM_SRC_CHANNELMAPPER_HPP_
-#define DQM_SRC_CHANNELMAPPER_HPP_
+#ifndef DQM_INCLUDE_DQM_CHANNELMAPPER_HPP_
+#define DQM_INCLUDE_DQM_CHANNELMAPPER_HPP_
 
 // DQM
 #include "daqdataformats/TriggerRecord.hpp"
 
 #include "readout/chmap/PdspChannelMapService.hpp"
 
-//Global channel map object to avoid repeated creation and deletion
+#include <string>
+
+// Global channel map object to avoid repeated creation and deletion
 
 struct ChannelInfo
 {
@@ -25,12 +27,12 @@ struct ChannelInfo
   std::string Partition = "NULL";
 };
 
-namespace dunedaq::dqm
-{
+namespace dunedaq::dqm {
 
-unsigned int getOfflineChannel(swtpg::PdspChannelMapService& channelMap, 
-                               const dunedaq::detdataformats::wib::WIBFrame* frame,
-                               unsigned int ch) // NOLINT(build/unsigned)
+unsigned int
+getOfflineChannel(swtpg::PdspChannelMapService& channelMap,
+                  const dunedaq::detdataformats::wib::WIBFrame* frame,
+                  unsigned int ch) // NOLINT(build/unsigned)
 {
   // handle 256 channels on two fibers -- use the channel
   // map that assumes 128 chans per fiber (=FEMB) (Copied
@@ -56,30 +58,31 @@ unsigned int getOfflineChannel(swtpg::PdspChannelMapService& channelMap,
 
   unsigned int crateloc = crate; // NOLINT(build/unsigned)
   unsigned int offline =         // NOLINT(build/unsigned)
-  channelMap.GetOfflineNumberFromDetectorElements(crateloc, slot, fiberloc, chloc, swtpg::PdspChannelMapService::kFELIX);
-  
-return offline;
+    channelMap.GetOfflineNumberFromDetectorElements(
+      crateloc, slot, fiberloc, chloc, swtpg::PdspChannelMapService::kFELIX);
+
+  return offline;
 }
 
-unsigned int LocalWireNumber(swtpg::PdspChannelMapService& channelMap, 
-                             unsigned int offline)
+unsigned int
+LocalWireNumber(swtpg::PdspChannelMapService& channelMap, unsigned int offline)
 {
-  unsigned int apa =  channelMap.APAFromOfflineChannel(offline);
+  unsigned int apa = channelMap.APAFromOfflineChannel(offline);
   unsigned int plane = channelMap.PlaneFromOfflineChannel(offline);
 
-  int apa_channel = offline - apa*2560;
-  unsigned int local_channel = apa_channel - plane*800;
+  int apa_channel = offline - apa * 2560;
+  unsigned int local_channel = apa_channel - plane * 800;
 
   return local_channel;
 }
 
-unsigned int GetPlane(swtpg::PdspChannelMapService& channelMap, 
-                             unsigned int offline)
+unsigned int
+GetPlane(swtpg::PdspChannelMapService& channelMap, unsigned int offline)
 {
   unsigned int plane = channelMap.PlaneFromOfflineChannel(offline);
   return plane;
 }
 
-} //namespace dqm
+} // namespace dunedaq::dqm
 
-#endif // DQM_SRC_CHANNELMAPPER_HPP_
+#endif // DQM_INCLUDE_DQM_CHANNELMAPPER_HPP_
