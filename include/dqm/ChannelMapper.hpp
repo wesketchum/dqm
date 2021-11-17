@@ -13,6 +13,8 @@
 
 #include "readout/chmap/PdspChannelMapService.hpp"
 
+#include <string>
+
 // Global channel map object to avoid repeated creation and deletion
 
 struct ChannelInfo

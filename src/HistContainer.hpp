@@ -29,12 +29,6 @@ namespace dunedaq::dqm {
 
 class HistContainer : public AnalysisModule
 {
-  std::string m_name;
-  std::vector<Hist> histvec;
-  int m_size;
-  std::map<int, std::string> m_to_send;
-  std::map<int, int> m_index;
-  bool m_only_mean_rms = false;
 
 public:
   HistContainer(std::string name, int nhist, int steps, double low, double high, bool only_mean = false);
@@ -64,6 +58,14 @@ public:
   void fill(int ch, double value);
   void fill(int ch, int link, double value);
   int get_local_index(int ch, int link);
+
+private:
+  std::string m_name;
+  std::vector<Hist> histvec;
+  int m_size;
+  std::map<int, std::string> m_to_send;
+  std::map<int, int> m_index;
+  bool m_only_mean_rms = false;
 };
 
 HistContainer::HistContainer(std::string name, int nhist, int steps, double low, double high, bool only_mean)

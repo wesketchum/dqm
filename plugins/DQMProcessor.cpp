@@ -196,8 +196,7 @@ DQMProcessor::RequestMaker()
 
     auto task = map.begin();
     if (task == map.end()) {
-      TLOG() << "Empty map! This should never happen!";
-      break;
+      throw ProcessorError(ERS_HERE, "Empty map! This should never happen!");
     }
     auto next_time = task->first;
     auto analysis_instance = task->second;

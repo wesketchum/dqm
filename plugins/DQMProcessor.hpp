@@ -52,14 +52,13 @@ public:
   void do_stop(const data_t&);
   void do_configure(const data_t&);
 
-  std::atomic<bool> m_run_marker;
-
   void RequestMaker();
   dfmessages::TriggerDecision CreateRequest(std::vector<dfmessages::GeoID>& m_links, int number_of_frames);
 
   void get_info(opmonlib::InfoCollector& ci, int /*level*/);
 
 private:
+  std::atomic<bool> m_run_marker;
   using trigger_record_source_qt = appfwk::DAQSource<std::unique_ptr<daqdataformats::TriggerRecord>>;
   std::unique_ptr<trigger_record_source_qt> m_source;
   using trigger_decision_sink_qt = appfwk::DAQSink<dfmessages::TriggerDecision>;

@@ -21,12 +21,14 @@ namespace dunedaq::dqm {
 class AnalysisModule
 {
 public:
-  std::atomic<bool> m_run_mark = false;
 
   virtual bool is_running();
   virtual void run(std::unique_ptr<daqdataformats::TriggerRecord> record,
                    std::unique_ptr<ChannelMap>& map,
                    std::string kafka_address) = 0;
+
+protected:
+  std::atomic<bool> m_run_mark = false;
 };
 
 bool
