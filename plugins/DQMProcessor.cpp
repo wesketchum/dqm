@@ -26,7 +26,9 @@
 #include "daqdataformats/GeoID.hpp"
 #include "daqdataformats/TriggerRecord.hpp"
 #include "detdataformats/wib/WIBFrame.hpp"
+#include "dfmessages/TimeSync.hpp"
 #include "dfmessages/TriggerDecision.hpp"
+#include "networkmanager/NetworkManager.hpp"
 
 // C++ includes
 #include <chrono>
@@ -45,6 +47,7 @@ DQMProcessor::DQMProcessor(const std::string& name)
   register_command("start", &DQMProcessor::do_start);
   register_command("conf", &DQMProcessor::do_configure);
   register_command("stop", &DQMProcessor::do_stop);
+  register_command("scrap", &DQMProcessor::do_scrap);
 }
 
 void
@@ -52,7 +55,6 @@ DQMProcessor::init(const data_t&)
 {
   m_source.reset(new trigger_record_source_qt("trigger_record_q_dqm"));
   m_sink.reset(new trigger_decision_sink_qt("trigger_decision_q_dqm"));
-  m_timesync_source.reset(new timesync_source_qt("time_sync_dqm_q"));
 }
 
 void
@@ -84,12 +86,19 @@ DQMProcessor::do_configure(const nlohmann::json& args)
   m_channel_map = conf.channel_map;
 
   m_region = conf.region;
+
+  m_timesync_connection = conf.timesync_connection_name;
+  networkmanager::NetworkManager::get().start_listening(m_timesync_connection);
 }
 
 void
 DQMProcessor::do_start(const nlohmann::json& args)
 {
-  m_time_est.reset(new timinglibs::TimestampEstimator(m_timesync_source, m_clock_frequency));
+  m_time_est.reset(new timinglibs::TimestampEstimator(m_clock_frequency));
+
+  m_received_timesync_count.store(0);
+  networkmanager::NetworkManager::get().register_callback(
+    m_timesync_connection, std::bind(&DQMProcessor::dispatch_timesync, this, std::placeholders::_1));
 
   m_run_marker.store(true);
 
@@ -109,6 +118,15 @@ DQMProcessor::do_stop(const data_t&)
 {
   m_run_marker.store(false);
   m_running_thread->join();
+
+  networkmanager::NetworkManager::get().clear_callback(m_timesync_connection);
+  TLOG() << get_name() << ": received " << m_received_timesync_count.load() << " TimeSync messages.";
+}
+
+void
+DQMProcessor::do_scrap(const data_t&)
+{
+  networkmanager::NetworkManager::get().stop_listening(m_timesync_connection);
 }
 
 void
@@ -326,6 +344,17 @@ DQMProcessor::CreateRequest(std::vector<dfmessages::GeoID>& m_links, int number_
     ;
 
   return decision;
+}
+
+void
+DQMProcessor::dispatch_timesync(ipm::Receiver::Response message)
+{
+  ++m_received_timesync_count;
+  auto timesyncmsg = serialization::deserialize<dfmessages::TimeSync>(message.data);
+  TLOG_DEBUG(13) << "Received TimeSync message with DAQ time = " << timesyncmsg.daq_time;
+  if (m_time_est.get() != nullptr) {
+    m_time_est->add_timestamp_datapoint(timesyncmsg);
+  }
 }
 
 } // namespace dqm

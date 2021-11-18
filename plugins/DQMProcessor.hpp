@@ -20,6 +20,7 @@
 #include "daqdataformats/TriggerRecord.hpp"
 #include "dfmessages/TriggerDecision.hpp"
 #include "timinglibs/TimestampEstimator.hpp"
+#include <ipm/Receiver.hpp>
 
 #include <atomic>
 #include <chrono>
@@ -51,6 +52,9 @@ public:
   void do_start(const data_t&);
   void do_stop(const data_t&);
   void do_configure(const data_t&);
+  void do_scrap(const data_t&);
+
+  void dispatch_timesync(ipm::Receiver::Response message);
 
   std::atomic<bool> m_run_marker;
 
@@ -72,9 +76,7 @@ private:
   dqmprocessor::StandardDQM m_standard_dqm_hist;
   dqmprocessor::StandardDQM m_standard_dqm_mean_rms;
   dqmprocessor::StandardDQM m_standard_dqm_fourier;
-
-  using timesync_source_qt = appfwk::DAQSource<dfmessages::TimeSync>;
-  std::unique_ptr<timesync_source_qt> m_timesync_source;
+  std::string m_timesync_connection;
 
   std::unique_ptr<timinglibs::TimestampEstimator> m_time_est;
 
@@ -92,6 +94,7 @@ private:
   std::atomic<int> m_total_request_count{0};
   std::atomic<int> m_data_count{0};
   std::atomic<int> m_total_data_count{0};
+  std::atomic<uint64_t> m_received_timesync_count{0}; // NOLINT(build/unsigned)
 
   std::string m_channel_map;
   std::unique_ptr<ChannelMap> m_map;

@@ -30,6 +30,8 @@ local dqmprocessor = {
     index_list : s.sequence("IndexList", self.index,
                             doc="A list with indexes"),
 
+    netmgr_name : s.string("NetMgrName", doc="Connection or topic name to be used with NetworkManager"),
+
     standard_dqm: s.record("StandardDQM", [
         s.field("how_often", self.time, 0,
                 doc="Algorithm is run every x seconds"),
@@ -54,7 +56,9 @@ local dqmprocessor = {
         s.field("link_idx", self.index_list,
                 doc="Index of each link that is sending data"),
         s.field("clock_frequency", self.big_count,
-                doc="Clock frequency in Hz")
+                doc="Clock frequency in Hz"),
+        s.field("timesync_connection_name", self.netmgr_name,
+                doc="Connection to use for receiving TimeSync messages")
     ], doc="Generic DQM configuration")
 };
 
