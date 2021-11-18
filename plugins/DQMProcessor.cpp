@@ -47,7 +47,6 @@ DQMProcessor::DQMProcessor(const std::string& name)
   register_command("start", &DQMProcessor::do_start);
   register_command("conf", &DQMProcessor::do_configure);
   register_command("stop", &DQMProcessor::do_stop);
-  register_command("scrap", &DQMProcessor::do_scrap);
 }
 
 void
@@ -88,7 +87,6 @@ DQMProcessor::do_configure(const nlohmann::json& args)
   m_region = conf.region;
 
   m_timesync_connection = conf.timesync_connection_name;
-  networkmanager::NetworkManager::get().start_listening(m_timesync_connection);
 }
 
 void
@@ -97,6 +95,7 @@ DQMProcessor::do_start(const nlohmann::json& args)
   m_time_est.reset(new timinglibs::TimestampEstimator(m_clock_frequency));
 
   m_received_timesync_count.store(0);
+  networkmanager::NetworkManager::get().start_listening(m_timesync_connection);
   networkmanager::NetworkManager::get().register_callback(
     m_timesync_connection, std::bind(&DQMProcessor::dispatch_timesync, this, std::placeholders::_1));
 
@@ -120,13 +119,8 @@ DQMProcessor::do_stop(const data_t&)
   m_running_thread->join();
 
   networkmanager::NetworkManager::get().clear_callback(m_timesync_connection);
-  TLOG() << get_name() << ": received " << m_received_timesync_count.load() << " TimeSync messages.";
-}
-
-void
-DQMProcessor::do_scrap(const data_t&)
-{
   networkmanager::NetworkManager::get().stop_listening(m_timesync_connection);
+  TLOG() << get_name() << ": received " << m_received_timesync_count.load() << " TimeSync messages.";
 }
 
 void

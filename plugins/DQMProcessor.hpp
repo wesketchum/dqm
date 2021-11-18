@@ -52,7 +52,6 @@ public:
   void do_start(const data_t&);
   void do_stop(const data_t&);
   void do_configure(const data_t&);
-  void do_scrap(const data_t&);
 
   void dispatch_timesync(ipm::Receiver::Response message);
 
