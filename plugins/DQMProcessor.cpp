@@ -211,8 +211,10 @@ DQMProcessor::RequestMaker()
     // If the channel map filler has already run and has worked then remove the entry
     // and keep running
     if (analysis_instance.mod == chfiller && m_map->is_filled()) {
-      if (task->second.running_thread != nullptr && task->second.running_thread->joinable()) {
-	task->second.running_thread->join();
+      // If the channel map filling has not finished yet
+      // we wait until the it has finished and the thread is joined
+      if (analysis_instance.running_thread != nullptr && analysis_instance.running_thread->joinable()) {
+        analysis_instance.running_thread->join();
       }
       map.erase(task);
       TLOG_DEBUG(5) << "Channel map already filled, removing entry and starting again";
@@ -317,9 +319,9 @@ DQMProcessor::RequestMaker()
 
   }
 
-  for (auto& task : map) {
-    if (task.second.running_thread && task.second.running_thread->joinable()) {
-      task.second.running_thread->join();
+  for (auto& [time, analysis_instance] : map) {
+    if (analysis_instance.running_thread && analysis_instance.running_thread->joinable()) {
+      analysis_instance.running_thread->join();
     }
   }
 
