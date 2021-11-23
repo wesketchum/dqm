@@ -22,8 +22,6 @@ FIND_PACKAGE(Boost 1.70.0 COMPONENTS program_options REQUIRED)
 daq_codegen(*.jsonnet TEMPLATES Structs.hpp.j2 Nljs.hpp.j2 )
 daq_codegen(*info.jsonnet DEP_PKGS opmonlib TEMPLATES opmonlib/InfoStructs.hpp.j2 opmonlib/InfoNljs.hpp.j2 )
 
-# daq_add_application(trigger_transform trigger_transform.cxx LINK_LIBRARIES appfwk::appfwk readout::readout daqdataformats::daqdataformats detdataformats::detdataformats detchannelmaps::detchannelmaps HighFive RdKafka::rdkafka++ timinglibs::timinglibs ${Boost_PROGRAM_OPTIONS_LIBRARY})
-
 # We put here the name of our class, and the libraries we want to link with
 
 daq_add_plugin(DQMProcessor duneDAQModule LINK_LIBRARIES appfwk::appfwk daqdataformats::daqdataformats detdataformats::detdataformats detchannelmaps::detchannelmaps readoutlibs::readoutlibs timinglibs::timinglibs RdKafka::rdkafka RdKafka::rdkafka++)
