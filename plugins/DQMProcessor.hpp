@@ -55,14 +55,13 @@ public:
 
   void dispatch_timesync(ipm::Receiver::Response message);
 
-  std::atomic<bool> m_run_marker;
-
   void RequestMaker();
   dfmessages::TriggerDecision CreateRequest(std::vector<dfmessages::GeoID>& m_links, int number_of_frames);
 
   void get_info(opmonlib::InfoCollector& ci, int /*level*/);
 
 private:
+  std::atomic<bool> m_run_marker;
   using trigger_record_source_qt = appfwk::DAQSource<std::unique_ptr<daqdataformats::TriggerRecord>>;
   std::unique_ptr<trigger_record_source_qt> m_source;
   using trigger_decision_sink_qt = appfwk::DAQSink<dfmessages::TriggerDecision>;
@@ -84,20 +83,19 @@ private:
   std::string m_kafka_address;
   std::vector<int> m_link_idx;
 
-  uint16_t m_region;
+  uint16_t m_region; // NOLINT(build/unsigned)
   int m_clock_frequency;
 
   std::unique_ptr<std::thread> m_running_thread;
 
-  std::atomic<int> m_request_count{0};
-  std::atomic<int> m_total_request_count{0};
-  std::atomic<int> m_data_count{0};
-  std::atomic<int> m_total_data_count{0};
-  std::atomic<uint64_t> m_received_timesync_count{0}; // NOLINT(build/unsigned)
+  std::atomic<int> m_request_count{ 0 };
+  std::atomic<int> m_total_request_count{ 0 };
+  std::atomic<int> m_data_count{ 0 };
+  std::atomic<int> m_total_data_count{ 0 };
+  std::atomic<uint64_t> m_received_timesync_count{ 0 }; // NOLINT(build/unsigned)
 
   std::string m_channel_map;
   std::unique_ptr<ChannelMap> m_map;
-
 };
 
 } // namespace dunedaq::dqm
