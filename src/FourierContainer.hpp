@@ -15,6 +15,7 @@
 #include "Decoder.hpp"
 #include "Exporter.hpp"
 #include "dqm/Fourier.hpp"
+#include "dqm/DQMIssues.hpp"
 
 #include "daqdataformats/TriggerRecord.hpp"
 
@@ -217,6 +218,10 @@ FourierContainer::transmit_global(std::string &kafka_address, std::unique_ptr<Ch
     output << "Summed FFT\n";
     for (size_t i = 0; i < freq.size(); ++i)
     {
+      if (i >= fouriervec[plane].m_transform.size()) {
+        ers::error(ChannelMapError(ERS_HERE, "Plane " + std::to_string(plane) + " has not been found"));
+        break;
+      }
       output << fouriervec[plane].get_transform(i) << " ";
     }
     output << "\n";
