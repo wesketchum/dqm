@@ -27,12 +27,12 @@ class ChannelMapFiller : public AnalysisModule{
 
 public:
   ChannelMapFiller(std::string name, std::string cmap_name);
-  void run(std::unique_ptr<daqdataformats::TriggerRecord> record, std::unique_ptr<ChannelMap> &map, std::string kafka_address);
+  void run(std::unique_ptr<daqdataformats::TriggerRecord> record, std::unique_ptr<ChannelMap> &map, std::atomic<bool>& run_mark, std::string kafka_address);
 
 };
 
 void
-ChannelMapFiller::run(std::unique_ptr<daqdataformats::TriggerRecord> record, std::unique_ptr<ChannelMap> &map, std::string)
+ChannelMapFiller::run(std::unique_ptr<daqdataformats::TriggerRecord> record, std::unique_ptr<ChannelMap> &map, std::atomic<bool>& run_mark, std::string)
 {
   m_run_mark.store(true);
 

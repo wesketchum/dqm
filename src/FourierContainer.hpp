@@ -39,7 +39,7 @@ public:
   FourierContainer(std::string name, int size, double inc, int npoints);
   FourierContainer(std::string name, int size, std::vector<int>& link_idx, double inc, int npoints, bool global_mode=false);
 
-  void run(std::unique_ptr<daqdataformats::TriggerRecord> record, std::unique_ptr<ChannelMap> &map, std::string kafka_address="");
+  void run(std::unique_ptr<daqdataformats::TriggerRecord> record, std::unique_ptr<ChannelMap> &map, std::atomic<bool>& run_mark, std::string kafka_address="");
   void transmit(std::string &kafka_address, std::unique_ptr<ChannelMap> &cmap, const std::string& topicname, int run_num, time_t timestamp);
   void transmit_global(std::string &kafka_address, std::unique_ptr<ChannelMap> &cmap, const std::string& topicname, int run_num, time_t timestamp);
   void clean();
@@ -75,7 +75,7 @@ FourierContainer::FourierContainer(std::string name, int size, double inc, int n
   }
 }
 void
-FourierContainer::run(std::unique_ptr<daqdataformats::TriggerRecord> record, std::unique_ptr<ChannelMap> &map, std::string kafka_address)
+FourierContainer::run(std::unique_ptr<daqdataformats::TriggerRecord> record, std::unique_ptr<ChannelMap> &map, std::atomic<bool>& run_mark, std::string kafka_address)
 {
   m_run_mark.store(true);
   dunedaq::dqm::Decoder dec;
@@ -129,6 +129,10 @@ FourierContainer::run(std::unique_ptr<daqdataformats::TriggerRecord> record, std
       }
 
     for (size_t ich = 0; ich < m_size - 1; ++ich) {
+      if (!run_mark) {
+        m_run_mark.store(false);
+        return;
+      }
       fouriervec[ich].compute_fourier_normalized();
     }
     // The last one corresponds can be obtained as the sum of the ones for the planes
