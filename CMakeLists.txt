@@ -17,7 +17,7 @@ find_package(timinglibs REQUIRED)
 find_package(RdKafka REQUIRED)
 find_package(ers REQUIRED)
 find_package(HighFive REQUIRED)
-FIND_PACKAGE(Boost 1.70.0 COMPONENTS program_options REQUIRED)
+find_package(Boost COMPONENTS unit_test_framework program_options REQUIRED)
 
 daq_codegen(*.jsonnet TEMPLATES Structs.hpp.j2 Nljs.hpp.j2 )
 daq_codegen(*info.jsonnet DEP_PKGS opmonlib TEMPLATES opmonlib/InfoStructs.hpp.j2 opmonlib/InfoNljs.hpp.j2 )
