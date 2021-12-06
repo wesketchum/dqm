@@ -327,8 +327,6 @@ DQMProcessor::RequestMaker()
     // AnalysisInstance whose thread it refers to
 
     map.erase(task);
-
-
   }
 
   for (auto& [time, analysis_instance] : map) {
@@ -385,9 +383,14 @@ DQMProcessor::dispatch_timesync(ipm::Receiver::Response message)
 {
   ++m_received_timesync_count;
   auto timesyncmsg = serialization::deserialize<dfmessages::TimeSync>(message.data);
-  TLOG_DEBUG(13) << "Received TimeSync message with DAQ time = " << timesyncmsg.daq_time;
+  TLOG_DEBUG(13) << "Received TimeSync message with DAQ time= " << timesyncmsg.daq_time
+                 << ", run=" << timesyncmsg.run_number << " (local run number is " << m_run_number << ")";
   if (m_time_est.get() != nullptr) {
-    m_time_est->add_timestamp_datapoint(timesyncmsg);
+    if (timesyncmsg.run_number == m_run_number) {
+      m_time_est->add_timestamp_datapoint(timesyncmsg);
+    } else {
+      TLOG_DEBUG(0) << "Discarded TimeSync message from run " << timesyncmsg.run_number << " during run " << m_run_number;
+    }
   }
 }
 
