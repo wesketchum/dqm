@@ -65,7 +65,7 @@ Fourier::fourier_prep(const std::vector<double>& input) const
   for (size_t i = 0; i < input.size(); i++) {
     output[i] = input[i];
     if (i < 100)
-      TLOG()  << "Prep " << output[i] << " " << input[i];
+      TLOG() << "Prep " << output[i] << " " << input[i];
   }
   return output;
 }
@@ -102,6 +102,11 @@ Fourier::compute_fourier_normalized()
 double
 Fourier::get_transform(int index)
 {
+  if (index < 0 || static_cast<size_t>(index) >= m_transform.size()) {
+    TLOG() << "WARNING: Fourier::get_transform called with index out of range, index=" << index
+           << ", size of m_transform vector is " << m_transform.size();
+    return 0.0;
+  }
   return m_transform[index];
 }
 
