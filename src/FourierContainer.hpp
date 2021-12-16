@@ -4,7 +4,7 @@
  * This is part of the DUNE DAQ , copyright 2020.
  * Licensing/copyright details are in the COPYING file that you should have
  * received with this code.
-*/
+ */
 #ifndef DQM_SRC_FOURIERCONTAINER_HPP_
 #define DQM_SRC_FOURIERCONTAINER_HPP_
 
@@ -19,11 +19,13 @@
 
 #include "daqdataformats/TriggerRecord.hpp"
 
+#include <cstdlib>
 #include <fstream>
+#include <map>
+#include <memory>
 #include <ostream>
 #include <string>
 #include <vector>
-#include <cstdlib>
 
 namespace dunedaq::dqm {
 
@@ -40,20 +42,30 @@ public:
   FourierContainer(std::string name, int size, double inc, int npoints);
   FourierContainer(std::string name, int size, std::vector<int>& link_idx, double inc, int npoints, bool global_mode=false);
 
-  void run(std::unique_ptr<daqdataformats::TriggerRecord> record, std::unique_ptr<ChannelMap> &map, std::atomic<bool>& run_mark, std::string kafka_address="");
-  void transmit(std::string &kafka_address, std::unique_ptr<ChannelMap> &cmap, const std::string& topicname, int run_num, time_t timestamp);
-  void transmit_global(std::string &kafka_address, std::unique_ptr<ChannelMap> &cmap, const std::string& topicname, int run_num, time_t timestamp);
+  void run(std::unique_ptr<daqdataformats::TriggerRecord> record,
+           std::atomic<bool>& run_mark,
+           std::unique_ptr<ChannelMap>& map,
+           std::string kafka_address = "");
+  void transmit(std::string& kafka_address,
+                std::unique_ptr<ChannelMap>& cmap,
+                const std::string& topicname,
+                int run_num,
+                time_t timestamp);
+  void transmit_global(std::string &kafka_address,
+                       std::unique_ptr<ChannelMap> &cmap,
+                       const std::string& topicname,
+                       int run_num,
+                       time_t timestamp);
   void clean();
   void fill(int ch, double value);
   void fill(int ch, int link, double value);
   int get_local_index(int ch, int link);
-
 };
 
 FourierContainer::FourierContainer(std::string name, int size, double inc, int npoints)
-  : m_name(name),
-    m_size(size),
-    m_npoints(npoints)
+  : m_name(name)
+  , m_size(size)
+  , m_npoints(npoints)
 {
   for (size_t i = 0; i < m_size; ++i) {
     fouriervec.emplace_back(Fourier(inc, npoints));
@@ -61,10 +73,10 @@ FourierContainer::FourierContainer(std::string name, int size, double inc, int n
 }
 
   FourierContainer::FourierContainer(std::string name, int size, std::vector<int>& link_idx, double inc, int npoints, bool global_mode)
-  : m_name(name),
-    m_size(size),
-    m_npoints(npoints),
-    m_global_mode(global_mode)
+  : m_name(name)
+  , m_size(size)
+  , m_npoints(npoints)
+  , m_global_mode(global_mode)
 {
   for (size_t i = 0; i < m_size; ++i) {
     fouriervec.emplace_back(Fourier(inc, npoints));
@@ -76,9 +88,12 @@ FourierContainer::FourierContainer(std::string name, int size, double inc, int n
   }
 }
 void
-FourierContainer::run(std::unique_ptr<daqdataformats::TriggerRecord> record, std::unique_ptr<ChannelMap> &map, std::atomic<bool>& run_mark, std::string kafka_address)
+FourierContainer::run(std::unique_ptr<daqdataformats::TriggerRecord> record,
+                      std::atomic<bool>& run_mark,
+                      std::unique_ptr<ChannelMap>& map,
+                      std::string kafka_address)
 {
-  m_run_mark.store(true);
+  set_is_running(true);
   dunedaq::dqm::Decoder dec;
   auto wibframes = dec.decode(*record);
   // std::uint64_t timestamp = 0; // NOLINT(build/unsigned)
@@ -90,7 +105,7 @@ FourierContainer::run(std::unique_ptr<daqdataformats::TriggerRecord> record, std
   for (auto& vec : wibframes) {
     if (vec.second.size() != size) {
       ers::error(InvalidData(ERS_HERE, "the size of the vector of frames is different for each link"));
-      m_run_mark.store(false);
+      set_is_running(false);
       return;
     }
   }
@@ -107,7 +122,11 @@ FourierContainer::run(std::unique_ptr<daqdataformats::TriggerRecord> record, std
     for (size_t ich = 0; ich < m_size; ++ich) {
       fouriervec[ich].compute_fourier_normalized();
     }
-    transmit(kafka_address, map, "testdunedqm", record->get_header_ref().get_run_number(), record->get_header_ref().get_trigger_timestamp());
+    transmit(kafka_address,
+             map,
+             "testdunedqm",
+             record->get_header_ref().get_run_number(),
+             record->get_header_ref().get_trigger_timestamp());
   }
 
   // Global mode means adding everything in planes and then all together
@@ -131,7 +150,7 @@ FourierContainer::run(std::unique_ptr<daqdataformats::TriggerRecord> record, std
 
     for (size_t ich = 0; ich < m_size - 1; ++ich) {
       if (!run_mark) {
-        m_run_mark.store(false);
+        set_is_running(false);
         return;
       }
       fouriervec[ich].compute_fourier_normalized();
@@ -146,11 +165,15 @@ FourierContainer::run(std::unique_ptr<daqdataformats::TriggerRecord> record, std
     transmit_global(kafka_address, map, "testdunedqm", record->get_header_ref().get_run_number(), record->get_header_ref().get_trigger_timestamp());
   }
 
-  m_run_mark.store(false);
+  set_is_running(false);
 }
 
 void
-FourierContainer::transmit(std::string &kafka_address, std::unique_ptr<ChannelMap> &cmap, const std::string& topicname, int run_num, time_t timestamp)
+FourierContainer::transmit(std::string& kafka_address,
+                           std::unique_ptr<ChannelMap>& cmap,
+                           const std::string& topicname,
+                           int run_num,
+                           time_t timestamp)
 {
   // Placeholders
   std::string dataname = m_name;
@@ -166,14 +189,13 @@ FourierContainer::transmit(std::string &kafka_address, std::unique_ptr<ChannelMa
   auto channel_order = cmap->get_map();
   for (auto& [plane, map] : channel_order) {
     std::stringstream output;
-    output << datasource << ";" << dataname << ";" << run_num << ";" << subrun
-           << ";" << event << ";" << timestamp << ";" << metadata << ";"
-           << partition << ";" << app_name << ";" << 0 << ";" << plane << ";";
+    output << datasource << ";" << dataname << ";" << run_num << ";" << subrun << ";" << event << ";" << timestamp
+           << ";" << metadata << ";" << partition << ";" << app_name << ";" << 0 << ";" << plane << ";";
     for (auto& [offch, pair] : map) {
       output << offch << " ";
     }
     output << "\n";
-    for (size_t i=0; i < freq.size(); ++i) {
+    for (size_t i = 0; i < freq.size(); ++i) {
       output << freq[i] << "\n";
       for (auto& [offch, pair] : map) {
         int link = pair.first;
@@ -256,7 +278,6 @@ FourierContainer::get_local_index(int ch, int link)
 {
   return ch + m_index[link];
 }
-
 
 } // namespace dunedaq::dqm
 
