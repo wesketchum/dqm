@@ -74,6 +74,8 @@ private:
   dqmprocessor::StandardDQM m_standard_dqm_hist;
   dqmprocessor::StandardDQM m_standard_dqm_mean_rms;
   dqmprocessor::StandardDQM m_standard_dqm_fourier;
+  dqmprocessor::StandardDQM m_standard_dqm_fourier_sum;
+
   std::string m_timesync_connection;
 
   std::unique_ptr<timinglibs::TimestampEstimator> m_time_est;

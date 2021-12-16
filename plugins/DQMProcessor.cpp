@@ -78,6 +78,7 @@ DQMProcessor::do_configure(const nlohmann::json& args)
   m_standard_dqm_hist = conf.sdqm_hist;
   m_standard_dqm_mean_rms = conf.sdqm_mean_rms;
   m_standard_dqm_fourier = conf.sdqm_fourier;
+  m_standard_dqm_fourier_sum = conf.sdqm_fourier_sum;
 
   m_link_idx = conf.link_idx;
 
@@ -165,6 +166,12 @@ DQMProcessor::RequestMaker()
                                                     m_link_idx,
                                                     1. / m_clock_frequency * TICKS_BETWEEN_TIMESTAMP,
                                                     m_standard_dqm_fourier.num_frames);
+  auto fouriersum = std::make_shared<FourierContainer>("fft_sums_display",
+                                                       4,
+                                                       m_link_idx,
+                                                       1. / m_clock_frequency * TICKS_BETWEEN_TIMESTAMP,
+                                                       m_standard_dqm_fourier_sum.num_frames,
+                                                       true);
   // Fills the channel map at the beggining of a run
   auto chfiller = std::make_shared<ChannelMapFiller>("channelmapfiller", m_channel_map);
 
@@ -197,6 +204,16 @@ DQMProcessor::RequestMaker()
       m_standard_dqm_fourier.num_frames,
       nullptr,
       "Fourier every " + std::to_string(m_standard_dqm_fourier.how_often) + " s"
+    };
+
+  if (m_standard_dqm_fourier_sum.how_often > 0)
+    map[std::chrono::system_clock::now() + std::chrono::seconds(10)] = {
+      fouriersum,
+      m_standard_dqm_fourier_sum.how_often,
+      m_standard_dqm_fourier_sum.unavailable_time,
+      m_standard_dqm_fourier_sum.num_frames,
+      nullptr,
+      "Summed Fourier every " + std::to_string(m_standard_dqm_fourier_sum.how_often) + " s"
     };
   map[std::chrono::system_clock::now() + std::chrono::seconds(2)] = { chfiller, 3,
                                                                       3,
@@ -293,11 +310,12 @@ DQMProcessor::RequestMaker()
 
     TLOG_DEBUG(10) << "Data popped from the queue";
     using runfunc_type = void (AnalysisModule::*)(std::unique_ptr<daqdataformats::TriggerRecord> record,
+                                                  std::atomic<bool>& run_mark,
                                                   std::unique_ptr<ChannelMap> & map,
                                                   std::string kafka_address);
     runfunc_type memfunc = &AnalysisModule::run;
     auto current_thread =
-      std::make_shared<std::thread>(memfunc, std::ref(*algo), std::move(element), std::ref(m_map), m_kafka_address);
+      std::make_shared<std::thread>(memfunc, std::ref(*algo), std::move(element), std::ref(m_run_marker), std::ref(m_map), m_kafka_address);
 
     // Add a new entry for the current instance
     TLOG() << "Starting to run \"" << analysis_instance.name << "\"";

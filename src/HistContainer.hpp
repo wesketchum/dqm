@@ -41,6 +41,7 @@ public:
                 bool only_mean);
 
   void run(std::unique_ptr<daqdataformats::TriggerRecord> record,
+           std::atomic<bool>& run_mark,
            std::unique_ptr<ChannelMap>& map,
            std::string kafka_address = "");
   void transmit(std::string& kafka_address,
@@ -100,6 +101,7 @@ HistContainer::HistContainer(std::string name,
 
 void
 HistContainer::run(std::unique_ptr<daqdataformats::TriggerRecord> record,
+                   std::atomic<bool>& run_mark,
                    std::unique_ptr<ChannelMap>& map,
                    std::string kafka_address)
 {
