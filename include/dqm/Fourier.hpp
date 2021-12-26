@@ -28,8 +28,6 @@ typedef std::valarray<Complex> CArray;
 class Fourier
 {
 public:
-  void fast_fourier_transform(CArray& x);
-
   double m_inc_size;
   int m_npoints;
   std::vector<double> m_data;
