@@ -31,7 +31,6 @@ typedef std::valarray<Complex> CArray;
 class Fourier
 {
 public:
-  CArray fourier_prep(const std::vector<double>& input) const;
   void fast_fourier_transform(CArray& x);
 
   double m_inc_size;
@@ -56,18 +55,6 @@ Fourier::Fourier(double inc, int npoints) // NOLINT(build/unsigned)
   , m_npoints(npoints)
 {
   m_data.reserve(m_npoints);
-}
-
-CArray
-Fourier::fourier_prep(const std::vector<double>& input) const
-{
-  CArray output(input.size());
-  for (size_t i = 0; i < input.size(); i++) {
-    output[i] = input[i];
-    if (i < 100)
-      TLOG() << "Prep " << output[i] << " " << input[i];
-  }
-  return output;
 }
 
 CArray
