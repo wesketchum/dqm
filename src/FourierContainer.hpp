@@ -27,6 +27,9 @@
 #include <string>
 #include <vector>
 
+// #include <complex> has to be before this include
+#include <fftw3.h>
+
 namespace dunedaq::dqm {
 
 class FourierContainer : public AnalysisModule
@@ -37,6 +40,7 @@ class FourierContainer : public AnalysisModule
   int m_npoints;
   std::map<int, int> m_index;
   bool m_global_mode;
+  fftw_plan m_plan;
 
 public:
   FourierContainer(std::string name, int size, double inc, int npoints);
@@ -70,6 +74,12 @@ FourierContainer::FourierContainer(std::string name, int size, double inc, int n
   for (size_t i = 0; i < m_size; ++i) {
     fouriervec.emplace_back(Fourier(inc, npoints));
   }
+
+  // Plan to be used for the Fourier transform
+  // The input and output arrays are not specified since the plan is going
+  // to be reused for each array
+  m_plan = fftw_plan_r2r_1d(size, NULL, NULL, FFTW_R2HC, FFTW_ESTIMATE);
+
 }
 
   FourierContainer::FourierContainer(std::string name, int size, std::vector<int>& link_idx, double inc, int npoints, bool global_mode)
@@ -120,7 +130,7 @@ FourierContainer::run(std::unique_ptr<daqdataformats::TriggerRecord> record,
       }
     }
     for (size_t ich = 0; ich < m_size; ++ich) {
-      fouriervec[ich].compute_fourier_normalized();
+      fouriervec[ich].compute_fourier_transform(m_plan);
     }
     transmit(kafka_address,
              map,
@@ -153,7 +163,7 @@ FourierContainer::run(std::unique_ptr<daqdataformats::TriggerRecord> record,
         set_is_running(false);
         return;
       }
-      fouriervec[ich].compute_fourier_normalized();
+      fouriervec[ich].compute_fourier_transform(m_plan);
     }
     // The last one corresponds can be obtained as the sum of the ones for the planes
     // since the fourier transform is linear
