@@ -78,7 +78,7 @@ FourierContainer::FourierContainer(std::string name, int size, double inc, int n
   // Plan to be used for the Fourier transform
   // The input and output arrays are not specified since the plan is going
   // to be reused for each array
-  m_plan = fftw_plan_r2r_1d(size, NULL, NULL, FFTW_R2HC, FFTW_ESTIMATE);
+  m_plan = fftw_plan_r2r_1d(size, NULL, NULL, FFTW_R2HC, FFTW_MEASURE);
 
 }
 
