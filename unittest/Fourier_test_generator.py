@@ -17,7 +17,7 @@ for i, (N, T) in enumerate(zip(Nval, Tval), start=1):
     y = np.sin(120.0 * 2.0*np.pi*x) + 0.5*np.sin(150.0 * 2.0*np.pi*x)
 
     xf = rfftfreq(N, T)
-    yf = rfft(y)
+    yf = np.abs(rfft(y))
 
     print(xf.shape, yf.shape)
     print(xf)
