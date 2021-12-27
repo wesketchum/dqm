@@ -48,15 +48,12 @@ Fourier_test_case(double T, int N, std::string& inpy, std::string& outx, std::st
   auto freq = fourier.get_frequencies();
 
   for (int i = 0; i <= N / 2; ++i) {
-    double real, imag;
-    char sign, j;
-    std::complex<double> ctmp;
-    outys >> real >> sign >> imag >> j;
-    ctmp = Complex(real, sign == '-' ? -imag : imag);
-    BOOST_TEST_REQUIRE(abs(ctmp) - res[i] < 1e-4);
-    double tmp;
-    outxs >> tmp;
-    BOOST_TEST_REQUIRE(abs(tmp - freq[i]) < 1e-4);
+    double absval;
+    outys >> absval;
+    BOOST_TEST_REQUIRE(abs(absval - res[i]) < 1e-4);
+    double freqval;
+    outxs >> freqval;
+    BOOST_TEST_REQUIRE(abs(freqval - freq[i]) < 1e-4);
   }
 }
 
