@@ -210,7 +210,7 @@ FourierContainer::transmit(std::string& kafka_address,
       for (auto& [offch, pair] : map) {
         int link = pair.first;
         int ch = pair.second;
-        output << fouriervec[get_local_index(ch, link)].get_transform(i) << " ";
+        output << fouriervec[get_local_index(ch, link)].get_transform_at(i) << " ";
       }
       output << "\n";
     }
@@ -254,7 +254,7 @@ FourierContainer::transmit_global(std::string &kafka_address, std::unique_ptr<Ch
         ers::error(ChannelMapError(ERS_HERE, "Plane " + std::to_string(plane) + " has not been found"));
         break;
       }
-      output << fouriervec[plane].get_transform(i) << " ";
+      output << fouriervec[plane].get_transform_at(i) << " ";
     }
     output << "\n";
     KafkaExport(kafka_address, output.str(), topicname);

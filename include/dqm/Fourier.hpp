@@ -46,15 +46,16 @@ public:
   std::vector<double> get_frequencies();
   void clean();
 
-  double get_transform(int index);
+  double get_transform_at(int index);
+  std::vector<double> get_transform();
 };
 
 Fourier::Fourier(double inc, int npoints) // NOLINT(build/unsigned)
   : m_inc_size(inc)
   , m_npoints(npoints)
 {
-  m_data.reserve(m_npoints);
-  m_transform.reserve(m_npoints);
+  m_data.reserve(npoints);
+  m_transform = std::vector<double> (npoints);
 }
 
 CArray
@@ -93,23 +94,34 @@ Fourier::compute_fourier_normalized()
  */
 void
 Fourier::compute_fourier_transform(fftw_plan &plan) {
-  fftw_execute_r2r(plan, m_data.data, m_transform.data);
+  fftw_execute_r2r(plan, m_data.data(), m_transform.data());
   // After the transform is computed half of the elements of the
   // output array are the real part and the other half are the
   // complex part, this computes the absolute value of each value
-  for (int i = 0; i < m_npoints / 2; ++i) {
+
+  // Caveats, i = 0 and i = m_npoints/2 are already real and i = 0 is already
+  // positive so only i = m_npoints/2 has to be changed
+  for (int i = 1; i < m_npoints / 2; ++i) {
     m_transform[i] = sqrt(m_transform[i] * m_transform[i] +
-                          m_transform[m_npoints / 2 - 1 - i] * m_transform[m_npoints / 2 - 1 - i]);
+                          m_transform[m_npoints - i] * m_transform[m_npoints - i]);
   }
+  m_transform[m_npoints / 2] = abs(m_transform[m_npoints / 2]);
+  m_transform.resize(m_npoints / 2 + 1);
+}
+
+
+std::vector<double>
+Fourier::get_transform() {
+  return m_transform;
 }
 
 /**
  * @brief Get the absolute value of the fourier transform at index index
  *
- *        This function must be called after compute_fourier_transform
+ *        Must be called after compute_fourier_transform
  */
 double
-Fourier::get_transform(int index)
+Fourier::get_transform_at(int index)
 {
   if (index < 0 || static_cast<size_t>(index) >= m_transform.size()) {
     TLOG() << "WARNING: Fourier::get_transform called with index out of range, index=" << index
@@ -126,7 +138,7 @@ std::vector<double>
 Fourier::get_frequencies()
 {
   std::vector<double> ret;
-  for (int i = 0; i < m_npoints / 2; ++i)
+  for (int i = 0; i <= m_npoints / 2; ++i)
     ret.push_back(i / (m_inc_size * m_npoints));
   // Don't return the negative frequencies by commenting the following block
   // for (int i = -m_npoints/2; i < 0; ++i)
