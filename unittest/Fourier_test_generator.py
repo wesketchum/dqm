@@ -8,8 +8,8 @@ np.set_printoptions(linewidth=np.inf)
 # N is the number of points
 # T is the sample spacing
 
-Nval = [200, 400, 600, 800, 1000]
-Tval = [1/100, 1/500, 1/800, 1/800, 2]
+Nval = [200,   400,   600,   800,   1000, 355]
+Tval = [1/100, 1/500, 1/800, 1/800, 2,    1.3]
 
 for i, (N, T) in enumerate(zip(Nval, Tval), start=1):
 
