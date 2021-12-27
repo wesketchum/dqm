@@ -25,9 +25,6 @@
 
 namespace dunedaq::dqm {
 
-typedef std::complex<double> Complex;
-typedef std::valarray<Complex> CArray;
-
 class Fourier
 {
 public:
@@ -39,9 +36,6 @@ public:
   Fourier(double inc, int npoints);
 
   void fill(double value);
-  CArray compute_fourier();
-  void compute_fourier_normalized();
-  CArray compute_fourier_def();
   void compute_fourier_transform(fftw_plan &plan);
   std::vector<double> get_frequencies();
   void clean();
@@ -56,35 +50,6 @@ Fourier::Fourier(double inc, int npoints) // NOLINT(build/unsigned)
 {
   m_data.reserve(npoints);
   m_transform = std::vector<double> (npoints);
-}
-
-CArray
-Fourier::compute_fourier_def()
-{
-  // if (m_data.size() != m_npoints)
-  //  TLOG() << "The number of points in the data is different from the number of points specified, m_data.size() = " <<
-  //  m_data.size() << " and m_npoints = " << m_npoints;
-  CArray output = CArray(0.0, m_data.size() / 2);
-
-  // Only until m_data.size() / 2, the others correspond to the negative frequencies
-  for (size_t k = 0; k < m_data.size() / 2; ++k)
-    for (size_t m = 0; m < m_data.size(); ++m) {
-      output[k] += m_data[m] * std::exp(Complex(0, -2) * M_PI * static_cast<double>(k) * static_cast<double>(m) /
-                                        static_cast<double>(m_data.size()));
-    }
-  return output;
-}
-
-void
-Fourier::compute_fourier_normalized()
-{
-  CArray output = compute_fourier_def();
-
-  // Only until m_data.size() / 2, the others correspond to the negative frequencies
-  for (size_t k = 0; k < m_data.size() / 2; ++k) {
-    output[k] = 2. / m_npoints * abs(output[k]);
-    m_transform.push_back(abs(output[k]));
-  }
 }
 
 
