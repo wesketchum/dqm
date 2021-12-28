@@ -36,7 +36,7 @@ public:
   Fourier(double inc, int npoints);
 
   void fill(double value);
-  void compute_fourier_transform(fftw_plan &plan);
+  void compute_fourier_transform();
   std::vector<double> get_frequencies();
   void clean();
 
@@ -58,8 +58,21 @@ Fourier::Fourier(double inc, int npoints) // NOLINT(build/unsigned)
  *        using the FFTW library
  */
 void
-Fourier::compute_fourier_transform(fftw_plan &plan) {
-  fftw_execute_r2r(plan, m_data.data(), m_transform.data());
+Fourier::compute_fourier_transform() {
+  if (m_transform.size() != m_npoints)
+    m_transform.resize(m_npoints);
+  if (m_data.size() != m_npoints) {
+    TLOG() << "Data has different size than expected";
+  }
+  // A plan is created, executed and destroyed each time_t
+  // Not the most efficient way but using the new-array interface
+  // and creating a single plan that is passed around crashes for
+  // an unknown reason. Anyway in the docs they say that creating a new plan
+  // once another one has been created before for the same size is cheap
+  fftw_plan plan = fftw_plan_r2r_1d(m_npoints, m_data.data(), m_transform.data(), FFTW_R2HC, FFTW_MEASURE);
+  // fftw_execute_r2r(plan, m_data.data(), m_transform.data());
+  fftw_execute(plan);
+  fftw_destroy_plan(plan);
   // After the transform is computed half of the elements of the
   // output array are the real part and the other half are the
   // complex part, this computes the absolute value of each value

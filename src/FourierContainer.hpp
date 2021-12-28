@@ -27,9 +27,6 @@
 #include <string>
 #include <vector>
 
-// #include <complex> has to be before this include
-#include <fftw3.h>
-
 namespace dunedaq::dqm {
 
 class FourierContainer : public AnalysisModule
@@ -40,7 +37,6 @@ class FourierContainer : public AnalysisModule
   int m_npoints;
   std::map<int, int> m_index;
   bool m_global_mode;
-  fftw_plan m_plan;
 
 public:
   FourierContainer(std::string name, int size, double inc, int npoints);
@@ -74,11 +70,6 @@ FourierContainer::FourierContainer(std::string name, int size, double inc, int n
   for (size_t i = 0; i < m_size; ++i) {
     fouriervec.emplace_back(Fourier(inc, npoints));
   }
-
-  // Plan to be used for the Fourier transform
-  // The input and output arrays are not specified since the plan is going
-  // to be reused for each array
-  m_plan = fftw_plan_r2r_1d(size, NULL, NULL, FFTW_R2HC, FFTW_MEASURE);
 
 }
 
