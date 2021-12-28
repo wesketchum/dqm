@@ -10,6 +10,7 @@
 
 // dqm
 #include "AnalysisModule.hpp"
+#include "DQMIssues.hpp"
 #include "Decoder.hpp"
 
 #include "daqdataformats/TriggerRecord.hpp"
@@ -59,10 +60,11 @@ Fourier::Fourier(double inc, int npoints) // NOLINT(build/unsigned)
  */
 void
 Fourier::compute_fourier_transform() {
-  if (m_transform.size() != m_npoints)
+  if (m_transform.size() != (size_t)m_npoints)
     m_transform.resize(m_npoints);
-  if (m_data.size() != m_npoints) {
-    TLOG() << "Data has different size than expected";
+  if (m_data.size() != (size_t)m_npoints) {
+    ers::error(InvalidData(ERS_HERE, "input doesn't have the expected size for the Fourier transform"));
+    return;
   }
   // A plan is created, executed and destroyed each time_t
   // Not the most efficient way but using the new-array interface
@@ -71,6 +73,10 @@ Fourier::compute_fourier_transform() {
   // once another one has been created before for the same size is cheap
   // FFTW_MEASURE instead of FFTW_ESTIMATE doesn't change the output
   fftw_plan plan = fftw_plan_r2r_1d(m_npoints, m_data.data(), m_transform.data(), FFTW_R2HC, FFTW_ESTIMATE );
+  if (plan == NULL) {
+    ers::error(CouldNotCreateFourierPlan(ERS_HERE, ""));
+    return;
+  }
   fftw_execute(plan);
   fftw_destroy_plan(plan);
   // After the transform is computed half of the elements of the
