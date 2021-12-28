@@ -121,7 +121,7 @@ FourierContainer::run(std::unique_ptr<daqdataformats::TriggerRecord> record,
       }
     }
     for (size_t ich = 0; ich < m_size; ++ich) {
-      fouriervec[ich].compute_fourier_transform(m_plan);
+      fouriervec[ich].compute_fourier_transform();
     }
     transmit(kafka_address,
              map,
@@ -154,7 +154,7 @@ FourierContainer::run(std::unique_ptr<daqdataformats::TriggerRecord> record,
         set_is_running(false);
         return;
       }
-      fouriervec[ich].compute_fourier_transform(m_plan);
+      fouriervec[ich].compute_fourier_transform();
     }
     // The last one corresponds can be obtained as the sum of the ones for the planes
     // since the fourier transform is linear

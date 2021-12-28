@@ -41,9 +41,7 @@ Fourier_test_case(double T, int N, std::string& inpy, std::string& outx, std::st
     fourier.fill(tmp);
   }
 
-  fftw_plan p = fftw_plan_r2r_1d(N, NULL, NULL, FFTW_R2HC, FFTW_ESTIMATE);
-
-  fourier.compute_fourier_transform(p);
+  fourier.compute_fourier_transform();
   auto res = fourier.get_transform();
   auto freq = fourier.get_frequencies();
 

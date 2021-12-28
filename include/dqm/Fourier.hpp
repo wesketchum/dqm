@@ -69,8 +69,8 @@ Fourier::compute_fourier_transform() {
   // and creating a single plan that is passed around crashes for
   // an unknown reason. Anyway in the docs they say that creating a new plan
   // once another one has been created before for the same size is cheap
-  fftw_plan plan = fftw_plan_r2r_1d(m_npoints, m_data.data(), m_transform.data(), FFTW_R2HC, FFTW_MEASURE);
-  // fftw_execute_r2r(plan, m_data.data(), m_transform.data());
+  // FFTW_MEASURE instead of FFTW_ESTIMATE doesn't change the output
+  fftw_plan plan = fftw_plan_r2r_1d(m_npoints, m_data.data(), m_transform.data(), FFTW_R2HC, FFTW_ESTIMATE );
   fftw_execute(plan);
   fftw_destroy_plan(plan);
   // After the transform is computed half of the elements of the
