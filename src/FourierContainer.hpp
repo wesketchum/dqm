@@ -73,7 +73,7 @@ FourierContainer::FourierContainer(std::string name, int size, double inc, int n
 
 }
 
-  FourierContainer::FourierContainer(std::string name, int size, std::vector<int>& link_idx, double inc, int npoints, bool global_mode)
+FourierContainer::FourierContainer(std::string name, int size, std::vector<int>& link_idx, double inc, int npoints, bool global_mode)
   : m_name(name)
   , m_size(size)
   , m_npoints(npoints)
