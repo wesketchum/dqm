@@ -25,10 +25,12 @@ daq_codegen(*info.jsonnet DEP_PKGS opmonlib TEMPLATES opmonlib/InfoStructs.hpp.j
 # We put here the name of our class, and the libraries we want to link with
 
 daq_add_plugin(DQMProcessor duneDAQModule LINK_LIBRARIES appfwk::appfwk daqdataformats::daqdataformats detdataformats::detdataformats detchannelmaps::detchannelmaps readoutlibs::readoutlibs timinglibs::timinglibs RdKafka::rdkafka RdKafka::rdkafka++ $ENV{FFTW_LIBRARY}/libfftw3.so)
+target_include_directories(dqm_DQMProcessor_duneDAQModule PUBLIC $ENV{FFTW_INC})
 # daq_add_plugin(HDF5Reader duneDAQModule LINK_LIBRARIES appfwk::appfwk daqdataformats::daqdataformats detdataformats::detdataformats detchannelmaps::detchannelmaps timinglibs::timinglibs readout::readout HighFive)
 
 # Unit tests
 
-daq_add_unit_test(Fourier_test LINK_LIBRARIES daqdataformats::daqdataformats detdataformats::detdataformats detchannelmaps::detchannelmaps readoutlibs::readoutlibs RdKafka::rdkafka++)
+daq_add_unit_test(Fourier_test LINK_LIBRARIES daqdataformats::daqdataformats detdataformats::detdataformats detchannelmaps::detchannelmaps readoutlibs::readoutlibs RdKafka::rdkafka++ $ENV{FFTW_LIBRARY}/libfftw3.so)
+target_include_directories(Fourier_test PUBLIC $ENV{FFTW_INC})
 
 daq_install()
