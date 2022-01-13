@@ -70,9 +70,10 @@ FourierContainer::FourierContainer(std::string name, int size, double inc, int n
   for (size_t i = 0; i < m_size; ++i) {
     fouriervec.emplace_back(Fourier(inc, npoints));
   }
+
 }
 
-  FourierContainer::FourierContainer(std::string name, int size, std::vector<int>& link_idx, double inc, int npoints, bool global_mode)
+FourierContainer::FourierContainer(std::string name, int size, std::vector<int>& link_idx, double inc, int npoints, bool global_mode)
   : m_name(name)
   , m_size(size)
   , m_npoints(npoints)
@@ -120,7 +121,7 @@ FourierContainer::run(std::unique_ptr<daqdataformats::TriggerRecord> record,
       }
     }
     for (size_t ich = 0; ich < m_size; ++ich) {
-      fouriervec[ich].compute_fourier_normalized();
+      fouriervec[ich].compute_fourier_transform();
     }
     transmit(kafka_address,
              map,
@@ -153,7 +154,7 @@ FourierContainer::run(std::unique_ptr<daqdataformats::TriggerRecord> record,
         set_is_running(false);
         return;
       }
-      fouriervec[ich].compute_fourier_normalized();
+      fouriervec[ich].compute_fourier_transform();
     }
     // The last one corresponds can be obtained as the sum of the ones for the planes
     // since the fourier transform is linear
@@ -200,7 +201,7 @@ FourierContainer::transmit(std::string& kafka_address,
       for (auto& [offch, pair] : map) {
         int link = pair.first;
         int ch = pair.second;
-        output << fouriervec[get_local_index(ch, link)].get_transform(i) << " ";
+        output << fouriervec[get_local_index(ch, link)].get_transform_at(i) << " ";
       }
       output << "\n";
     }
@@ -244,7 +245,7 @@ FourierContainer::transmit_global(std::string &kafka_address, std::unique_ptr<Ch
         ers::error(ChannelMapError(ERS_HERE, "Plane " + std::to_string(plane) + " has not been found"));
         break;
       }
-      output << fouriervec[plane].get_transform(i) << " ";
+      output << fouriervec[plane].get_transform_at(i) << " ";
     }
     output << "\n";
     KafkaExport(kafka_address, output.str(), topicname);
