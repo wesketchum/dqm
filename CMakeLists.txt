@@ -24,6 +24,7 @@ detdataformats::detdataformats
 detchannelmaps::detchannelmaps
 dfmessages::dfmessages
 RdKafka::rdkafka
+RdKafka::rdkafka++
 timinglibs::timinglibs
 )
 
