@@ -13,7 +13,6 @@ find_package(detchannelmaps REQUIRED)
 find_package(dfmessages REQUIRED)
 find_package(RdKafka REQUIRED)
 find_package(timinglibs REQUIRED)
-# find_package(HighFive REQUIRED)
 find_package(Boost COMPONENTS unit_test_framework program_options REQUIRED)
 
 daq_codegen(*.jsonnet TEMPLATES Structs.hpp.j2 Nljs.hpp.j2 )
