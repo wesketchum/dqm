@@ -28,6 +28,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <list>
 
 namespace dunedaq::dqm {
 
@@ -103,6 +104,8 @@ private:
 
   std::string m_channel_map;
   std::unique_ptr<ChannelMap> m_map;
+
+  std::list<daqdataformats::TriggerRecord> dftrs;
 };
 
 } // namespace dunedaq::dqm

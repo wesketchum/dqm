@@ -28,7 +28,9 @@
 #include "detdataformats/wib/WIBFrame.hpp"
 #include "dfmessages/TimeSync.hpp"
 #include "dfmessages/TriggerDecision.hpp"
+#include "dfmessages/TRMonRequest.hpp"
 #include "networkmanager/NetworkManager.hpp"
+#include "dfmessages/TriggerRecord_serialization.hpp"
 
 // C++ includes
 #include <chrono>
@@ -308,6 +310,10 @@ DQMProcessor::RequestMaker()
     ++m_total_request_count;
 
     TLOG_DEBUG(10) << "Request (trigger decision) pushed to the queue";
+
+    TLOG() << "DF Request";
+    dfrequest();
+    TLOG() << "DF Request done";
 
     // TLOG() << "Going to pop";
     try {
