@@ -60,7 +60,11 @@ local dqmprocessor = {
         s.field("clock_frequency", self.big_count,
                 doc="Clock frequency in Hz"),
         s.field("timesync_connection_name", self.netmgr_name,
-                doc="Connection to use for receiving TimeSync messages")
+                doc="Connection to use for receiving TimeSync messages"),
+        s.field("df2dqm_connection_name", self.netmgr_name,
+                doc="Connection to use for receiving TRs from DF"),
+        s.field("dqm2df_connection_name", self.netmgr_name,
+                doc="Connection to use for sending TRMon messages to DF")
     ], doc="Generic DQM configuration")
 };
 
