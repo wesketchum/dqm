@@ -89,6 +89,12 @@ DQMProcessor::do_configure(const nlohmann::json& args)
   m_region = conf.region;
 
   m_timesync_connection = conf.timesync_connection_name;
+  m_df2dqm_connection = conf.df2dqm_connection_name;
+  m_dqm2df_connection = conf.dqm2df_connection_name;
+
+  if (!m_df2dqm_connection.empty()) {
+      networkmanager::NetworkManager::get().start_listening(m_df2dqm_connection);
+  }
 }
 
 void
@@ -100,6 +106,11 @@ DQMProcessor::do_start(const nlohmann::json& args)
   networkmanager::NetworkManager::get().start_listening(m_timesync_connection);
   networkmanager::NetworkManager::get().register_callback(
     m_timesync_connection, std::bind(&DQMProcessor::dispatch_timesync, this, std::placeholders::_1));
+
+  if (!m_df2dqm_connection.empty()) {
+  networkmanager::NetworkManager::get().register_callback(m_df2dqm_connection,
+    std::bind(&DQMProcessor::dispatch_trigger_record, this, std::placeholders::_1));
+  }
 
   m_run_marker.store(true);
 
