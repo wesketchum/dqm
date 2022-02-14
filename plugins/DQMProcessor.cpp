@@ -311,9 +311,11 @@ DQMProcessor::RequestMaker()
 
     TLOG_DEBUG(10) << "Request (trigger decision) pushed to the queue";
 
-    TLOG() << "DF Request";
-    dfrequest();
-    TLOG() << "DF Request done";
+    if (!m_df2dqm_connection.empty()) {
+        TLOG() << "DF Request";
+        dfrequest();
+        TLOG() << "DF Request done";
+    }
 
     // TLOG() << "Going to pop";
     try {
@@ -419,6 +421,7 @@ DQMProcessor::dispatch_trigger_record(ipm::Receiver::Response message)
 {
   dftrs.emplace_back(serialization::deserialize<daqdataformats::TriggerRecord>(message.data));
   TLOG() << "Size = " << dftrs.back().get_fragments_ref()[0]->get_size() << " " << sizeof(daqdataformats::FragmentHeader);
+  dftrs.pop_back();
 }
 
 
