@@ -396,6 +396,28 @@ DQMProcessor::CreateRequest(std::vector<dfmessages::GeoID>& m_links, int number_
   return decision;
 }
 
+
+void
+DQMProcessor::dispatch_trigger_record(ipm::Receiver::Response message)
+{
+  dftrs.emplace_back(serialization::deserialize<daqdataformats::TriggerRecord>(message.data));
+  TLOG() << "Size = " << dftrs.back().get_fragments_ref()[0]->get_size() << " " << sizeof(daqdataformats::FragmentHeader);
+}
+
+
+void
+DQMProcessor::dfrequest()
+{
+  dfmessages::TRMonRequest trmon;
+  trmon.run_number = m_run_number;
+  trmon.trigger_type = 1;
+  trmon.data_destination = m_df2dqm_connection;
+
+  auto trmon_message = serialization::serialize(trmon, serialization::kMsgPack);
+  networkmanager::NetworkManager::get().send_to(m_dqm2df_connection, static_cast<const void*>(trmon_message.data()), trmon_message.size(), m_sink_timeout);
+}
+
+
 void
 DQMProcessor::dispatch_timesync(ipm::Receiver::Response message)
 {

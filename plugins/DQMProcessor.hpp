@@ -54,9 +54,12 @@ public:
   void do_configure(const data_t&);
 
   void dispatch_timesync(ipm::Receiver::Response message);
+  void dispatch_trigger_record(ipm::Receiver::Response message);
 
   void RequestMaker();
   dfmessages::TriggerDecision CreateRequest(std::vector<dfmessages::GeoID>& m_links, int number_of_frames);
+
+  void dfrequest();
 
   void get_info(opmonlib::InfoCollector& ci, int /*level*/);
 
