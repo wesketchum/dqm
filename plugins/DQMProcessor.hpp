@@ -98,6 +98,8 @@ private:
 
   std::string m_channel_map;
   std::unique_ptr<ChannelMap> m_map;
+
+  int m_readout_window_offset;
 };
 
 } // namespace dunedaq::dqm
