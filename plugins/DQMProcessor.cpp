@@ -89,6 +89,8 @@ DQMProcessor::do_configure(const nlohmann::json& args)
   m_region = conf.region;
 
   m_timesync_connection = conf.timesync_connection_name;
+
+  m_readout_window_offset = conf.readout_window_offset;
 }
 
 void
@@ -382,8 +384,8 @@ DQMProcessor::CreateRequest(std::vector<dfmessages::GeoID>& m_links, int number_
     // 10^5 was tried at first but wasn't enough. At 50 MHz, 10^5 = 2 ms
     // The current value is 10^7 which seems to work after several hours of
     // running and no delayed requests in readout
-    request.window_begin = timestamp - window_size - 10000000;
-    request.window_end = timestamp - 10000000;
+    request.window_begin = timestamp - window_size - m_readout_window_offset;
+    request.window_end = timestamp - m_readout_window_offset;
 
     decision.components.push_back(request);
   }
