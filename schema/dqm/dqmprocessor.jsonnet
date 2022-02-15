@@ -30,8 +30,6 @@ local dqmprocessor = {
     index_list : s.sequence("IndexList", self.index,
                             doc="A list with indexes"),
 
-    int32 : s.number("Integer", "i32", doc="An integer"),
-
     netmgr_name : s.string("NetMgrName", doc="Connection or topic name to be used with NetworkManager"),
 
     standard_dqm: s.record("StandardDQM", [
@@ -63,8 +61,8 @@ local dqmprocessor = {
                 doc="Clock frequency in Hz"),
         s.field("timesync_connection_name", self.netmgr_name,
                 doc="Connection to use for receiving TimeSync messages"),
-        s.field("readout_window_offset", self.i32,
-                doc="Offset to use for the windows requested to readout"),
+        s.field("readout_window_offset", self.big_count,
+                doc="Offset to use for the windows requested to readout")
 
 
     ], doc="Generic DQM configuration")
