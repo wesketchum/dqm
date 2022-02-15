@@ -24,6 +24,9 @@ local dqmprocessor = {
     index : s.number("Index", "i4",
                      doc="An integer index"),
 
+    big_count : s.number("BigCount", "i8",
+                         doc="A count of more things"),
+
     index_list : s.sequence("IndexList", self.index,
                             doc="A list with indexes"),
 
