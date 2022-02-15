@@ -81,16 +81,12 @@ DQMProcessor::do_configure(const nlohmann::json& args)
   m_standard_dqm_fourier_sum = conf.sdqm_fourier_sum;
 
   m_link_idx = conf.link_idx;
-
   m_clock_frequency = conf.clock_frequency;
-
   m_channel_map = conf.channel_map;
-
   m_region = conf.region;
+  m_readout_window_offset = conf.readout_window_offset;
 
   m_timesync_connection = conf.timesync_connection_name;
-
-  m_readout_window_offset = conf.readout_window_offset;
 }
 
 void
