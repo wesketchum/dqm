@@ -166,26 +166,33 @@ DQMProcessor::RequestMaker()
   // Instances of analysis modules
 
   // Raw event display
-  auto hist = std::make_shared<HistContainer>(
-    "raw_display", CHANNELS_PER_LINK * m_link_idx.size(), m_link_idx, 100, 0, 5000, false);
-  // Mean and RMS
-  auto mean_rms = std::make_shared<HistContainer>(
-    "rmsm_display", CHANNELS_PER_LINK * m_link_idx.size(), m_link_idx, 100, 0, 5000, true);
-  // Fourier transform
-  // The Delta of time between frames is the inverse of the sampling frequency (clock frequency)
-  // but because we are sampling every TICKS_BETWEEN_TIMESTAMP ticks we have to multiply by that
-  auto fourier = std::make_shared<FourierContainer>("fft_display",
-                                                    CHANNELS_PER_LINK * m_link_idx.size(),
-                                                    m_link_idx,
-                                                    1. / m_clock_frequency * TICKS_BETWEEN_TIMESTAMP,
-                                                    m_standard_dqm_fourier.num_frames);
-  auto fouriersum = std::make_shared<FourierContainer>("fft_sums_display",
-                                                       4,
-                                                       m_link_idx,
-                                                       1. / m_clock_frequency * TICKS_BETWEEN_TIMESTAMP,
-                                                       m_standard_dqm_fourier_sum.num_frames,
-                                                       true);
-  // Fills the channel map at the beggining of a run
+  if (m_mode == "readout") {
+    auto hist = std::make_shared<HistContainer>(
+        "raw_display", CHANNELS_PER_LINK * m_link_idx.size(), m_link_idx, 100, 0, 5000, false);
+    // Mean and RMS
+    auto mean_rms = std::make_shared<HistContainer>(
+        "rmsm_display", CHANNELS_PER_LINK * m_link_idx.size(), m_link_idx, 100, 0, 5000, true);
+    // Fourier transform
+    // The Delta of time between frames is the inverse of the sampling frequency (clock frequency)
+    // but because we are sampling every TICKS_BETWEEN_TIMESTAMP ticks we have to multiply by that
+    auto fourier = std::make_shared<FourierContainer>("fft_display",
+                                                        CHANNELS_PER_LINK * m_link_idx.size(),
+                                                        m_link_idx,
+                                                        1. / m_clock_frequency * TICKS_BETWEEN_TIMESTAMP,
+                                                        m_standard_dqm_fourier.num_frames);
+    auto fouriersum = std::make_shared<FourierContainer>("fft_sums_display",
+                                                        4,
+                                                        m_link_idx,
+                                                        1. / m_clock_frequency * TICKS_BETWEEN_TIMESTAMP,
+                                                        m_standard_dqm_fourier_sum.num_frames,
+                                                        true);
+    // Fills the channel map at the beggining of a run
+  }
+  else if (m_mode == "dqm") {
+  }
+  else {
+    // Throw issue
+  }
   auto chfiller = std::make_shared<ChannelMapFiller>("channelmapfiller", m_channel_map);
 
   // Initial tasks
