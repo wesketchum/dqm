@@ -80,6 +80,12 @@ private:
   dqmprocessor::StandardDQM m_standard_dqm_fourier;
   dqmprocessor::StandardDQM m_standard_dqm_fourier_sum;
 
+  // Configuration parameters for TRs coming from DF
+  dqmprocessor::StandardDQM m_df_hist;
+  dqmprocessor::StandardDQM m_df_mean_rms;
+  dqmprocessor::StandardDQM m_df_fourier;
+  dqmprocessor::StandardDQM m_df_fourier_sum;
+
   std::string m_timesync_connection;
   std::string m_df2dqm_connection;
   std::string m_dqm2df_connection;
@@ -106,6 +112,8 @@ private:
   std::unique_ptr<ChannelMap> m_map;
 
   std::list<daqdataformats::TriggerRecord> dftrs;
+
+  std::string m_mode;
 };
 
 } // namespace dunedaq::dqm

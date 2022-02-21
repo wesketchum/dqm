@@ -82,6 +82,11 @@ DQMProcessor::do_configure(const nlohmann::json& args)
   m_standard_dqm_fourier = conf.sdqm_fourier;
   m_standard_dqm_fourier_sum = conf.sdqm_fourier_sum;
 
+  m_df_hist = conf.df_hist;
+  m_df_mean_rms = conf.df_mean_rms;
+  m_df_fourier = conf.df_fourier;
+  m_df_fourier_sum = conf.df_fourier_sum;
+
   m_link_idx = conf.link_idx;
 
   m_clock_frequency = conf.clock_frequency;
