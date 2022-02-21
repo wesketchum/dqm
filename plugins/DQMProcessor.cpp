@@ -110,12 +110,15 @@ DQMProcessor::do_configure(const nlohmann::json& args)
 void
 DQMProcessor::do_start(const nlohmann::json& args)
 {
-  m_time_est.reset(new timinglibs::TimestampEstimator(m_clock_frequency));
+  if (m_mode == "readout") {
 
-  m_received_timesync_count.store(0);
-  networkmanager::NetworkManager::get().start_listening(m_timesync_connection);
-  networkmanager::NetworkManager::get().register_callback(
-    m_timesync_connection, std::bind(&DQMProcessor::dispatch_timesync, this, std::placeholders::_1));
+    m_time_est.reset(new timinglibs::TimestampEstimator(m_clock_frequency));
+
+    m_received_timesync_count.store(0);
+    networkmanager::NetworkManager::get().start_listening(m_timesync_connection);
+    networkmanager::NetworkManager::get().register_callback(
+      m_timesync_connection, std::bind(&DQMProcessor::dispatch_timesync, this, std::placeholders::_1));
+  }
 
   if (m_mode == "df") {
   networkmanager::NetworkManager::get().register_callback(m_df2dqm_connection,
@@ -140,8 +143,10 @@ DQMProcessor::do_stop(const data_t&)
   m_run_marker.store(false);
   m_running_thread->join();
 
-  networkmanager::NetworkManager::get().clear_callback(m_timesync_connection);
-  networkmanager::NetworkManager::get().stop_listening(m_timesync_connection);
+  if (m_mode == "readout") {
+    networkmanager::NetworkManager::get().clear_callback(m_timesync_connection);
+    networkmanager::NetworkManager::get().stop_listening(m_timesync_connection);
+  }
   TLOG() << get_name() << ": received " << m_received_timesync_count.load() << " TimeSync messages.";
 }
 
@@ -177,7 +182,6 @@ DQMProcessor::RequestMaker()
   dqmprocessor::StandardDQM mean_rms_params   = m_mode == "readout" ? m_standard_dqm_mean_rms   : m_df_mean_rms;
   dqmprocessor::StandardDQM fourier_params    = m_mode == "readout" ? m_standard_dqm_fourier    : m_df_fourier;
   dqmprocessor::StandardDQM fouriersum_params = m_mode == "readout" ? m_standard_dqm_fouriersum : m_df_fouriersum;
-
 
   // Raw event display
   auto hist = std::make_shared<HistContainer>(
