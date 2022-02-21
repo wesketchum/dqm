@@ -21,11 +21,11 @@ local dqmprocessor = {
     count : s.number("Count", "i4",
                      doc="A count of not too many things"),
 
-    big_count : s.number("BigCount", "i8",
-                         doc="A count of more things"),
-
     index : s.number("Index", "i4",
                      doc="An integer index"),
+
+    big_count : s.number("BigCount", "i8",
+                         doc="A count of more things"),
 
     index_list : s.sequence("IndexList", self.index,
                             doc="A list with indexes"),
@@ -73,7 +73,10 @@ local dqmprocessor = {
         s.field("df2dqm_connection_name", self.netmgr_name,
                 doc="Connection to use for receiving TRs from DF"),
         s.field("dqm2df_connection_name", self.netmgr_name,
-                doc="Connection to use for sending TRMon messages to DF")
+                doc="Connection to use for sending TRMon messages to DF"),
+        s.field("readout_window_offset", self.big_count,
+                doc="Offset to use for the windows requested to readout")
+
     ], doc="Generic DQM configuration")
 };
 

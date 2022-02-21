@@ -114,6 +114,7 @@ private:
   std::list<daqdataformats::TriggerRecord> dftrs;
 
   std::string m_mode;
+  int m_readout_window_offset;
 };
 
 } // namespace dunedaq::dqm
