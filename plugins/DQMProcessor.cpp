@@ -297,8 +297,7 @@ DQMProcessor::RequestMaker()
       continue;
     }
 
-    // Before creating a request check that there
-    // There has been a bug where the timestamp was retrieved before there were any timestamps
+    // There was a bug where the timestamp was retrieved before there were any timestamps
     // obtaining an invalid timestamps
     auto timestamp = m_time_est->get_timestamp_estimate();
     if (timestamp == dfmessages::TypeDefaults::s_invalid_timestamp) {
@@ -310,36 +309,42 @@ DQMProcessor::RequestMaker()
     }
 
     // Now it's the time to do something
-    auto request = CreateRequest(m_links, analysis_instance.number_of_frames);
-
-    try {
-      m_sink->push(request, m_sink_timeout);
-    } catch (const ers::Issue& excpt) {
-      TLOG() << "DQM: Unable to push to the request queue";
-      continue;
+    dfmessages::TriggerDecision request;
+    if (m_mode == "readout") {
+      request = CreateRequest(m_links, analysis_instance.number_of_frames);
+      try {
+        m_sink->push(request, m_sink_timeout);
+      } catch (const ers::Issue& excpt) {
+        TLOG() << "DQM: Unable to push to the request queue";
+        continue;
+      }
+      TLOG_DEBUG(10) << "Request (trigger decision) pushed to the queue";
     }
+    else if (m_mode == "df") {
+      dfrequest();
+    }
+
     ++m_request_count;
     ++m_total_request_count;
 
-    TLOG_DEBUG(10) << "Request (trigger decision) pushed to the queue";
-
-    if (!m_df2dqm_connection.empty()) {
+    if (m_mode == "df") {
         TLOG() << "DF Request";
         dfrequest();
         TLOG() << "DF Request done";
     }
-
-    // TLOG() << "Going to pop";
-    try {
-      m_source->pop(element, m_source_timeout);
-    } catch (const ers::Issue& excpt) {
-      TLOG() << "DQM: Unable to pop from the data queue";
-      continue;
+    else if (m_mode == "readout") {
+      try {
+        m_source->pop(element, m_source_timeout);
+      } catch (const ers::Issue& excpt) {
+        TLOG() << "DQM: Unable to pop from the data queue";
+        continue;
+      }
+      TLOG_DEBUG(10) << "Data popped from the queue";
     }
+
     ++m_data_count;
     ++m_total_data_count;
 
-    TLOG_DEBUG(10) << "Data popped from the queue";
     using runfunc_type = void (AnalysisModule::*)(std::unique_ptr<daqdataformats::TriggerRecord> record,
                                                   std::atomic<bool>& run_mark,
                                                   std::unique_ptr<ChannelMap> & map,
