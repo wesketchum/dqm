@@ -10,7 +10,7 @@
 
 // DQM
 #include "AnalysisModule.hpp"
-#include "SortedChannelMap.hpp"
+#include "ChannelMap.hpp"
 #include "Constants.hpp"
 #include "dqm/DQMIssues.hpp"
 #include "HistContainer.hpp"
@@ -27,71 +27,77 @@ class DFModule : public AnalysisModule
 
 public:
   DFModule(bool enable_hist, bool enable_mean_rms, bool enable_fourier, bool enable_fourier_sum,
-           std::vector<daqdataformats::GeoID>& ids);
+           int clock_frequency, std::vector<int>& ids);
 
   bool m_enable_hist, m_enable_mean_rms, m_enable_fourier, m_enable_fourier_sum;
+  int m_clock_frequency;
+  void run(std::unique_ptr<daqdataformats::TriggerRecord> record,
+      std::atomic<bool>& run_mark,
+      std::unique_ptr<ChannelMap>& map,
+      std::string kafka_address);
 
 private:
 
   std::shared_ptr<HistContainer> m_hist, m_mean_rms;
   std::shared_ptr<FourierContainer> m_fourier, m_fourier_sum;
 
-  std::vector<daqdataformats::GeoID> m_ids;
+  std::vector<int> m_ids;
 
 };
 
 DFModule::DFModule(bool enable_hist, bool enable_mean_rms, bool enable_fourier, bool enable_fourier_sum,
-                   std::vector<daqdataformats::GeoID>& ids) :
+                   int clock_frequency, std::vector<int>& ids) :
     m_enable_hist(enable_hist),
     m_enable_mean_rms(enable_mean_rms),
     m_enable_fourier(enable_fourier),
     m_enable_fourier_sum(enable_fourier_sum),
+    m_clock_frequency(clock_frequency),
     m_ids(ids)
 
 {
   if (m_enable_hist) {
-    m_hist.reset(std::make_shared<HistContainer>(
-                                                 "raw_display", CHANNELS_PER_LINK * m_ids.size(), m_ids, 100, 0, 5000, false));
+    m_hist = std::make_shared<HistContainer>(
+                                                 "raw_display", CHANNELS_PER_LINK * m_ids.size(), m_ids, 100, 0, 5000, false);
   }
   if (m_enable_mean_rms) {
-    m_mean_rms.reset(std::make_shared<HistContainer>(
-                                                     "rmsm_display", CHANNELS_PER_LINK * m_ids.size(), m_ids, 100, 0, 5000, true));
+    m_mean_rms = std::make_shared<HistContainer>(
+                                                     "rmsm_display", CHANNELS_PER_LINK * m_ids.size(), m_ids, 100, 0, 5000, true);
   }
   if (m_enable_fourier) {
-    m_fourier.reest(std::make_shared<FourierContainer>("fft_display",
+    m_fourier = std::make_shared<FourierContainer>("fft_display",
                                                     CHANNELS_PER_LINK * m_ids.size(),
                                                     m_ids,
                                                     1. / m_clock_frequency * TICKS_BETWEEN_TIMESTAMP,
-                                                       m_standard_dqm_fourier.num_frames));
+                                                       10);
   }
   if (m_enable_fourier_sum) {
-    m_fourier_sum.reset(std::make_shared<FourierContainer>("fft_sums_display",
+    m_fourier_sum = std::make_shared<FourierContainer>("fft_sums_display",
                                                        4,
                                                        m_ids,
                                                        1. / m_clock_frequency * TICKS_BETWEEN_TIMESTAMP,
-                                                       m_standard_dqm_fourier_sum.num_frames,
-                                                           true));
+                                                       10,
+                                                           true);
   }
 }
 
 void
 DFModule::run(std::unique_ptr<daqdataformats::TriggerRecord> record,
                    std::atomic<bool>& run_mark,
-                   std::unique_ptr<SortedChannelMap>& map,
+                   std::unique_ptr<ChannelMap>& map,
                    std::string kafka_address)
 {
   set_is_running(true);
-  if (m_enable_hist) {
-    m_hist->run(record, run_mark, map, kafka_address);
-  }
-  if (m_enable_mean_rms) {
-    m_mean_rms->run(record, run_mark, map, kafka_address);
-  }
-  if (m_enable_fourier) {
-    m_fourier->run(record, run_mark, map, kafka_address);
-  }
-  if (m_enable_fouriersum) {
-    m_fourier->run(record, run_mark, map, kafka_address);
+  // if (m_enable_hist) {
+  //   m_hist->run(record, run_mark, map, kafka_address);
+  // }
+  // if (m_enable_mean_rms) {
+  //   m_mean_rms->run(record, run_mark, map, kafka_address);
+  // }
+  // if (m_enable_fourier) {
+  //   m_fourier->run(record, run_mark, map, kafka_address);
+  // }
+  if (m_enable_fourier_sum) {
+    m_fourier->run(std::move(record), run_mark, map, kafka_address);
   }
   set_is_running(false);
 }

@@ -18,6 +18,7 @@
 #include "DQMProcessor.hpp"
 #include "FourierContainer.hpp"
 #include "HistContainer.hpp"
+#include "DFModule.hpp"
 
 // DUNE-DAQ includes
 #include "appfwk/DAQSource.hpp"
@@ -198,6 +199,9 @@ DQMProcessor::RequestMaker()
                                                       1. / m_clock_frequency * TICKS_BETWEEN_TIMESTAMP,
                                                       m_standard_dqm_fourier_sum.num_frames,
                                                       true);
+
+  auto dfmodule = std::make_shared<DFModule>(true, true, false, true, m_clock_frequency, m_link_idx);
+
   // Fills the channel map at the beggining of a run
   auto chfiller = std::make_shared<ChannelMapFiller>("channelmapfiller", m_channel_map);
 
@@ -241,6 +245,19 @@ DQMProcessor::RequestMaker()
       nullptr,
       "Summed Fourier every " + std::to_string(m_standard_dqm_fourier_sum.how_often) + " s"
     };
+
+  if (m_mode == "df") {
+    map[std::chrono::system_clock::now() + std::chrono::seconds(10)] = {
+      dfmodule,
+      10,
+      m_standard_dqm_fourier_sum.unavailable_time,
+      m_standard_dqm_fourier_sum.num_frames,
+      nullptr,
+      "Algorithms on TR from DF every " + std::to_string(10) + " s"
+    };
+  }
+
+
   map[std::chrono::system_clock::now() + std::chrono::seconds(2)] = { chfiller, 3,
                                                                       3,
                                                                       1, // Request only one frame for each link
