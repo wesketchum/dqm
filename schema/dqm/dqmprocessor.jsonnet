@@ -54,14 +54,6 @@ local dqmprocessor = {
                 doc="Fourier"),
         s.field("sdqm_fourier_sum", self.standard_dqm, # This one is for summed fourier transforms
                 doc="Fourier sum"),
-        s.field("df_mean_rms", self.standard_dqm,  # This one is for the Mean and RMS
-                doc="Standard dqm"),
-        s.field("df_hist", self.standard_dqm,      # This one is for the raw event display
-                doc="Standard dqm"),
-        s.field("df_fourier", self.standard_dqm,   # This one is for fourier transforms
-                doc="Fourier"),
-        s.field("df_fourier_sum", self.standard_dqm, # This one is for summed fourier transforms
-                doc="Fourier sum"),
         s.field("kafka_address", self.string,
                 doc="Address used for sending to the kafka broker"),
         s.field("link_idx", self.index_list,
