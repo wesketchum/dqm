@@ -77,6 +77,9 @@ DQMProcessor::do_configure(const nlohmann::json& args)
 {
   auto conf = args.get<dqmprocessor::Conf>();
   m_kafka_address = conf.kafka_address;
+
+  m_mode = conf.mode;
+
   m_standard_dqm_hist = conf.sdqm_hist;
   m_standard_dqm_mean_rms = conf.sdqm_mean_rms;
   m_standard_dqm_fourier = conf.sdqm_fourier;
@@ -99,7 +102,7 @@ DQMProcessor::do_configure(const nlohmann::json& args)
   m_df2dqm_connection = conf.df2dqm_connection_name;
   m_dqm2df_connection = conf.dqm2df_connection_name;
 
-  if (!m_df2dqm_connection.empty()) {
+  if (m_mode == "df") {
       networkmanager::NetworkManager::get().start_listening(m_df2dqm_connection);
   }
 }
@@ -114,7 +117,7 @@ DQMProcessor::do_start(const nlohmann::json& args)
   networkmanager::NetworkManager::get().register_callback(
     m_timesync_connection, std::bind(&DQMProcessor::dispatch_timesync, this, std::placeholders::_1));
 
-  if (!m_df2dqm_connection.empty()) {
+  if (m_mode == "df") {
   networkmanager::NetworkManager::get().register_callback(m_df2dqm_connection,
     std::bind(&DQMProcessor::dispatch_trigger_record, this, std::placeholders::_1));
   }
