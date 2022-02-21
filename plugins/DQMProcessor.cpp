@@ -170,75 +170,75 @@ DQMProcessor::RequestMaker()
 
   // Instances of analysis modules
 
+  dqmprocessor::StandardDQM hist_params       = m_mode == "readout" ? m_standard_dqm_hist       : m_df_hist;
+  dqmprocessor::StandardDQM mean_rms_params   = m_mode == "readout" ? m_standard_dqm_mean_rms   : m_df_mean_rms;
+  dqmprocessor::StandardDQM fourier_params    = m_mode == "readout" ? m_standard_dqm_fourier    : m_df_fourier;
+  dqmprocessor::StandardDQM fouriersum_params = m_mode == "readout" ? m_standard_dqm_fouriersum : m_df_fouriersum;
+
+
   // Raw event display
-  if (m_mode == "readout") {
-    auto hist = std::make_shared<HistContainer>(
-        "raw_display", CHANNELS_PER_LINK * m_link_idx.size(), m_link_idx, 100, 0, 5000, false);
-    // Mean and RMS
-    auto mean_rms = std::make_shared<HistContainer>(
-        "rmsm_display", CHANNELS_PER_LINK * m_link_idx.size(), m_link_idx, 100, 0, 5000, true);
-    // Fourier transform
-    // The Delta of time between frames is the inverse of the sampling frequency (clock frequency)
-    // but because we are sampling every TICKS_BETWEEN_TIMESTAMP ticks we have to multiply by that
-    auto fourier = std::make_shared<FourierContainer>("fft_display",
-                                                        CHANNELS_PER_LINK * m_link_idx.size(),
-                                                        m_link_idx,
-                                                        1. / m_clock_frequency * TICKS_BETWEEN_TIMESTAMP,
-                                                        m_standard_dqm_fourier.num_frames);
-    auto fouriersum = std::make_shared<FourierContainer>("fft_sums_display",
-                                                        4,
-                                                        m_link_idx,
-                                                        1. / m_clock_frequency * TICKS_BETWEEN_TIMESTAMP,
-                                                        m_standard_dqm_fourier_sum.num_frames,
-                                                        true);
-    // Fills the channel map at the beggining of a run
-  }
-  else if (m_mode == "dqm") {
-  }
-  else {
-    // Throw issue
-  }
+  auto hist = std::make_shared<HistContainer>(
+      "raw_display", CHANNELS_PER_LINK * m_link_idx.size(), m_link_idx, 100, 0, 5000, false);
+  // Mean and RMS
+  auto mean_rms = std::make_shared<HistContainer>(
+      "rmsm_display", CHANNELS_PER_LINK * m_link_idx.size(), m_link_idx, 100, 0, 5000, true);
+  // Fourier transform
+  // The Delta of time between frames is the inverse of the sampling frequency (clock frequency)
+  // but because we are sampling every TICKS_BETWEEN_TIMESTAMP ticks we have to multiply by that
+  auto fourier = std::make_shared<FourierContainer>("fft_display",
+                                                      CHANNELS_PER_LINK * m_link_idx.size(),
+                                                      m_link_idx,
+                                                      1. / m_clock_frequency * TICKS_BETWEEN_TIMESTAMP,
+                                                      fourier_params.num_frames);
+  auto fouriersum = std::make_shared<FourierContainer>("fft_sums_display",
+                                                      4,
+                                                      m_link_idx,
+                                                      1. / m_clock_frequency * TICKS_BETWEEN_TIMESTAMP,
+                                                      fouriersum_params.num_frames,
+                                                      true);
+  // Fills the channel map at the beggining of a run
+
   auto chfiller = std::make_shared<ChannelMapFiller>("channelmapfiller", m_channel_map);
 
   // Initial tasks
   // Add some offset time to let the other parts of the DAQ start
   // Typically the first and maybe second requests of data fails
-  if (m_standard_dqm_hist.how_often > 0)
+  if (hist_params.how_often > 0)
     map[std::chrono::system_clock::now() + std::chrono::seconds(10)] = {
       hist,
-      m_standard_dqm_hist.how_often,
-      m_standard_dqm_hist.unavailable_time,
-      m_standard_dqm_hist.num_frames,
+      hist_params.how_often,
+      hist_params.unavailable_time,
+      hist_params.num_frames,
       nullptr,
-      "Histogram every " + std::to_string(m_standard_dqm_hist.how_often) + " s"
+      "Histogram every " + std::to_string(hist_params.how_often) + " s"
     };
-  if (m_standard_dqm_mean_rms.how_often > 0)
+  if (mean_rms_params.how_often > 0)
     map[std::chrono::system_clock::now() + std::chrono::seconds(10)] = {
       mean_rms,
-      m_standard_dqm_mean_rms.how_often,
-      m_standard_dqm_mean_rms.unavailable_time,
-      m_standard_dqm_mean_rms.num_frames,
+      mean_rms_params.how_often,
+      mean_rms_params.unavailable_time,
+      mean_rms_params.num_frames,
       nullptr,
-      "Mean and RMS every " + std::to_string(m_standard_dqm_mean_rms.how_often) + " s"
+      "Mean and RMS every " + std::to_string(mean_rms_params.how_often) + " s"
     };
-  if (m_standard_dqm_fourier.how_often > 0)
+  if (fourier_params.how_often > 0)
     map[std::chrono::system_clock::now() + std::chrono::seconds(10)] = {
       fourier,
-      m_standard_dqm_fourier.how_often,
-      m_standard_dqm_fourier.unavailable_time,
-      m_standard_dqm_fourier.num_frames,
+      fourier_params.how_often,
+      fourier_params.unavailable_time,
+      fourier_params.num_frames,
       nullptr,
-      "Fourier every " + std::to_string(m_standard_dqm_fourier.how_often) + " s"
+      "Fourier every " + std::to_string(fourier_params.how_often) + " s"
     };
 
-  if (m_standard_dqm_fourier_sum.how_often > 0)
+  if (fouriersum_params.how_often > 0)
     map[std::chrono::system_clock::now() + std::chrono::seconds(10)] = {
       fouriersum,
-      m_standard_dqm_fourier_sum.how_often,
-      m_standard_dqm_fourier_sum.unavailable_time,
-      m_standard_dqm_fourier_sum.num_frames,
+      fouriersum_params.how_often,
+      fouriersum_params.unavailable_time,
+      fouriersum_params.num_frames,
       nullptr,
-      "Summed Fourier every " + std::to_string(m_standard_dqm_fourier_sum.how_often) + " s"
+      "Summed Fourier every " + std::to_string(fouriersum_params.how_often) + " s"
     };
   map[std::chrono::system_clock::now() + std::chrono::seconds(2)] = { chfiller, 3,
                                                                       3,
