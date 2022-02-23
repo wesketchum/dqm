@@ -312,13 +312,15 @@ DQMProcessor::RequestMaker()
 
     // There was a bug where the timestamp was retrieved before there were any timestamps
     // obtaining an invalid timestamps
-    auto timestamp = m_time_est->get_timestamp_estimate();
-    if (timestamp == dfmessages::TypeDefaults::s_invalid_timestamp) {
-      ers::warning(InvalidTimestamp(ERS_HERE, timestamp));
-      // Some sleep is needed because at the beginning there are no valid timestamps
-      // so it will be checking continuously if there is a valid one
-      std::this_thread::sleep_for(std::chrono::milliseconds(50));
-      continue;
+    if (m_mode == "readout") {
+      auto timestamp = m_time_est->get_timestamp_estimate();
+      if (timestamp == dfmessages::TypeDefaults::s_invalid_timestamp) {
+        ers::warning(InvalidTimestamp(ERS_HERE, timestamp));
+        // Some sleep is needed because at the beginning there are no valid timestamps
+        // so it will be checking continuously if there is a valid one
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
+        continue;
+      }
     }
 
     // Now it's the time to do something
@@ -340,12 +342,7 @@ DQMProcessor::RequestMaker()
     ++m_request_count;
     ++m_total_request_count;
 
-    if (m_mode == "df") {
-        TLOG() << "DF Request";
-        dfrequest();
-        TLOG() << "DF Request done";
-    }
-    else if (m_mode == "readout") {
+    if (m_mode == "readout") {
       try {
         m_source->pop(element, m_source_timeout);
       } catch (const ers::Issue& excpt) {
@@ -353,6 +350,16 @@ DQMProcessor::RequestMaker()
         continue;
       }
       TLOG_DEBUG(10) << "Data popped from the queue";
+    }
+    else if (m_mode == "df") {
+      while (dftrs.size() == 0) {
+        TLOG() << "Going to sleep for a bit";
+        std::this_thread::sleep_for(std::chrono::milliseconds(300));
+      }
+      std::this_thread::sleep_for(std::chrono::milliseconds(5000));
+      TLOG() << "Size is " << dftrs.size();
+      element = std::move(dftrs.front());
+      TLOG() << "Element moved from the queue";
     }
 
     ++m_data_count;
@@ -449,15 +456,18 @@ DQMProcessor::CreateRequest(std::vector<dfmessages::GeoID>& m_links, int number_
 void
 DQMProcessor::dispatch_trigger_record(ipm::Receiver::Response message)
 {
-  dftrs.emplace_back(serialization::deserialize<daqdataformats::TriggerRecord>(message.data));
-  TLOG() << "Size = " << dftrs.back().get_fragments_ref()[0]->get_size() << " " << sizeof(daqdataformats::FragmentHeader);
-  dftrs.pop_back();
+  // const std::lock_guard<std::mutex> lock(m_mutex);
+  TLOG() << "Got TR from DF";
+  dftrs.push(std::make_unique<daqdataformats::TriggerRecord>(serialization::deserialize<daqdataformats::TriggerRecord>(message.data)));
+  TLOG() << "Size = " << dftrs.back()->get_fragments_ref()[0]->get_size() << " " << sizeof(daqdataformats::FragmentHeader);
+  // dftrs.pop_back();
 }
 
 
 void
 DQMProcessor::dfrequest()
 {
+  TLOG() << "Sending request to DF";
   dfmessages::TRMonRequest trmon;
   trmon.run_number = m_run_number;
   trmon.trigger_type = 1;
