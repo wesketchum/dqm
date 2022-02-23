@@ -56,8 +56,6 @@ DQMProcessor::DQMProcessor(const std::string& name)
 void
 DQMProcessor::init(const data_t&)
 {
-  m_source.reset(new trigger_record_source_qt("trigger_record_q_dqm"));
-  m_sink.reset(new trigger_decision_sink_qt("trigger_decision_q_dqm"));
 }
 
 void
@@ -98,6 +96,10 @@ DQMProcessor::do_configure(const nlohmann::json& args)
 
   if (m_mode == "df") {
       networkmanager::NetworkManager::get().start_listening(m_df2dqm_connection);
+  }
+  else if (m_mode == "readout") {
+    m_source.reset(new trigger_record_source_qt("trigger_record_q_dqm"));
+    m_sink.reset(new trigger_decision_sink_qt("trigger_decision_q_dqm"));
   }
 }
 
