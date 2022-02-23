@@ -105,7 +105,7 @@ private:
   std::string m_channel_map;
   std::unique_ptr<ChannelMap> m_map;
 
-  std::list<daqdataformats::TriggerRecord> dftrs;
+  std::queue<std::unique_ptr<daqdataformats::TriggerRecord>> dftrs;
 
   std::string m_mode;
   int m_readout_window_offset;
