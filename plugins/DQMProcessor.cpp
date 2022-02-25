@@ -366,7 +366,7 @@ DQMProcessor::RequestMaker()
       // for (auto& elem: dftrs)
       //   TLOG() << elem.get();
       // dftrs.pop_back();
-      // continue;
+      continue;
     }
 
     ++m_data_count;
