@@ -22,6 +22,8 @@
 #include "timinglibs/TimestampEstimator.hpp"
 #include <ipm/Receiver.hpp>
 
+#include "appfwk/FollyQueue.hpp"
+
 #include <atomic>
 #include <chrono>
 #include <memory>
@@ -105,7 +107,8 @@ private:
   std::string m_channel_map;
   std::unique_ptr<ChannelMap> m_map;
 
-  std::queue<std::unique_ptr<daqdataformats::TriggerRecord>> dftrs;
+  // std::list<std::unique_ptr<daqdataformats::TriggerRecord>> dftrs;
+  appfwk::FollySPSCQueue<std::unique_ptr<daqdataformats::TriggerRecord>> dftrs{"FollyQueue", 100};
 
   std::string m_mode;
   int m_readout_window_offset;
