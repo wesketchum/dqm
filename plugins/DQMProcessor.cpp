@@ -361,7 +361,7 @@ DQMProcessor::RequestMaker()
       // for (auto& elem: dftrs)
       //   TLOG() << elem.get();
       //element = std::move(dftrs.front());
-       dftrs.pop(element, std::chrono::milliseconds(100));
+      dftrs.pop(element, std::chrono::milliseconds(100));
       TLOG() << "Element moved from the queue: " << (void*)element.get();
       // for (auto& elem: dftrs)
       //   TLOG() << elem.get();
