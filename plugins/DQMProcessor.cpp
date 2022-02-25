@@ -379,6 +379,7 @@ DQMProcessor::RequestMaker()
     runfunc_type memfunc = &AnalysisModule::run;
     auto current_thread =
       std::make_shared<std::thread>(memfunc, std::ref(*algo), std::move(element), std::ref(m_run_marker), std::ref(m_map), m_kafka_address);
+    element.reset(nullptr);
 
     // Add a new entry for the current instance
     TLOG() << "Starting to run \"" << analysis_instance.name << "\"";
