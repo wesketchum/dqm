@@ -352,14 +352,21 @@ DQMProcessor::RequestMaker()
       TLOG_DEBUG(10) << "Data popped from the queue";
     }
     else if (m_mode == "df") {
-      while (dftrs.size() == 0) {
+      while (dftrs.get_num_elements() == 0) {
         TLOG() << "Going to sleep for a bit";
         std::this_thread::sleep_for(std::chrono::milliseconds(300));
       }
       std::this_thread::sleep_for(std::chrono::milliseconds(5000));
-      TLOG() << "Size is " << dftrs.size();
-      element = std::move(dftrs.front());
+      // TLOG() << "Size is " << dftrs.size();
+      // for (auto& elem: dftrs)
+      //   TLOG() << elem.get();
+      // element = std::move(dftrs.front());
+      // dftrs.pop(element, std::chrono::milliseconds(100));
       TLOG() << "Element moved from the queue";
+      // for (auto& elem: dftrs)
+      //   TLOG() << elem.get();
+      // dftrs.pop_back();
+      // continue;
     }
 
     ++m_data_count;
@@ -458,8 +465,20 @@ DQMProcessor::dispatch_trigger_record(ipm::Receiver::Response message)
 {
   // const std::lock_guard<std::mutex> lock(m_mutex);
   TLOG() << "Got TR from DF";
-  dftrs.push(std::make_unique<daqdataformats::TriggerRecord>(serialization::deserialize<daqdataformats::TriggerRecord>(message.data)));
-  TLOG() << "Size = " << dftrs.back()->get_fragments_ref()[0]->get_size() << " " << sizeof(daqdataformats::FragmentHeader);
+  // std::this_thread::sleep_for(std::chrono::milliseconds(300));
+  // for (auto& elem: dftrs)
+  //   TLOG() << elem.get();
+  auto tr = daqdataformats::TriggerRecord(std::move(serialization::deserialize<daqdataformats::TriggerRecord>(message.data)));
+  TLOG() << "Deserialization done";
+  // std::this_thread::sleep_for(std::chrono::milliseconds(300));
+  auto ptr = std::make_unique<daqdataformats::TriggerRecord>(std::move(tr));
+  TLOG() << "ptr = " << ptr.get();
+  // std::this_thread::sleep_for(std::chrono::milliseconds(300));
+  // dftrs.emplace_back(std::move(ptr));
+  dftrs.push(std::move(ptr), std::chrono::milliseconds(100));
+  // TLOG() << "Size = " << dftrs.back()->get_fragments_ref()[0]->get_size() << " " << sizeof(daqdataformats::FragmentHeader);
+  // std::this_thread::sleep_for(std::chrono::milliseconds(300));
+  TLOG() << "Push done";
   // dftrs.pop_back();
 }
 
