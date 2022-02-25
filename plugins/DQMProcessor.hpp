@@ -105,7 +105,7 @@ private:
   std::atomic<uint64_t> m_received_timesync_count{ 0 }; // NOLINT(build/unsigned)
 
   std::string m_channel_map;
-  std::unique_ptr<ChannelMap> m_map;
+  std::shared_ptr<ChannelMap> m_map;
 
   // std::list<std::unique_ptr<daqdataformats::TriggerRecord>> dftrs;
   appfwk::FollySPSCQueue<std::unique_ptr<daqdataformats::TriggerRecord>> dftrs{"FollyQueue", 100};

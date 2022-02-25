@@ -33,7 +33,7 @@ public:
   int m_clock_frequency;
   void run(std::unique_ptr<daqdataformats::TriggerRecord> record,
       std::atomic<bool>& run_mark,
-      std::unique_ptr<ChannelMap>& map,
+           std::shared_ptr<ChannelMap> map,
       std::string kafka_address);
 
 private:
@@ -83,7 +83,7 @@ DFModule::DFModule(bool enable_hist, bool enable_mean_rms, bool enable_fourier, 
 void
 DFModule::run(std::unique_ptr<daqdataformats::TriggerRecord> record,
                    std::atomic<bool>& run_mark,
-                   std::unique_ptr<ChannelMap>& map,
+                   std::shared_ptr<ChannelMap> map,
                    std::string kafka_address)
 {
   set_is_running(true);
@@ -97,7 +97,7 @@ DFModule::run(std::unique_ptr<daqdataformats::TriggerRecord> record,
   //   m_fourier->run(record, run_mark, map, kafka_address);
   // }
   if (m_enable_fourier_sum) {
-    m_fourier->run(std::move(record), run_mark, map, kafka_address);
+    m_fourier_sum->run(std::move(record), run_mark, map, kafka_address);
   }
   set_is_running(false);
 }

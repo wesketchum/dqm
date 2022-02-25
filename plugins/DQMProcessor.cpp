@@ -128,7 +128,7 @@ DQMProcessor::do_start(const nlohmann::json& args)
   // The channel map pointer is set to the empty channel map that is not filled
   // and allows the first check to pass for it to be filled with the actual
   // channel map
-  m_map.reset(new ChannelMapEmpty);
+  m_map = std::shared_ptr<ChannelMap>(new ChannelMapEmpty);
 
   m_running_thread.reset(new std::thread(&DQMProcessor::RequestMaker, this));
 }
@@ -170,7 +170,7 @@ DQMProcessor::RequestMaker()
   // Map that holds the tasks and times when to do them
   std::map<std::chrono::time_point<std::chrono::system_clock>, AnalysisInstance> map;
 
-  std::unique_ptr<daqdataformats::TriggerRecord> element;
+  std::unique_ptr<daqdataformats::TriggerRecord> element{ nullptr };
 
   // Instances of analysis modules
 
@@ -357,16 +357,16 @@ DQMProcessor::RequestMaker()
         std::this_thread::sleep_for(std::chrono::milliseconds(300));
       }
       std::this_thread::sleep_for(std::chrono::milliseconds(5000));
-      // TLOG() << "Size is " << dftrs.size();
+      //TLOG() << "Size is " << dftrs.size();
       // for (auto& elem: dftrs)
       //   TLOG() << elem.get();
-      // element = std::move(dftrs.front());
-      // dftrs.pop(element, std::chrono::milliseconds(100));
-      TLOG() << "Element moved from the queue";
+      //element = std::move(dftrs.front());
+       dftrs.pop(element, std::chrono::milliseconds(100));
+      TLOG() << "Element moved from the queue: " << (void*)element.get();
       // for (auto& elem: dftrs)
       //   TLOG() << elem.get();
-      // dftrs.pop_back();
-      continue;
+      //dftrs.pop_back();
+      //continue;
     }
 
     ++m_data_count;
@@ -374,11 +374,11 @@ DQMProcessor::RequestMaker()
 
     using runfunc_type = void (AnalysisModule::*)(std::unique_ptr<daqdataformats::TriggerRecord> record,
                                                   std::atomic<bool>& run_mark,
-                                                  std::unique_ptr<ChannelMap> & map,
+                                                  std::shared_ptr<ChannelMap> map,
                                                   std::string kafka_address);
     runfunc_type memfunc = &AnalysisModule::run;
     auto current_thread =
-      std::make_shared<std::thread>(memfunc, std::ref(*algo), std::move(element), std::ref(m_run_marker), std::ref(m_map), m_kafka_address);
+      std::make_shared<std::thread>(memfunc, std::ref(*algo), std::move(element), std::ref(m_run_marker), m_map, m_kafka_address);
     element.reset(nullptr);
 
     // Add a new entry for the current instance
@@ -466,15 +466,8 @@ DQMProcessor::dispatch_trigger_record(ipm::Receiver::Response message)
 {
   // const std::lock_guard<std::mutex> lock(m_mutex);
   TLOG() << "Got TR from DF";
-  // std::this_thread::sleep_for(std::chrono::milliseconds(300));
-  // for (auto& elem: dftrs)
-  //   TLOG() << elem.get();
-  auto tr = std::make_unique<daqdataformats::TriggerRecord>(
-    std::move(serialization::deserialize<daqdataformats::TriggerRecord>(message.data)));
-  TLOG() << "Deserialization done";
-  // std::this_thread::sleep_for(std::chrono::milliseconds(300));
-  // dftrs.emplace_back(std::move(ptr));
-  dftrs.push(std::move(tr), std::chrono::milliseconds(100));
+  dftrs.push(std::move(serialization::deserialize<std::unique_ptr<daqdataformats::TriggerRecord>>(message.data)),
+             std::chrono::milliseconds(100));
   // TLOG() << "Size = " << dftrs.back()->get_fragments_ref()[0]->get_size() << " " << sizeof(daqdataformats::FragmentHeader);
   // std::this_thread::sleep_for(std::chrono::milliseconds(300));
   TLOG() << "Push done";

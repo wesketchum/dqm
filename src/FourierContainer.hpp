@@ -44,15 +44,15 @@ public:
 
   void run(std::unique_ptr<daqdataformats::TriggerRecord> record,
            std::atomic<bool>& run_mark,
-           std::unique_ptr<ChannelMap>& map,
+           std::shared_ptr<ChannelMap> map,
            std::string kafka_address = "");
   void transmit(std::string& kafka_address,
-                std::unique_ptr<ChannelMap>& cmap,
+                std::shared_ptr<ChannelMap> cmap,
                 const std::string& topicname,
                 int run_num,
                 time_t timestamp);
   void transmit_global(std::string &kafka_address,
-                       std::unique_ptr<ChannelMap> &cmap,
+                       std::shared_ptr<ChannelMap> cmap,
                        const std::string& topicname,
                        int run_num,
                        time_t timestamp);
@@ -91,7 +91,7 @@ FourierContainer::FourierContainer(std::string name, int size, std::vector<int>&
 void
 FourierContainer::run(std::unique_ptr<daqdataformats::TriggerRecord> record,
                       std::atomic<bool>& run_mark,
-                      std::unique_ptr<ChannelMap>& map,
+                      std::shared_ptr<ChannelMap> map,
                       std::string kafka_address)
 {
   set_is_running(true);
@@ -171,7 +171,7 @@ FourierContainer::run(std::unique_ptr<daqdataformats::TriggerRecord> record,
 
 void
 FourierContainer::transmit(std::string& kafka_address,
-                           std::unique_ptr<ChannelMap>& cmap,
+                           std::shared_ptr<ChannelMap> cmap,
                            const std::string& topicname,
                            int run_num,
                            time_t timestamp)
@@ -213,7 +213,11 @@ FourierContainer::transmit(std::string& kafka_address,
 }
 
 void
-FourierContainer::transmit_global(std::string &kafka_address, std::unique_ptr<ChannelMap>& , const std::string& topicname, int run_num, time_t timestamp)
+FourierContainer::transmit_global(std::string& kafka_address,
+                                  std::shared_ptr<ChannelMap>,
+                                  const std::string& topicname,
+                                  int run_num,
+                                  time_t timestamp)
 {
   std::string dataname = m_name;
   std::string metadata = "";
