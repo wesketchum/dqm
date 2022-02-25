@@ -469,14 +469,12 @@ DQMProcessor::dispatch_trigger_record(ipm::Receiver::Response message)
   // std::this_thread::sleep_for(std::chrono::milliseconds(300));
   // for (auto& elem: dftrs)
   //   TLOG() << elem.get();
-  auto tr = daqdataformats::TriggerRecord(std::move(serialization::deserialize<daqdataformats::TriggerRecord>(message.data)));
+  auto tr = std::make_unique<daqdataformats::TriggerRecord>(
+    std::move(serialization::deserialize<daqdataformats::TriggerRecord>(message.data)));
   TLOG() << "Deserialization done";
   // std::this_thread::sleep_for(std::chrono::milliseconds(300));
-  auto ptr = std::make_unique<daqdataformats::TriggerRecord>(std::move(tr));
-  TLOG() << "ptr = " << ptr.get();
-  // std::this_thread::sleep_for(std::chrono::milliseconds(300));
   // dftrs.emplace_back(std::move(ptr));
-  dftrs.push(std::move(ptr), std::chrono::milliseconds(100));
+  dftrs.push(std::move(tr), std::chrono::milliseconds(100));
   // TLOG() << "Size = " << dftrs.back()->get_fragments_ref()[0]->get_size() << " " << sizeof(daqdataformats::FragmentHeader);
   // std::this_thread::sleep_for(std::chrono::milliseconds(300));
   TLOG() << "Push done";
