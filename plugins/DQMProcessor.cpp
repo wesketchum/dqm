@@ -251,7 +251,7 @@ DQMProcessor::RequestMaker()
       5,
       -1, // Number of frames, unused
       nullptr,
-      "Algorithms on TR from DF every " + std::to_string(10) + " s"
+      "Algorithms on TR from DF every " + std::to_string(m_df_seconds) + " s"
     };
   }
 
