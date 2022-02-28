@@ -44,7 +44,7 @@ public:
 
   void run(std::unique_ptr<daqdataformats::TriggerRecord> record,
            std::atomic<bool>& run_mark,
-           std::shared_ptr<ChannelMap> map,
+           std::shared_ptr<ChannelMap>& map,
            std::string kafka_address = "");
   void transmit(std::string& kafka_address,
                 std::shared_ptr<ChannelMap> cmap,
@@ -91,7 +91,7 @@ FourierContainer::FourierContainer(std::string name, int size, std::vector<int>&
 void
 FourierContainer::run(std::unique_ptr<daqdataformats::TriggerRecord> record,
                       std::atomic<bool>& run_mark,
-                      std::shared_ptr<ChannelMap> map,
+                      std::shared_ptr<ChannelMap>& map,
                       std::string kafka_address)
 {
   set_is_running(true);
