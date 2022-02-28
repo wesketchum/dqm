@@ -363,11 +363,11 @@ DQMProcessor::RequestMaker()
     ++m_data_count;
     ++m_total_data_count;
 
-    using runfunc_type = void (AnalysisModule::*)(std::unique_ptr<daqdataformats::TriggerRecord> record,
-                                                  std::atomic<bool>& run_mark,
-                                                  std::shared_ptr<ChannelMap>& map,
-                                                  std::string kafka_address);
-    runfunc_type memfunc = &AnalysisModule::run;
+    // using runfunc_type = void (AnalysisModule::*)(std::unique_ptr<daqdataformats::TriggerRecord> record,
+    //                                               std::atomic<bool>& run_mark,
+    //                                               std::shared_ptr<ChannelMap>& map,
+    //                                               std::string kafka_address);
+    auto memfunc = &AnalysisModule::run;
     auto current_thread =
       std::make_shared<std::thread>(memfunc, std::ref(*algo), std::move(element), std::ref(m_run_marker), std::ref(m_map), m_kafka_address);
     element.reset(nullptr);

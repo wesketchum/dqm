@@ -42,10 +42,11 @@ public:
   FourierContainer(std::string name, int size, double inc, int npoints);
   FourierContainer(std::string name, int size, std::vector<int>& link_idx, double inc, int npoints, bool global_mode=false);
 
-  void run(std::unique_ptr<daqdataformats::TriggerRecord> record,
-           std::atomic<bool>& run_mark,
-           std::shared_ptr<ChannelMap>& map,
-           std::string kafka_address = "");
+  std::unique_ptr<daqdataformats::TriggerRecord>
+  run(std::unique_ptr<daqdataformats::TriggerRecord> record,
+      std::atomic<bool>& run_mark,
+      std::shared_ptr<ChannelMap>& map,
+      std::string kafka_address = "");
   void transmit(std::string& kafka_address,
                 std::shared_ptr<ChannelMap> cmap,
                 const std::string& topicname,
@@ -88,7 +89,8 @@ FourierContainer::FourierContainer(std::string name, int size, std::vector<int>&
     channels += CHANNELS_PER_LINK;
   }
 }
-void
+
+std::unique_ptr<daqdataformats::TriggerRecord>
 FourierContainer::run(std::unique_ptr<daqdataformats::TriggerRecord> record,
                       std::atomic<bool>& run_mark,
                       std::shared_ptr<ChannelMap>& map,
@@ -107,7 +109,7 @@ FourierContainer::run(std::unique_ptr<daqdataformats::TriggerRecord> record,
     if (vec.second.size() != size) {
       ers::error(InvalidData(ERS_HERE, "the size of the vector of frames is different for each link"));
       set_is_running(false);
-      return;
+      return std::move(record);
     }
   }
 
@@ -152,7 +154,7 @@ FourierContainer::run(std::unique_ptr<daqdataformats::TriggerRecord> record,
     for (size_t ich = 0; ich < m_size - 1; ++ich) {
       if (!run_mark) {
         set_is_running(false);
-        return;
+        return std::move(record);
       }
       fouriervec[ich].compute_fourier_transform();
     }
@@ -167,6 +169,7 @@ FourierContainer::run(std::unique_ptr<daqdataformats::TriggerRecord> record,
   }
 
   set_is_running(false);
+  return std::move(record);
 }
 
 void

@@ -40,10 +40,11 @@ public:
                 double high,
                 bool only_mean);
 
-  void run(std::unique_ptr<daqdataformats::TriggerRecord> record,
-           std::atomic<bool>& run_mark,
-           std::shared_ptr<ChannelMap>& map,
-           std::string kafka_address = "");
+  std::unique_ptr<daqdataformats::TriggerRecord>
+  run(std::unique_ptr<daqdataformats::TriggerRecord> record,
+      std::atomic<bool>& run_mark,
+      std::shared_ptr<ChannelMap>& map,
+      std::string kafka_address = "");
   void transmit(std::string& kafka_address,
                 std::shared_ptr<ChannelMap>& map,
                 const std::string& topicname,
@@ -99,7 +100,7 @@ HistContainer::HistContainer(std::string name,
   }
 }
 
-void
+std::unique_ptr<daqdataformats::TriggerRecord>
 HistContainer::run(std::unique_ptr<daqdataformats::TriggerRecord> record,
                    std::atomic<bool>&,
                    std::shared_ptr<ChannelMap>& map,
@@ -113,7 +114,7 @@ HistContainer::run(std::unique_ptr<daqdataformats::TriggerRecord> record,
     // throw issue
     set_is_running(false);
     TLOG() << "Found no frames";
-    return;
+    return std::move(record);
   }
 
   // Get all the keys
@@ -139,7 +140,7 @@ HistContainer::run(std::unique_ptr<daqdataformats::TriggerRecord> record,
     if (vec.second.size() != size) {
       ers::error(InvalidData(ERS_HERE, "the size of the vector of frames is different for each link"));
       set_is_running(false);
-      return;
+      return std::move(record);
     }
   }
 
@@ -186,6 +187,7 @@ HistContainer::run(std::unique_ptr<daqdataformats::TriggerRecord> record,
   clean();
 
   set_is_running(false);
+  return std::move(record);
 }
 
 void
