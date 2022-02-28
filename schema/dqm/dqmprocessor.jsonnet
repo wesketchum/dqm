@@ -67,7 +67,13 @@ local dqmprocessor = {
         s.field("dqm2df_connection_name", self.netmgr_name,
                 doc="Connection to use for sending TRMon messages to DF"),
         s.field("readout_window_offset", self.big_count,
-                doc="Offset to use for the windows requested to readout")
+                doc="Offset to use for the windows requested to readout"),
+
+        s.field("df_seconds", self.time,
+                doc="Number of seconds between requests to DF for TRs"),
+        s.field("df_offset", self.time,
+                doc="Number of seconds to offset so that when there are multiple DF apps the rate is maintained")
+
 
     ], doc="Generic DQM configuration")
 };

@@ -84,6 +84,9 @@ DQMProcessor::do_configure(const nlohmann::json& args)
   m_standard_dqm_fourier = conf.sdqm_fourier;
   m_standard_dqm_fourier_sum = conf.sdqm_fourier_sum;
 
+  m_df_seconds = conf.df_seconds;
+  m_df_offset = conf.df_offset;
+
   m_link_idx = conf.link_idx;
   m_clock_frequency = conf.clock_frequency;
   m_channel_map = conf.channel_map;
@@ -241,12 +244,12 @@ DQMProcessor::RequestMaker()
       "Summed Fourier every " + std::to_string(m_standard_dqm_fourier_sum.how_often) + " s"
     };
 
-  if (m_mode == "df") {
-    map[std::chrono::system_clock::now() + std::chrono::seconds(10)] = {
+  if (m_mode == "df" && m_df_seconds > 0) {
+    map[std::chrono::system_clock::now() + std::chrono::milliseconds(10000 + static_cast<int>(m_df_offset * 1000))] = {
       dfmodule,
-      10,
-      m_standard_dqm_fourier_sum.unavailable_time,
-      m_standard_dqm_fourier_sum.num_frames,
+      m_df_seconds,
+      5,
+      -1, // Number of frames, unused
       nullptr,
       "Algorithms on TR from DF every " + std::to_string(10) + " s"
     };
