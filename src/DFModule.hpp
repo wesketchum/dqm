@@ -1,5 +1,5 @@
 /**
- * @file DFModule.hpp Implementation of a container of Hist objects
+ * @file DFModule.hpp Class for running algorithms on the TRs from DF
  *
  * This is part of the DUNE DAQ , copyright 2020.
  * Licensing/copyright details are in the COPYING file that you should have
@@ -69,15 +69,15 @@ DFModule::DFModule(bool enable_hist, bool enable_mean_rms, bool enable_fourier, 
                                                     CHANNELS_PER_LINK * m_ids.size(),
                                                     m_ids,
                                                     1. / m_clock_frequency * TICKS_BETWEEN_TIMESTAMP,
-                                                       10);
+                                                    80);
   }
   if (m_enable_fourier_sum) {
     m_fourier_sum = std::make_shared<FourierContainer>("fft_sums_display",
                                                        4,
                                                        m_ids,
                                                        1. / m_clock_frequency * TICKS_BETWEEN_TIMESTAMP,
-                                                       10,
-                                                           true);
+                                                       80,
+                                                       true);
   }
 }
 
@@ -88,17 +88,18 @@ DFModule::run(std::unique_ptr<daqdataformats::TriggerRecord> record,
                    std::string kafka_address)
 {
   set_is_running(true);
-  // if (m_enable_hist) {
-  //   m_hist->run(record, run_mark, map, kafka_address);
-  // }
-  // if (m_enable_mean_rms) {
-  //   m_mean_rms->run(record, run_mark, map, kafka_address);
-  // }
-  // if (m_enable_fourier) {
-  //   m_fourier->run(record, run_mark, map, kafka_address);
-  // }
+
+  if (m_enable_hist) {
+    record = m_hist->run(std::move(record), run_mark, map, kafka_address);
+  }
+  if (m_enable_mean_rms) {
+    record = m_mean_rms->run(std::move(record), run_mark, map, kafka_address);
+  }
+  if (m_enable_fourier) {
+    record = m_fourier->run(std::move(record), run_mark, map, kafka_address);
+  }
   if (m_enable_fourier_sum) {
-    m_fourier_sum->run(std::move(record), run_mark, map, kafka_address);
+    record = m_fourier_sum->run(std::move(record), run_mark, map, kafka_address);
   }
   set_is_running(false);
   return std::move(record);

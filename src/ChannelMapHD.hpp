@@ -90,7 +90,6 @@ ChannelMapHD::fill(daqdataformats::TriggerRecord& tr)
                  << m_map[2].size();
 
   TLOG_DEBUG(5) << "Channel Map for the HD created";
-  TLOG() << "Filling done, setting m_filled = true";
   m_is_filled = true;
 }
 

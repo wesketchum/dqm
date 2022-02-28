@@ -15,10 +15,10 @@
 
 #include "ChannelMapEmpty.hpp"
 #include "ChannelMapFiller.hpp"
+#include "DFModule.hpp"
 #include "DQMProcessor.hpp"
 #include "FourierContainer.hpp"
 #include "HistContainer.hpp"
-#include "DFModule.hpp"
 
 // DUNE-DAQ includes
 #include "appfwk/DAQSource.hpp"
@@ -195,7 +195,7 @@ DQMProcessor::RequestMaker()
                                                       m_standard_dqm_fourier_sum.num_frames,
                                                       true);
 
-  auto dfmodule = std::make_shared<DFModule>(true, true, false, true, m_clock_frequency, m_link_idx);
+  auto dfmodule = std::make_shared<DFModule>(true, true, true, true, m_clock_frequency, m_link_idx);
 
   // Fills the channel map at the beggining of a run
   auto chfiller = std::make_shared<ChannelMapFiller>("channelmapfiller", m_channel_map);
