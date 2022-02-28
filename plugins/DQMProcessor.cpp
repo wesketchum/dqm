@@ -87,6 +87,7 @@ DQMProcessor::do_configure(const nlohmann::json& args)
   m_df_seconds = conf.df_seconds;
   m_df_offset = conf.df_offset;
   m_df_algs = conf.df_algs;
+  m_df_num_frames = conf.df_num_frames;
 
   m_link_idx = conf.link_idx;
   m_clock_frequency = conf.clock_frequency;
@@ -200,9 +201,11 @@ DQMProcessor::RequestMaker()
                                                       true);
 
   // Whether an algorithm is enabled or not depends on the value of the bitfield m_df_algs
+  TLOG() << "m_df_algs = " << m_df_algs;
   auto dfmodule = std::make_shared<DFModule>(m_df_algs & 1, m_df_algs & 2,
                                              m_df_algs & 4, m_df_algs & 8,
-                                             m_clock_frequency, m_link_idx);
+                                             m_clock_frequency, m_link_idx,
+                                             m_df_num_frames);
 
   // Fills the channel map at the beggining of a run
   auto chfiller = std::make_shared<ChannelMapFiller>("channelmapfiller", m_channel_map);

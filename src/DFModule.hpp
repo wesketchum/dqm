@@ -27,7 +27,7 @@ class DFModule : public AnalysisModule
 
 public:
   DFModule(bool enable_hist, bool enable_mean_rms, bool enable_fourier, bool enable_fourier_sum,
-           int clock_frequency, std::vector<int>& ids);
+           int clock_frequency, std::vector<int>& ids, int num_frames);
 
   bool m_enable_hist, m_enable_mean_rms, m_enable_fourier, m_enable_fourier_sum;
   int m_clock_frequency;
@@ -44,16 +44,19 @@ private:
 
   std::vector<int> m_ids;
 
+  int m_num_frames;
+
 };
 
 DFModule::DFModule(bool enable_hist, bool enable_mean_rms, bool enable_fourier, bool enable_fourier_sum,
-                   int clock_frequency, std::vector<int>& ids) :
+                   int clock_frequency, std::vector<int>& ids, int num_frames) :
     m_enable_hist(enable_hist),
     m_enable_mean_rms(enable_mean_rms),
     m_enable_fourier(enable_fourier),
     m_enable_fourier_sum(enable_fourier_sum),
     m_clock_frequency(clock_frequency),
-    m_ids(ids)
+    m_ids(ids),
+    m_num_frames(num_frames)
 
 {
   if (m_enable_hist) {
@@ -69,7 +72,7 @@ DFModule::DFModule(bool enable_hist, bool enable_mean_rms, bool enable_fourier, 
                                                     CHANNELS_PER_LINK * m_ids.size(),
                                                     m_ids,
                                                     1. / m_clock_frequency * TICKS_BETWEEN_TIMESTAMP,
-                                                    80);
+                                                    m_num_frames);
   }
   if (m_enable_fourier_sum) {
     m_fourier_sum = std::make_shared<FourierContainer>("fft_sums_display",
@@ -77,7 +80,7 @@ DFModule::DFModule(bool enable_hist, bool enable_mean_rms, bool enable_fourier, 
                                                        m_ids,
                                                        1. / m_clock_frequency * TICKS_BETWEEN_TIMESTAMP,
                                                        80,
-                                                       true);
+                                                       m_num_frames);
   }
 }
 

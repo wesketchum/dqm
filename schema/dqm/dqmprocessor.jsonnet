@@ -74,6 +74,8 @@ local dqmprocessor = {
         s.field("df_offset", self.time,
                 doc="Number of seconds to offset so that when there are multiple DF apps the rate is maintained"),
         s.field("df_algs", self.big_count,
+                doc="Bitfield where the bits are whether an algorith is turned on or off for TRs coming from DF"),
+        s.field("df_num_frames", self.count,
                 doc="Bitfield where the bits are whether an algorith is turned on or off for TRs coming from DF")
 
 
