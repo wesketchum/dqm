@@ -363,11 +363,9 @@ DQMProcessor::RequestMaker()
     }
     else if (m_mode == "df") {
       while (dftrs.get_num_elements() == 0) {
-        TLOG() << "Going to sleep for a bit";
         std::this_thread::sleep_for(std::chrono::milliseconds(300));
       }
       dftrs.pop(element, std::chrono::milliseconds(100));
-      TLOG() << "Element moved from the queue: " << (void*)element.get();
     }
 
     ++m_data_count;
