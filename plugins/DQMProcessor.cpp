@@ -356,17 +356,8 @@ DQMProcessor::RequestMaker()
         TLOG() << "Going to sleep for a bit";
         std::this_thread::sleep_for(std::chrono::milliseconds(300));
       }
-      std::this_thread::sleep_for(std::chrono::milliseconds(5000));
-      //TLOG() << "Size is " << dftrs.size();
-      // for (auto& elem: dftrs)
-      //   TLOG() << elem.get();
-      //element = std::move(dftrs.front());
       dftrs.pop(element, std::chrono::milliseconds(100));
       TLOG() << "Element moved from the queue: " << (void*)element.get();
-      // for (auto& elem: dftrs)
-      //   TLOG() << elem.get();
-      //dftrs.pop_back();
-      //continue;
     }
 
     ++m_data_count;
@@ -464,14 +455,10 @@ DQMProcessor::CreateRequest(std::vector<dfmessages::GeoID>& m_links, int number_
 void
 DQMProcessor::dispatch_trigger_record(ipm::Receiver::Response message)
 {
-  // const std::lock_guard<std::mutex> lock(m_mutex);
   TLOG() << "Got TR from DF";
   dftrs.push(std::move(serialization::deserialize<std::unique_ptr<daqdataformats::TriggerRecord>>(message.data)),
              std::chrono::milliseconds(100));
-  // TLOG() << "Size = " << dftrs.back()->get_fragments_ref()[0]->get_size() << " " << sizeof(daqdataformats::FragmentHeader);
-  // std::this_thread::sleep_for(std::chrono::milliseconds(300));
   TLOG() << "Push done";
-  // dftrs.pop_back();
 }
 
 
