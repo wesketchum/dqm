@@ -86,6 +86,7 @@ DQMProcessor::do_configure(const nlohmann::json& args)
 
   m_df_seconds = conf.df_seconds;
   m_df_offset = conf.df_offset;
+  m_df_algs = conf.df_algs;
 
   m_link_idx = conf.link_idx;
   m_clock_frequency = conf.clock_frequency;
@@ -198,7 +199,10 @@ DQMProcessor::RequestMaker()
                                                       m_standard_dqm_fourier_sum.num_frames,
                                                       true);
 
-  auto dfmodule = std::make_shared<DFModule>(true, true, true, true, m_clock_frequency, m_link_idx);
+  // Whether an algorithm is enabled or not depends on the value of the bitfield m_df_algs
+  auto dfmodule = std::make_shared<DFModule>(m_df_algs & 1, m_df_algs & 2,
+                                             m_df_algs & 4, m_df_algs & 8,
+                                             m_clock_frequency, m_link_idx);
 
   // Fills the channel map at the beggining of a run
   auto chfiller = std::make_shared<ChannelMapFiller>("channelmapfiller", m_channel_map);

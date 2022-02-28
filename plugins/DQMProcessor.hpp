@@ -85,6 +85,7 @@ private:
   // DF configuration parameters
   double m_df_seconds {0};
   double m_df_offset {0};
+  int m_df_algs {0};
 
   std::string m_timesync_connection;
   std::string m_df2dqm_connection;
