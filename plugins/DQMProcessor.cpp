@@ -462,10 +462,8 @@ DQMProcessor::CreateRequest(std::vector<dfmessages::GeoID>& m_links, int number_
 void
 DQMProcessor::dispatch_trigger_record(ipm::Receiver::Response message)
 {
-  TLOG() << "Got TR from DF";
   dftrs.push(std::move(serialization::deserialize<std::unique_ptr<daqdataformats::TriggerRecord>>(message.data)),
              std::chrono::milliseconds(100));
-  TLOG() << "Push done";
 }
 
 
