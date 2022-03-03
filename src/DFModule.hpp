@@ -94,15 +94,19 @@ DFModule::run(std::unique_ptr<daqdataformats::TriggerRecord> record,
 
   if (m_enable_hist) {
     record = m_hist->run(std::move(record), run_mark, map, kafka_address);
+    TLOG_DEBUG(5) << "Running histogram";
   }
   if (m_enable_mean_rms) {
     record = m_mean_rms->run(std::move(record), run_mark, map, kafka_address);
+    TLOG_DEBUG(5) << "Running mean and RMS";
   }
   if (m_enable_fourier) {
     record = m_fourier->run(std::move(record), run_mark, map, kafka_address);
+    TLOG_DEBUG(5) << "Running fourier transform";
   }
   if (m_enable_fourier_sum) {
     record = m_fourier_sum->run(std::move(record), run_mark, map, kafka_address);
+    TLOG_DEBUG(5) << "Running fourier transform (summed version)";
   }
   set_is_running(false);
   return std::move(record);
