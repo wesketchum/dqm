@@ -22,12 +22,15 @@
 #include "timinglibs/TimestampEstimator.hpp"
 #include <ipm/Receiver.hpp>
 
+#include "appfwk/FollyQueue.hpp"
+
 #include <atomic>
 #include <chrono>
 #include <memory>
 #include <string>
 #include <utility>
 #include <vector>
+#include <list>
 
 namespace dunedaq::dqm {
 
@@ -54,9 +57,12 @@ public:
   void do_configure(const data_t&);
 
   void dispatch_timesync(ipm::Receiver::Response message);
+  void dispatch_trigger_record(ipm::Receiver::Response message);
 
   void RequestMaker();
   dfmessages::TriggerDecision CreateRequest(std::vector<dfmessages::GeoID>& m_links, int number_of_frames);
+
+  void dfrequest();
 
   void get_info(opmonlib::InfoCollector& ci, int /*level*/);
 
@@ -76,7 +82,15 @@ private:
   dqmprocessor::StandardDQM m_standard_dqm_fourier;
   dqmprocessor::StandardDQM m_standard_dqm_fourier_sum;
 
+  // DF configuration parameters
+  double m_df_seconds {0};
+  double m_df_offset {0};
+  int m_df_algs {0};
+  int m_df_num_frames {0};
+
   std::string m_timesync_connection;
+  std::string m_df2dqm_connection;
+  std::string m_dqm2df_connection;
 
   std::unique_ptr<timinglibs::TimestampEstimator> m_time_est;
 
@@ -97,8 +111,12 @@ private:
   std::atomic<uint64_t> m_received_timesync_count{ 0 }; // NOLINT(build/unsigned)
 
   std::string m_channel_map;
-  std::unique_ptr<ChannelMap> m_map;
+  std::shared_ptr<ChannelMap> m_map;
 
+  // std::list<std::unique_ptr<daqdataformats::TriggerRecord>> dftrs;
+  appfwk::FollySPSCQueue<std::unique_ptr<daqdataformats::TriggerRecord>> dftrs{"FollyQueue", 100};
+
+  std::string m_mode;
   int m_readout_window_offset;
 };
 
