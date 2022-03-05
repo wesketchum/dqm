@@ -380,10 +380,6 @@ DQMProcessor::RequestMaker()
     ++m_data_count;
     ++m_total_data_count;
 
-    // using runfunc_type = void (AnalysisModule::*)(std::unique_ptr<daqdataformats::TriggerRecord> record,
-    //                                               std::atomic<bool>& run_mark,
-    //                                               std::shared_ptr<ChannelMap>& map,
-    //                                               std::string kafka_address);
     auto memfunc = &AnalysisModule::run;
     auto current_thread =
       std::make_shared<std::thread>(memfunc, std::ref(*algo), std::move(element), std::ref(m_run_marker), std::ref(m_map), m_kafka_address);
@@ -409,12 +405,6 @@ DQMProcessor::RequestMaker()
         throw ProcessorError(ERS_HERE, "Thread not joinable");
       }
     }
-
-    // Delete the entry we just used and find the next one
-
-    // Note that since previous_thread refers to the thread
-    // corresponding to task, it's safe to now remove the
-    // AnalysisInstance whose thread it refers to
 
     map.erase(task);
   }
