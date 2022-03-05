@@ -279,7 +279,13 @@ DQMProcessor::RequestMaker()
     auto analysis_instance = task->second;
     auto algo = analysis_instance.mod;
 
-    // Sleep until the next time
+    // Sleep until the next time, done in steps of 500 ms so that one doesn't have to wait a lot
+    // when stopping
+    while (m_run_marker && next_time - std::chrono::system_clock::now() > std::chrono::duration<double>(.5)) {
+      TLOG() << "Sleeping for 500 ms";
+      std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    }
+    if (!m_run_marker) break;
     std::this_thread::sleep_until(next_time);
 
     // Save pointer to delete the thread later
