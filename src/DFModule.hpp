@@ -92,22 +92,18 @@ DFModule::run(std::unique_ptr<daqdataformats::TriggerRecord> record,
 {
   set_is_running(true);
 
-  if (m_enable_hist) {
-    record = m_hist->run(std::move(record), run_mark, map, kafka_address);
-    TLOG_DEBUG(5) << "Running histogram";
+  std::vector<std::shared_ptr<AnalysisModule>> list {m_hist, m_mean_rms, m_fourier, m_fourier_sum};
+  std::vector<bool> will_run {m_enable_hist, m_enable_mean_rms, m_enable_fourier, m_enable_fourier_sum};
+
+  for(size_t i=0; i < list.size(); ++i) {
+    if (!will_run[i]) continue;
+    if (!run_mark) {
+      set_is_running(false);
+      return std::move(record);
+    }
+    record = list[i]->run(std::move(record), run_mark, map, kafka_address);
   }
-  if (m_enable_mean_rms) {
-    record = m_mean_rms->run(std::move(record), run_mark, map, kafka_address);
-    TLOG_DEBUG(5) << "Running mean and RMS";
-  }
-  if (m_enable_fourier) {
-    record = m_fourier->run(std::move(record), run_mark, map, kafka_address);
-    TLOG_DEBUG(5) << "Running fourier transform";
-  }
-  if (m_enable_fourier_sum) {
-    record = m_fourier_sum->run(std::move(record), run_mark, map, kafka_address);
-    TLOG_DEBUG(5) << "Running fourier transform (summed version)";
-  }
+
   set_is_running(false);
   return std::move(record);
 }

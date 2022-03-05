@@ -214,7 +214,7 @@ DQMProcessor::RequestMaker()
   // Add some offset time to let the other parts of the DAQ start
   // Typically the first and maybe second requests of data fails
   if (m_standard_dqm_hist.how_often > 0)
-    map[std::chrono::system_clock::now() + std::chrono::seconds(10)] = {
+    map[std::chrono::system_clock::now() + std::chrono::seconds(m_offset_from_channel_map)] = {
       hist,
       m_standard_dqm_hist.how_often,
       m_standard_dqm_hist.unavailable_time,
@@ -223,7 +223,7 @@ DQMProcessor::RequestMaker()
       "Histogram every " + std::to_string(m_standard_dqm_hist.how_often) + " s"
     };
   if (m_standard_dqm_mean_rms.how_often > 0)
-    map[std::chrono::system_clock::now() + std::chrono::seconds(10)] = {
+    map[std::chrono::system_clock::now() + std::chrono::seconds(m_offset_from_channel_map)] = {
       mean_rms,
       m_standard_dqm_mean_rms.how_often,
       m_standard_dqm_mean_rms.unavailable_time,
@@ -232,7 +232,7 @@ DQMProcessor::RequestMaker()
       "Mean and RMS every " + std::to_string(m_standard_dqm_mean_rms.how_often) + " s"
     };
   if (m_standard_dqm_fourier.how_often > 0)
-    map[std::chrono::system_clock::now() + std::chrono::seconds(10)] = {
+    map[std::chrono::system_clock::now() + std::chrono::seconds(m_offset_from_channel_map)] = {
       fourier,
       m_standard_dqm_fourier.how_often,
       m_standard_dqm_fourier.unavailable_time,
@@ -242,7 +242,7 @@ DQMProcessor::RequestMaker()
     };
 
   if (m_standard_dqm_fourier_sum.how_often > 0)
-    map[std::chrono::system_clock::now() + std::chrono::seconds(10)] = {
+    map[std::chrono::system_clock::now() + std::chrono::seconds(m_offset_from_channel_map)] = {
       fouriersum,
       m_standard_dqm_fourier_sum.how_often,
       m_standard_dqm_fourier_sum.unavailable_time,
@@ -252,7 +252,7 @@ DQMProcessor::RequestMaker()
     };
 
   if (m_mode == "df" && m_df_seconds > 0) {
-    map[std::chrono::system_clock::now() + std::chrono::milliseconds(10000 + static_cast<int>(m_df_offset * 1000))] = {
+    map[std::chrono::system_clock::now() + std::chrono::milliseconds(1000 * m_offset_from_channel_map + static_cast<int>(m_df_offset * 1000))] = {
       dfmodule,
       m_df_seconds,
       5,
@@ -263,7 +263,7 @@ DQMProcessor::RequestMaker()
   }
 
 
-  map[std::chrono::system_clock::now() + std::chrono::seconds(2)] = { chfiller, 3,
+  map[std::chrono::system_clock::now() + std::chrono::seconds(m_channel_map_delay)] = { chfiller, 3,
                                                                       3,
                                                                       1, // Request only one frame for each link
                                                                       nullptr,  "Channel map filler" };
@@ -279,7 +279,12 @@ DQMProcessor::RequestMaker()
     auto analysis_instance = task->second;
     auto algo = analysis_instance.mod;
 
-    // Sleep until the next time
+    // Sleep until the next time, done in steps so that one doesn't have to wait a lot
+    // when stopping
+    while (m_run_marker && next_time - std::chrono::system_clock::now() > std::chrono::duration<double>(m_sleep_time / 1000.)) {
+      std::this_thread::sleep_for(std::chrono::milliseconds(m_sleep_time));
+    }
+    if (!m_run_marker) break;
     std::this_thread::sleep_until(next_time);
 
     // Save pointer to delete the thread later
@@ -328,7 +333,7 @@ DQMProcessor::RequestMaker()
         ers::warning(InvalidTimestamp(ERS_HERE, timestamp));
         // Some sleep is needed because at the beginning there are no valid timestamps
         // so it will be checking continuously if there is a valid one
-        std::this_thread::sleep_for(std::chrono::milliseconds(50));
+        std::this_thread::sleep_for(std::chrono::milliseconds(m_timesync_check));
         continue;
       }
     }
@@ -362,8 +367,11 @@ DQMProcessor::RequestMaker()
       TLOG_DEBUG(10) << "Data popped from the queue";
     }
     else if (m_mode == "df") {
-      while (dftrs.get_num_elements() == 0) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(300));
+      while (m_run_marker && dftrs.get_num_elements() == 0) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(m_sleep_time_df));
+      }
+      if (!m_run_marker) {
+        break;
       }
       dftrs.pop(element, std::chrono::milliseconds(100));
     }
@@ -371,10 +379,6 @@ DQMProcessor::RequestMaker()
     ++m_data_count;
     ++m_total_data_count;
 
-    // using runfunc_type = void (AnalysisModule::*)(std::unique_ptr<daqdataformats::TriggerRecord> record,
-    //                                               std::atomic<bool>& run_mark,
-    //                                               std::shared_ptr<ChannelMap>& map,
-    //                                               std::string kafka_address);
     auto memfunc = &AnalysisModule::run;
     auto current_thread =
       std::make_shared<std::thread>(memfunc, std::ref(*algo), std::move(element), std::ref(m_run_marker), std::ref(m_map), m_kafka_address);
@@ -400,12 +404,6 @@ DQMProcessor::RequestMaker()
         throw ProcessorError(ERS_HERE, "Thread not joinable");
       }
     }
-
-    // Delete the entry we just used and find the next one
-
-    // Note that since previous_thread refers to the thread
-    // corresponding to task, it's safe to now remove the
-    // AnalysisInstance whose thread it refers to
 
     map.erase(task);
   }
