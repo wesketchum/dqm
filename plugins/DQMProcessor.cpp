@@ -362,8 +362,11 @@ DQMProcessor::RequestMaker()
       TLOG_DEBUG(10) << "Data popped from the queue";
     }
     else if (m_mode == "df") {
-      while (dftrs.get_num_elements() == 0) {
+      while (m_run_marker && dftrs.get_num_elements() == 0) {
         std::this_thread::sleep_for(std::chrono::milliseconds(300));
+      }
+      if (!m_run_marker) {
+        break;
       }
       dftrs.pop(element, std::chrono::milliseconds(100));
     }
