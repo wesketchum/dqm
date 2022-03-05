@@ -118,6 +118,13 @@ private:
 
   std::string m_mode;
   int m_readout_window_offset;
+
+  // Constants used in DQMProcessor.cpp
+  static constexpr int m_channel_map_delay {2};                // How much time in s to wait until running the channel map
+  static constexpr int m_offset_from_channel_map {10};         // How much time in s to wait after the channel map has been filled to run the other algorithms
+  static constexpr int m_sleep_time {300};                     // How much time in ms to sleep between checking if the run has been stopped
+  static constexpr int m_sleep_time_df {300};                  // How much time in ms to sleep between checking if a TR from DF has arrived
+  static constexpr int m_timesync_check {100};                 // How much time in ms to wait for correct timesync messages
 };
 
 } // namespace dunedaq::dqm
