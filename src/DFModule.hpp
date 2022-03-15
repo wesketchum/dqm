@@ -79,8 +79,8 @@ DFModule::DFModule(bool enable_hist, bool enable_mean_rms, bool enable_fourier, 
                                                        4,
                                                        m_ids,
                                                        1. / m_clock_frequency * TICKS_BETWEEN_TIMESTAMP,
-                                                       80,
-                                                       m_num_frames);
+                                                       m_num_frames,
+                                                       true);
   }
 }
 
