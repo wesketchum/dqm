@@ -136,7 +136,6 @@ DQMProcessor::do_start(const nlohmann::json& args)
 
   }
 
-
   m_run_marker.store(true);
 
   m_run_number.store(daqdataformats::run_number_t(args.at("run").get<daqdataformats::run_number_t>()));
@@ -160,13 +159,13 @@ DQMProcessor::do_stop(const data_t&)
     iomanager::IOManager iom;
     dunedaq::iomanager::ConnectionRef cref;
     cref.uid = m_timesync_connection;
-    iom.remove_callback(cref);
+    iom.remove_callback<dfmessages::TimeSync>(cref);
   }
   else if (m_mode == "df") {
     iomanager::IOManager iom;
     dunedaq::iomanager::ConnectionRef cref;
     cref.uid = m_df2dqm_connection;
-    iom.remove_callback(cref);
+    iom.remove_callback<std::unique_ptr<daqdataformats::TriggerRecord>>(cref);
   }
   TLOG() << get_name() << ": received " << m_received_timesync_count.load() << " TimeSync messages.";
 }
