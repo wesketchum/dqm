@@ -162,6 +162,12 @@ DQMProcessor::do_stop(const data_t&)
     cref.uid = m_timesync_connection;
     iom.remove_callback(cref);
   }
+  else if (m_mode == "df") {
+    iomanager::IOManager iom;
+    dunedaq::iomanager::ConnectionRef cref;
+    cref.uid = m_df2dqm_connection;
+    iom.remove_callback(cref);
+  }
   TLOG() << get_name() << ": received " << m_received_timesync_count.load() << " TimeSync messages.";
 }
 
