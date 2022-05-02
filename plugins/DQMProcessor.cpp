@@ -21,7 +21,6 @@
 #include "HistContainer.hpp"
 
 // DUNE-DAQ includes
-#include "appfwk/DAQSource.hpp"
 #include "daqdataformats/ComponentRequest.hpp"
 #include "daqdataformats/Fragment.hpp"
 #include "daqdataformats/GeoID.hpp"
