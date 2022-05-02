@@ -100,11 +100,15 @@ DQMProcessor::do_configure(const nlohmann::json& args)
   m_dqm2df_connection = conf.dqm2df_connection_name;
 
   if (m_mode == "df") {
-      networkmanager::NetworkManager::get().start_listening(m_df2dqm_connection);
+      // networkmanager::NetworkManager::get().start_listening(m_df2dqm_connection);
   }
   else if (m_mode == "readout") {
-    m_source.reset(new trigger_record_source_qt("trigger_record_q_dqm"));
-    m_sink.reset(new trigger_decision_sink_qt("trigger_decision_q_dqm"));
+    iomanager::IOManager iom;
+    dunedaq::iomanager::ConnectionRef cref;
+    cref.uid = "trigger_record_q_dqm";
+    m_receiver = iom.get_receiver<std::unique_ptr<daqdataformats::TriggerRecord>>(cref);
+    cref.uid = "trigger_decision_q_dqm";
+    m_sender = iom.get_sender<dfmessages::TriggerDecision>(cref);
   }
 }
 
@@ -116,15 +120,22 @@ DQMProcessor::do_start(const nlohmann::json& args)
     m_time_est.reset(new timinglibs::TimestampEstimator(m_clock_frequency));
 
     m_received_timesync_count.store(0);
-    networkmanager::NetworkManager::get().start_listening(m_timesync_connection);
-    networkmanager::NetworkManager::get().register_callback(
-      m_timesync_connection, std::bind(&DQMProcessor::dispatch_timesync, this, std::placeholders::_1));
+
+    iomanager::IOManager iom;
+    dunedaq::iomanager::ConnectionRef cref;
+    cref.uid = m_timesync_connection;
+    iom.add_callback<dfmessages::TimeSync>(cref, std::bind(&DQMProcessor::dispatch_timesync, this, std::placeholders::_1));
+
   }
 
   if (m_mode == "df") {
-  networkmanager::NetworkManager::get().register_callback(m_df2dqm_connection,
-    std::bind(&DQMProcessor::dispatch_trigger_record, this, std::placeholders::_1));
+    iomanager::IOManager iom;
+    dunedaq::iomanager::ConnectionRef cref;
+    cref.uid = m_df2dqm_connection;
+    iom.add_callback<std::unique_ptr<daqdataformats::TriggerRecord>>(cref, std::bind(&DQMProcessor::dispatch_trigger_record, this, std::placeholders::_1));
+
   }
+
 
   m_run_marker.store(true);
 
@@ -145,8 +156,11 @@ DQMProcessor::do_stop(const data_t&)
   m_running_thread->join();
 
   if (m_mode == "readout") {
-    networkmanager::NetworkManager::get().clear_callback(m_timesync_connection);
-    networkmanager::NetworkManager::get().stop_listening(m_timesync_connection);
+
+    iomanager::IOManager iom;
+    dunedaq::iomanager::ConnectionRef cref;
+    cref.uid = m_timesync_connection;
+    iom.remove_callback(cref);
   }
   TLOG() << get_name() << ": received " << m_received_timesync_count.load() << " TimeSync messages.";
 }
@@ -343,8 +357,8 @@ DQMProcessor::RequestMaker()
     if (m_mode == "readout") {
       request = CreateRequest(m_links, analysis_instance.number_of_frames);
       try {
-        m_sink->push(request, m_sink_timeout);
-      } catch (const ers::Issue& excpt) {
+        m_sender->send(request, m_sink_timeout);
+      } catch (iomanager::TimeoutExpired&) {
         TLOG() << "DQM: Unable to push to the request queue";
         continue;
       }
@@ -359,7 +373,7 @@ DQMProcessor::RequestMaker()
 
     if (m_mode == "readout") {
       try {
-        m_source->pop(element, m_source_timeout);
+        element = m_receiver->receive(m_source_timeout);
       } catch (const ers::Issue& excpt) {
         TLOG() << "DQM: Unable to pop from the data queue";
         continue;
@@ -459,10 +473,9 @@ DQMProcessor::CreateRequest(std::vector<dfmessages::GeoID>& m_links, int number_
 
 
 void
-DQMProcessor::dispatch_trigger_record(ipm::Receiver::Response message)
+DQMProcessor::dispatch_trigger_record(std::unique_ptr<daqdataformats::TriggerRecord>& tr)
 {
-  dftrs.push(std::move(serialization::deserialize<std::unique_ptr<daqdataformats::TriggerRecord>>(message.data)),
-             std::chrono::milliseconds(100));
+  dftrs.push(std::move(tr), std::chrono::milliseconds(100));
 }
 
 
@@ -475,16 +488,17 @@ DQMProcessor::dfrequest()
   trmon.trigger_type = 1;
   trmon.data_destination = m_df2dqm_connection;
 
-  auto trmon_message = serialization::serialize(trmon, serialization::kMsgPack);
-  networkmanager::NetworkManager::get().send_to(m_dqm2df_connection, static_cast<const void*>(trmon_message.data()), trmon_message.size(), m_sink_timeout);
+  // auto trmon_message = serialization::serialize(trmon, serialization::kMsgPack);
+  // networkmanager::NetworkManager::get().send_to(m_dqm2df_connection, ;
+  iomanager::IOManager iom;
+  iom.get_sender<dfmessages::TRMonRequest>(m_dqm2df_connection)->send(trmon, m_sink_timeout);
 }
 
 
 void
-DQMProcessor::dispatch_timesync(ipm::Receiver::Response message)
+DQMProcessor::dispatch_timesync(dfmessages::TimeSync timesyncmsg)
 {
   ++m_received_timesync_count;
-  auto timesyncmsg = serialization::deserialize<dfmessages::TimeSync>(message.data);
   TLOG_DEBUG(13) << "Received TimeSync message with DAQ time= " << timesyncmsg.daq_time
                  << ", run=" << timesyncmsg.run_number << " (local run number is " << m_run_number << ")";
   if (m_time_est.get() != nullptr) {
