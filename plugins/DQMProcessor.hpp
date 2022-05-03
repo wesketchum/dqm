@@ -58,7 +58,7 @@ public:
   void do_configure(const data_t&);
 
   void dispatch_timesync(dfmessages::TimeSync& timesyncmsg);
-  void dispatch_trigger_record(std::unique_ptr<daqdataformats::TriggerRecord> tr);
+  void dispatch_trigger_record(std::unique_ptr<daqdataformats::TriggerRecord>& tr);
 
   void RequestMaker();
   dfmessages::TriggerDecision CreateRequest(std::vector<dfmessages::GeoID>& m_links, int number_of_frames);
