@@ -477,7 +477,7 @@ DQMProcessor::CreateRequest(std::vector<dfmessages::GeoID>& m_links, int number_
 
 
 void
-DQMProcessor::dispatch_trigger_record(std::unique_ptr<daqdataformats::TriggerRecord>& tr)
+DQMProcessor::dispatch_trigger_record(std::unique_ptr<daqdataformats::TriggerRecord> tr)
 {
   dftrs.push(std::move(tr), std::chrono::milliseconds(100));
 }
@@ -500,7 +500,7 @@ DQMProcessor::dfrequest()
 
 
 void
-DQMProcessor::dispatch_timesync(dfmessages::TimeSync timesyncmsg)
+DQMProcessor::dispatch_timesync(dfmessages::TimeSync& timesyncmsg)
 {
   ++m_received_timesync_count;
   TLOG_DEBUG(13) << "Received TimeSync message with DAQ time= " << timesyncmsg.daq_time
