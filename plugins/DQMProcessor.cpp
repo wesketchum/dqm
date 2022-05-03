@@ -131,7 +131,7 @@ DQMProcessor::do_start(const nlohmann::json& args)
     iomanager::IOManager iom;
     dunedaq::iomanager::ConnectionRef cref;
     cref.uid = m_df2dqm_connection;
-    iom.add_callback<std::unique_ptr<daqdataformats::TriggerRecord>>(cref, std::bind(&DQMProcessor::dispatch_trigger_record&, this, std::placeholders::_1));
+    iom.add_callback<std::unique_ptr<daqdataformats::TriggerRecord>>(cref, std::bind(&DQMProcessor::dispatch_trigger_record, this, std::placeholders::_1));
 
   }
 
@@ -477,7 +477,7 @@ DQMProcessor::CreateRequest(std::vector<dfmessages::GeoID>& m_links, int number_
 
 
 void
-DQMProcessor::dispatch_trigger_record(std::unique_ptr<daqdataformats::TriggerRecord> tr)
+DQMProcessor::dispatch_trigger_record(std::unique_ptr<daqdataformats::TriggerRecord>& tr)
 {
   dftrs.push(std::move(tr), std::chrono::milliseconds(100));
 }
