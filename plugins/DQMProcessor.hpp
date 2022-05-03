@@ -15,6 +15,7 @@
 #include "ChannelMap.hpp"
 
 #include "appfwk/DAQModule.hpp"
+#include "iomanager/IOManager.hpp"
 #include "iomanager/Sender.hpp"
 #include "iomanager/Receiver.hpp"
 #include "daqdataformats/TriggerRecord.hpp"
