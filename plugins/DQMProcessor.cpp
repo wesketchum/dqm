@@ -356,7 +356,7 @@ DQMProcessor::RequestMaker()
     if (m_mode == "readout") {
       request = CreateRequest(m_links, analysis_instance.number_of_frames);
       try {
-        m_sender->send(request, m_sink_timeout);
+        m_sender->send(std::move(request), m_sink_timeout);
       } catch (iomanager::TimeoutExpired&) {
         TLOG() << "DQM: Unable to push to the request queue";
         continue;
@@ -489,7 +489,7 @@ DQMProcessor::dfrequest()
 
   // auto trmon_message = serialization::serialize(trmon, serialization::kMsgPack);
   // networkmanager::NetworkManager::get().send_to(m_dqm2df_connection, ;
-  get_iom_sender<dfmessages::TRMonRequest>(m_dqm2df_connection)->send(trmon, m_sink_timeout);
+  get_iom_sender<dfmessages::TRMonRequest>(m_dqm2df_connection)->send(std::move(trmon), m_sink_timeout);
 }
 
 
