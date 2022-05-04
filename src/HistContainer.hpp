@@ -120,7 +120,7 @@ HistContainer::run(std::unique_ptr<daqdataformats::TriggerRecord> record,
   // Remove empty fragments
   for (auto& vec : wibframes)
     if (!vec.second.size())
-      wibframes.erase(vec.second.first);
+      wibframes.erase(vec.first);
 
   // Get all the keys
   std::vector<int> keys;

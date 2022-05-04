@@ -104,12 +104,12 @@ FourierContainer::run(std::unique_ptr<daqdataformats::TriggerRecord> record,
   // Remove empty fragments
   for (auto& vec : wibframes)
     if (!vec.second.size())
-      wibframes.erase(vec.second.first);
+      wibframes.erase(vec.first);
 
 
   // Check that all the wibframes vectors have the same size, if not, something
   // bad has happened, for now don't do anything
-  // auto size = wibframes.begin()->second.size();
+  auto size = wibframes.begin()->second.size();
   // for (auto& vec : wibframes) {
   //   if (vec.second.size() != size) {
   //     ers::error(InvalidData(ERS_HERE, "the size of the vector of frames is different for each link"));
@@ -150,7 +150,7 @@ FourierContainer::run(std::unique_ptr<daqdataformats::TriggerRecord> record,
       for (auto& [offch, pair] : map) {
         int link = pair.first;
         int ch = pair.second;
-        for (size_t iframe = 0; iframe < size; ++iframe) {
+        for (size_t iframe = 0; iframe < std::min(size, wibframes[link].size()); ++iframe) {
             fouriervec[plane].m_data[iframe] += wibframes[link][iframe]->get_channel(ch);
           }
         }
