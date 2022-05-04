@@ -101,17 +101,22 @@ FourierContainer::run(std::unique_ptr<daqdataformats::TriggerRecord> record,
   auto wibframes = dec.decode(*record);
   // std::uint64_t timestamp = 0; // NOLINT(build/unsigned)
 
+  // Remove empty fragments
+  for (auto& vec : wibframes)
+    if (!vec.second.size())
+      wibframes.erase(vec.second.first);
+
 
   // Check that all the wibframes vectors have the same size, if not, something
   // bad has happened, for now don't do anything
-  auto size = wibframes.begin()->second.size();
-  for (auto& vec : wibframes) {
-    if (vec.second.size() != size) {
-      ers::error(InvalidData(ERS_HERE, "the size of the vector of frames is different for each link"));
-      set_is_running(false);
-      return std::move(record);
-    }
-  }
+  // auto size = wibframes.begin()->second.size();
+  // for (auto& vec : wibframes) {
+  //   if (vec.second.size() != size) {
+  //     ers::error(InvalidData(ERS_HERE, "the size of the vector of frames is different for each link"));
+  //     set_is_running(false);
+  //     return std::move(record);
+  //   }
+  // }
 
   // Normal mode, fourier transform for every channel
   if (!m_global_mode) {

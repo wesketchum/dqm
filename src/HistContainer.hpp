@@ -117,6 +117,11 @@ HistContainer::run(std::unique_ptr<daqdataformats::TriggerRecord> record,
     return std::move(record);
   }
 
+  // Remove empty fragments
+  for (auto& vec : wibframes)
+    if (!vec.second.size())
+      wibframes.erase(vec.second.first);
+
   // Get all the keys
   std::vector<int> keys;
   for (auto& [key, value] : wibframes) {
@@ -135,14 +140,15 @@ HistContainer::run(std::unique_ptr<daqdataformats::TriggerRecord> record,
 
   // Check that all the wibframes vectors have the same size, if not, something
   // bad has happened, for now don't do anything
-  auto size = wibframes.begin()->second.size();
-  for (auto& vec : wibframes) {
-    if (vec.second.size() != size) {
-      ers::error(InvalidData(ERS_HERE, "the size of the vector of frames is different for each link"));
-      set_is_running(false);
-      return std::move(record);
-    }
-  }
+  // auto size = wibframes.begin()->second.size();
+  // for (auto& vec : wibframes) {
+  //   if (vec.second.size() != size) {
+  //     ers::error(InvalidData(ERS_HERE, "the size of the vector of frames is different for each link"));
+  //     set_is_running(false);
+  //     return std::move(record);
+  //   }
+  // }
+
 
   // Main loop
   // If only the mean and rms are to be sent all frames are processed
