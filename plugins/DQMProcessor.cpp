@@ -102,12 +102,11 @@ DQMProcessor::do_configure(const nlohmann::json& args)
       // networkmanager::NetworkManager::get().start_listening(m_df2dqm_connection);
   }
   else if (m_mode == "readout") {
-    iomanager::IOManager iom;
     dunedaq::iomanager::ConnectionRef cref;
     cref.uid = "trigger_record_q_dqm";
-    m_receiver = iom.get_receiver<std::unique_ptr<daqdataformats::TriggerRecord>>(cref);
+    m_receiver = get_iom_receiver<std::unique_ptr<daqdataformats::TriggerRecord>>(cref);
     cref.uid = "trigger_decision_q_dqm";
-    m_sender = iom.get_sender<dfmessages::TriggerDecision>(cref);
+    m_sender = get_iom_sender<dfmessages::TriggerDecision>(cref);
   }
 }
 
@@ -120,18 +119,16 @@ DQMProcessor::do_start(const nlohmann::json& args)
 
     m_received_timesync_count.store(0);
 
-    iomanager::IOManager iom;
     dunedaq::iomanager::ConnectionRef cref;
     cref.uid = m_timesync_connection;
-    iom.add_callback<dfmessages::TimeSync>(cref, std::bind(&DQMProcessor::dispatch_timesync, this, std::placeholders::_1));
+    get_iomanager()->add_callback<dfmessages::TimeSync>(cref, std::bind(&DQMProcessor::dispatch_timesync, this, std::placeholders::_1));
 
   }
 
   if (m_mode == "df") {
-    iomanager::IOManager iom;
     dunedaq::iomanager::ConnectionRef cref;
     cref.uid = m_df2dqm_connection;
-    iom.add_callback<std::unique_ptr<daqdataformats::TriggerRecord>>(cref, std::bind(&DQMProcessor::dispatch_trigger_record, this, std::placeholders::_1));
+    get_iomanager()->add_callback<std::unique_ptr<daqdataformats::TriggerRecord>>(cref, std::bind(&DQMProcessor::dispatch_trigger_record, this, std::placeholders::_1));
 
   }
 
@@ -155,16 +152,14 @@ DQMProcessor::do_stop(const data_t&)
 
   if (m_mode == "readout") {
 
-    iomanager::IOManager iom;
     dunedaq::iomanager::ConnectionRef cref;
     cref.uid = m_timesync_connection;
-    iom.remove_callback<dfmessages::TimeSync>(cref);
+    get_iomanager()->remove_callback<dfmessages::TimeSync>(cref);
   }
   else if (m_mode == "df") {
-    iomanager::IOManager iom;
     dunedaq::iomanager::ConnectionRef cref;
     cref.uid = m_df2dqm_connection;
-    iom.remove_callback<std::unique_ptr<daqdataformats::TriggerRecord>>(cref);
+    get_iomanager()->remove_callback<std::unique_ptr<daqdataformats::TriggerRecord>>(cref);
   }
   TLOG() << get_name() << ": received " << m_received_timesync_count.load() << " TimeSync messages.";
 }
@@ -494,8 +489,7 @@ DQMProcessor::dfrequest()
 
   // auto trmon_message = serialization::serialize(trmon, serialization::kMsgPack);
   // networkmanager::NetworkManager::get().send_to(m_dqm2df_connection, ;
-  iomanager::IOManager iom;
-  iom.get_sender<dfmessages::TRMonRequest>(m_dqm2df_connection)->send(trmon, m_sink_timeout);
+  get_iom_sender<dfmessages::TRMonRequest>(m_dqm2df_connection)->send(trmon, m_sink_timeout);
 }
 
 
