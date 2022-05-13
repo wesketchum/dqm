@@ -31,7 +31,7 @@ public:
   int get_channel(int channel);
   int get_plane(int channel);
   virtual bool is_filled();
-  virtual void fill(daqdataformats::TriggerRecord& tr);
+  virtual void fill(daqdataformats::TriggerRecord& tr, std::string& frontend_type);
   virtual std::map<int, std::map<int, std::pair<int, int>>> get_map();
 };
 
@@ -48,7 +48,7 @@ ChannelMap::get_map()
 }
 
 void
-ChannelMap::fill(daqdataformats::TriggerRecord&)
+ChannelMap::fill(daqdataformats::TriggerRecord&, std::string& )
 {
   // throw issue
 }

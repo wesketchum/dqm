@@ -35,7 +35,8 @@ public:
   run(std::unique_ptr<daqdataformats::TriggerRecord> record,
       std::atomic<bool>& run_mark,
       std::shared_ptr<ChannelMap>& map,
-      std::string kafka_address);
+      std::string& frontend_type,
+      const std::string& kafka_address);
 
 private:
 
@@ -86,9 +87,10 @@ DFModule::DFModule(bool enable_hist, bool enable_mean_rms, bool enable_fourier, 
 
 std::unique_ptr<daqdataformats::TriggerRecord>
 DFModule::run(std::unique_ptr<daqdataformats::TriggerRecord> record,
-                   std::atomic<bool>& run_mark,
-                   std::shared_ptr<ChannelMap>& map,
-                   std::string kafka_address)
+              std::atomic<bool>& run_mark,
+              std::shared_ptr<ChannelMap>& map,
+              std::string& frontend_type,
+              const std::string& kafka_address)
 {
   set_is_running(true);
 
@@ -101,7 +103,7 @@ DFModule::run(std::unique_ptr<daqdataformats::TriggerRecord> record,
       set_is_running(false);
       return std::move(record);
     }
-    record = list[i]->run(std::move(record), run_mark, map, kafka_address);
+    record = list[i]->run(std::move(record), run_mark, map, frontend_type, kafka_address);
   }
 
   set_is_running(false);

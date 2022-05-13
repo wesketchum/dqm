@@ -35,7 +35,7 @@ public:
   int get_channel(int channel);
   int get_plane(int channel);
   bool is_filled();
-  void fill(daqdataformats::TriggerRecord& tr);
+  void fill(daqdataformats::TriggerRecord& record, std::string& frontend_type);
   std::map<int, std::map<int, std::pair<int, int>>> get_map();
 };
 
@@ -51,15 +51,14 @@ ChannelMapHD::get_map()
 }
 
 void
-ChannelMapHD::fill(daqdataformats::TriggerRecord& tr)
+ChannelMapHD::fill(daqdataformats::TriggerRecord& record, std::string& frontend_type)
 {
   if (is_filled()) {
     TLOG_DEBUG(5) << "ChannelMapHD already filled";
     return;
   }
 
-  dunedaq::dqm::Decoder dec;
-  auto wibframes = dec.decode(tr);
+  auto wibframes = decode<detdataformats::wib::WIBFrame>(record);
 
   // If we get no frames then return and since
   // the map is not filled it will run again soon

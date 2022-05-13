@@ -25,9 +25,11 @@ public:
   bool get_is_running() const { return m_is_running; }
 
   virtual std::unique_ptr<daqdataformats::TriggerRecord> run(std::unique_ptr<daqdataformats::TriggerRecord> record,
-                   std::atomic<bool>& run_mark,
-                   std::shared_ptr<ChannelMap>& map,
-                   std::string kafka_address) = 0;
+                                                             std::atomic<bool>& run_mark,
+                                                             std::shared_ptr<ChannelMap>& map,
+                                                             std::string& frontend_type,
+                                                             const std::string& kafka_address
+                                                             ) = 0;
 
 protected:
   void set_is_running(bool status) { m_is_running = status; }

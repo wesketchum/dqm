@@ -34,14 +34,16 @@ public:
   run(std::unique_ptr<daqdataformats::TriggerRecord> record,
       std::atomic<bool>& run_mark,
       std::shared_ptr<ChannelMap>& map,
-      std::string kafka_address);
+      std::string& frontend_type,
+      const std::string& kafka_address);
 };
 
 std::unique_ptr<daqdataformats::TriggerRecord>
 ChannelMapFiller::run(std::unique_ptr<daqdataformats::TriggerRecord> record,
                       std::atomic<bool>&,
                       std::shared_ptr<ChannelMap>& map,
-                      std::string)
+                      std::string& frontend_type,
+                      const std::string&)
 {
   set_is_running(true);
 
@@ -56,7 +58,7 @@ ChannelMapFiller::run(std::unique_ptr<daqdataformats::TriggerRecord> record,
     map.reset(new ChannelMapVD);
   }
 
-  map->fill(*record);
+  map->fill(*record, frontend_type);
   set_is_running(false);
   return std::move(record);
 }

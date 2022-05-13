@@ -36,6 +36,8 @@ ERS_DECLARE_ISSUE(dqm, InvalidData, "Data was not valid: " << error, ((std::stri
 
 ERS_DECLARE_ISSUE(dqm, CouldNotCreateFourierPlan, "Fourier plan was not created ", ((std::string)error))
 
+ERS_DECLARE_ISSUE(dqm, FrontEndNotSupported, "Frontend is not supported: ", ((std::string)frontend_type))
+
 } // namespace dunedaq
 
 #endif // DQM_INCLUDE_DQM_DQMISSUES_HPP_
