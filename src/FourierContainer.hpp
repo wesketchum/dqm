@@ -111,7 +111,6 @@ FourierContainer::run_wibframe(std::unique_ptr<daqdataformats::TriggerRecord> re
                                std::shared_ptr<ChannelMap>& map,
                                const std::string& kafka_address)
 {
-  set_is_running(true);
   auto wibframes = decode<detdataformats::wib::WIBFrame>(*record);
   // std::uint64_t timestamp = 0; // NOLINT(build/unsigned)
 
@@ -127,7 +126,6 @@ FourierContainer::run_wibframe(std::unique_ptr<daqdataformats::TriggerRecord> re
   // for (auto& vec : wibframes) {
   //   if (vec.second.size() != size) {
   //     ers::error(InvalidData(ERS_HERE, "the size of the vector of frames is different for each link"));
-  //     set_is_running(false);
   //     return std::move(record);
   //   }
   // }
@@ -172,7 +170,6 @@ FourierContainer::run_wibframe(std::unique_ptr<daqdataformats::TriggerRecord> re
 
     for (size_t ich = 0; ich < m_size - 1; ++ich) {
       if (!run_mark) {
-        set_is_running(false);
         return std::move(record);
       }
       fouriervec[ich].compute_fourier_transform();
@@ -187,7 +184,6 @@ FourierContainer::run_wibframe(std::unique_ptr<daqdataformats::TriggerRecord> re
     transmit_global(kafka_address, map, "testdunedqm", record->get_header_ref().get_run_number(), record->get_header_ref().get_trigger_timestamp());
   }
 
-  set_is_running(false);
   return std::move(record);
 }
 
@@ -197,7 +193,6 @@ FourierContainer::run_wib2frame(std::unique_ptr<daqdataformats::TriggerRecord> r
                                 std::shared_ptr<ChannelMap>& map,
                                 const std::string& kafka_address)
 {
-  set_is_running(true);
   auto wibframes =  decode<detdataformats::wib2::WIB2Frame>(*record);
   // std::uint64_t timestamp = 0; // NOLINT(build/unsigned)
 
@@ -213,7 +208,6 @@ FourierContainer::run_wib2frame(std::unique_ptr<daqdataformats::TriggerRecord> r
   // for (auto& vec : wibframes) {
   //   if (vec.second.size() != size) {
   //     ers::error(InvalidData(ERS_HERE, "the size of the vector of frames is different for each link"));
-  //     set_is_running(false);
   //     return std::move(record);
   //   }
   // }
@@ -258,7 +252,6 @@ FourierContainer::run_wib2frame(std::unique_ptr<daqdataformats::TriggerRecord> r
 
     for (size_t ich = 0; ich < m_size - 1; ++ich) {
       if (!run_mark) {
-        set_is_running(false);
         return std::move(record);
       }
       fouriervec[ich].compute_fourier_transform();
@@ -273,7 +266,6 @@ FourierContainer::run_wib2frame(std::unique_ptr<daqdataformats::TriggerRecord> r
     transmit_global(kafka_address, map, "testdunedqm", record->get_header_ref().get_run_number(), record->get_header_ref().get_trigger_timestamp());
   }
 
-  set_is_running(false);
   return std::move(record);
 }
 
@@ -286,10 +278,16 @@ FourierContainer::run(std::unique_ptr<daqdataformats::TriggerRecord> record,
                       const std::string& kafka_address)
 {
   if (frontend_type == "wib") {
-    return run_wibframe(std::move(record), run_mark, map, kafka_address);
+    set_is_running(true);
+    auto ret = run_wibframe(std::move(record), run_mark, map, kafka_address);
+    set_is_running(false);
+    return ret;
   }
   else if (frontend_type == "wib2") {
-    return run_wib2frame(std::move(record), run_mark, map, kafka_address);
+    set_is_running(true);
+    auto ret = run_wib2frame(std::move(record), run_mark, map, kafka_address);
+    set_is_running(false);
+    return ret;
   }
 }
 

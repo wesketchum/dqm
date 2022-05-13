@@ -115,12 +115,10 @@ HistContainer::run_wibframe(std::unique_ptr<daqdataformats::TriggerRecord> recor
                             std::shared_ptr<ChannelMap>& map,
                             const std::string& kafka_address)
 {
-  set_is_running(true);
   auto wibframes = decode<detdataformats::wib::WIBFrame>(*record);
 
   if (wibframes.size() == 0) {
     // throw issue
-    set_is_running(false);
     TLOG() << "Found no frames";
     return std::move(record);
   }
@@ -200,7 +198,6 @@ HistContainer::run_wibframe(std::unique_ptr<daqdataformats::TriggerRecord> recor
   }
   clean();
 
-  set_is_running(false);
   return std::move(record);
 }
 
@@ -209,12 +206,10 @@ HistContainer::run_wib2frame(std::unique_ptr<daqdataformats::TriggerRecord> reco
                              std::shared_ptr<ChannelMap>& map,
                              const std::string& kafka_address)
 {
-  set_is_running(true);
   auto wibframes = decode<detdataformats::wib2::WIB2Frame>(*record);
 
   if (wibframes.size() == 0) {
     // throw issue
-    set_is_running(false);
     TLOG() << "Found no frames";
     return std::move(record);
   }
@@ -293,8 +288,6 @@ HistContainer::run_wib2frame(std::unique_ptr<daqdataformats::TriggerRecord> reco
              record->get_header_ref().get_trigger_timestamp());
   }
   clean();
-
-  set_is_running(false);
   return std::move(record);
 }
 
@@ -306,10 +299,16 @@ HistContainer::run(std::unique_ptr<daqdataformats::TriggerRecord> record,
                    const std::string& kafka_address)
 {
   if (frontend_type == "wib") {
-    return run_wibframe(std::move(record), map, kafka_address);
+    set_is_running(true);
+    auto ret = run_wibframe(std::move(record), map, kafka_address);
+    set_is_running(false);
+    return ret;
   }
   else if (frontend_type == "wib2") {
-    return run_wib2frame(std::move(record), map, kafka_address);
+    set_is_running(true);
+    auto ret = run_wib2frame(std::move(record), map, kafka_address);
+    set_is_running(false);
+    return ret;
   }
 }
 
@@ -356,6 +355,7 @@ HistContainer::transmit(const std::string& kafka_address,
     output << "\n";
     output << m_to_send[key];
     TLOG_DEBUG(5) << "Size of the message in bytes: " << output.str().size();
+    TLOG() << output.str();
     KafkaExport(kafka_address, output.str(), topicname);
   }
   m_to_send.clear();
