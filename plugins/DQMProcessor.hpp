@@ -117,6 +117,7 @@ private:
   appfwk::FollySPSCQueue<std::unique_ptr<daqdataformats::TriggerRecord>> dftrs{"FollyQueue", 100};
 
   std::string m_mode;
+  std::string m_frontend_type;
   int m_readout_window_offset;
 
   // Constants used in DQMProcessor.cpp

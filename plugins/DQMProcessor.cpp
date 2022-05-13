@@ -78,6 +78,7 @@ DQMProcessor::do_configure(const nlohmann::json& args)
   m_kafka_address = conf.kafka_address;
 
   m_mode = conf.mode;
+  m_frontend_type = conf.frontend_type;
 
   m_standard_dqm_hist = conf.sdqm_hist;
   m_standard_dqm_mean_rms = conf.sdqm_mean_rms;
@@ -381,7 +382,7 @@ DQMProcessor::RequestMaker()
 
     auto memfunc = &AnalysisModule::run;
     auto current_thread =
-      std::make_shared<std::thread>(memfunc, std::ref(*algo), std::move(element), std::ref(m_run_marker), std::ref(m_map), m_kafka_address);
+      std::make_shared<std::thread>(memfunc, std::ref(*algo), std::move(element), std::ref(m_run_marker), std::ref(m_map), std::ref(m_frontend_type), m_kafka_address);
     element.reset(nullptr);
 
     // Add a new entry for the current instance

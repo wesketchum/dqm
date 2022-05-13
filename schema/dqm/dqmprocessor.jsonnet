@@ -76,7 +76,9 @@ local dqmprocessor = {
         s.field("df_algs", self.big_count,
                 doc="Bitfield where the bits are whether an algorith is turned on or off for TRs coming from DF"),
         s.field("df_num_frames", self.count,
-                doc="Bitfield where the bits are whether an algorith is turned on or off for TRs coming from DF")
+                doc="Bitfield where the bits are whether an algorith is turned on or off for TRs coming from DF"),
+        s.field("frontend_type", self.string,
+                doc="Frontend to be used for DQM, takes the same values as in readout")
 
 
     ], doc="Generic DQM configuration")
