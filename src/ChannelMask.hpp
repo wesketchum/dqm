@@ -134,7 +134,6 @@ ChannelMask::run(std::unique_ptr<daqdataformats::TriggerRecord> record,
                    const std::string& kafka_address)
 {
   if (frontend_type == "wib2") {
-    TLOG() << "Frontend is wib2";
     set_is_running(true);
     auto ret = run_wib2frame(std::move(record), map, kafka_address);
     set_is_running(false);
