@@ -81,6 +81,7 @@ private:
   dqmprocessor::StandardDQM m_standard_dqm_mean_rms;
   dqmprocessor::StandardDQM m_standard_dqm_fourier;
   dqmprocessor::StandardDQM m_standard_dqm_fourier_sum;
+  dqmprocessor::StandardDQM m_standard_channel_mask;
 
   // DF configuration parameters
   double m_df_seconds {0};

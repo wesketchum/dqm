@@ -19,6 +19,7 @@
 #include "DQMProcessor.hpp"
 #include "FourierContainer.hpp"
 #include "HistContainer.hpp"
+#include "ChannelMask.hpp"
 
 // DUNE-DAQ includes
 #include "appfwk/DAQSource.hpp"
@@ -84,6 +85,7 @@ DQMProcessor::do_configure(const nlohmann::json& args)
   m_standard_dqm_mean_rms = conf.sdqm_mean_rms;
   m_standard_dqm_fourier = conf.sdqm_fourier;
   m_standard_dqm_fourier_sum = conf.sdqm_fourier_sum;
+  m_standard_channel_mask = conf.sdqm_channel_mask;
 
   m_df_seconds = conf.df_seconds;
   m_df_offset = conf.df_offset;
@@ -200,6 +202,8 @@ DQMProcessor::RequestMaker()
                                                       1. / m_clock_frequency * TICKS_BETWEEN_TIMESTAMP,
                                                       m_standard_dqm_fourier_sum.num_frames,
                                                       true);
+  auto channel_mask = std::make_shared<ChannelMask>("channel_mask_display",
+                                                    m_link_idx);
 
   // Whether an algorithm is enabled or not depends on the value of the bitfield m_df_algs
   TLOG() << "m_df_algs = " << m_df_algs;
@@ -250,6 +254,16 @@ DQMProcessor::RequestMaker()
       m_standard_dqm_fourier_sum.num_frames,
       nullptr,
       "Summed Fourier every " + std::to_string(m_standard_dqm_fourier_sum.how_often) + " s"
+    };
+
+  if (m_standard_channel_mask.how_often > 0)
+    map[std::chrono::system_clock::now() + std::chrono::seconds(m_offset_from_channel_map)] = {
+      channel_mask,
+      m_standard_channel_mask.how_often,
+      m_standard_channel_mask.unavailable_time,
+      m_standard_channel_mask.num_frames,
+      nullptr,
+      "Channel Mask every " + std::to_string(m_standard_channel_mask.how_often) + " s"
     };
 
   if (m_mode == "df" && m_df_seconds > 0) {
