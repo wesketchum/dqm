@@ -110,7 +110,7 @@ ChannelMask::run_wib2frame(std::unique_ptr<daqdataformats::TriggerRecord> record
 
     auto mask = fr->header.link_mask;
     for (int imask = 0; imask < 8; ++imask) {
-      auto masked = mask & (2 << imask);
+      auto masked = mask & (1 << imask);
       if (masked) {
         for (int ich = 0; ich < 32; ++ich) {
           mask_vec[get_local_index(ich + imask * 32, keys[ikey])] = 1;
