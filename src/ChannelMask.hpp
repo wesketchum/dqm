@@ -139,6 +139,7 @@ ChannelMask::run(std::unique_ptr<daqdataformats::TriggerRecord> record,
     set_is_running(false);
     return ret;
   }
+  return record;
 }
 
 void
@@ -167,7 +168,6 @@ ChannelMask::transmit(const std::string& kafka_address,
       output << offch << " ";
     }
     output << "\n";
-    output << "Channel Mask\n";
     for (auto& [offch, pair] : map) {
       int link = pair.first;
       int ch = pair.second;

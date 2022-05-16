@@ -310,6 +310,7 @@ HistContainer::run(std::unique_ptr<daqdataformats::TriggerRecord> record,
     set_is_running(false);
     return ret;
   }
+  return record;
 }
 
 void
@@ -355,7 +356,6 @@ HistContainer::transmit(const std::string& kafka_address,
     output << "\n";
     output << m_to_send[key];
     TLOG_DEBUG(5) << "Size of the message in bytes: " << output.str().size();
-    TLOG() << output.str();
     KafkaExport(kafka_address, output.str(), topicname);
   }
   m_to_send.clear();

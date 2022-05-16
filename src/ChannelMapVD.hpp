@@ -42,7 +42,7 @@ class ChannelMapVD : public ChannelMap
 
 public:
   ChannelMapVD();
-  void fill(daqdataformats::TriggerRecord& record, std::string& frontend_type);
+  void fill(daqdataformats::TriggerRecord& record);
   std::map<int, std::map<int, std::pair<int, int>>> get_map();
 };
 
@@ -60,7 +60,7 @@ ChannelMapVD::get_map()
 }
 
 void
-ChannelMapVD::fill(daqdataformats::TriggerRecord& record, std::string& frontend_type)
+ChannelMapVD::fill(daqdataformats::TriggerRecord& record)
 {
 
   if (is_filled()) {

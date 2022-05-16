@@ -58,7 +58,7 @@ ChannelMapFiller::run(std::unique_ptr<daqdataformats::TriggerRecord> record,
     map.reset(new ChannelMapVD);
   }
 
-  map->fill(*record, frontend_type);
+  map->fill(*record);
   set_is_running(false);
   return std::move(record);
 }

@@ -289,6 +289,7 @@ FourierContainer::run(std::unique_ptr<daqdataformats::TriggerRecord> record,
     set_is_running(false);
     return ret;
   }
+  return record;
 }
 
 void
