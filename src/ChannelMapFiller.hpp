@@ -57,6 +57,8 @@ ChannelMapFiller::run(std::unique_ptr<daqdataformats::TriggerRecord> record,
   } else if (m_cmap_name == "VD") {
     map.reset(new ChannelMapVD);
   }
+  // Silence warnings for now
+  static_cast<void>(frontend_type);
 
   map->fill(*record);
   set_is_running(false);
