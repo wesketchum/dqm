@@ -94,7 +94,7 @@ DQMProcessor::do_configure(const nlohmann::json& args)
   m_region = conf.region;
   m_readout_window_offset = conf.readout_window_offset;
 
-  m_timesync_connection = conf.timesync_connection_name;
+  m_timesync_topic = conf.timesync_topic_name;
   m_df2dqm_connection = conf.df2dqm_connection_name;
   m_dqm2df_connection = conf.dqm2df_connection_name;
 
@@ -120,7 +120,8 @@ DQMProcessor::do_start(const nlohmann::json& args)
     m_received_timesync_count.store(0);
 
     dunedaq::iomanager::ConnectionRef cref;
-    cref.uid = m_timesync_connection;
+    cref.uid = m_timesync_topic;
+    cref.dir = dunedaq::iomanager::Direction::kInput;
     get_iomanager()->add_callback<dfmessages::TimeSync>(cref, std::bind(&DQMProcessor::dispatch_timesync, this, std::placeholders::_1));
 
   }
@@ -153,7 +154,8 @@ DQMProcessor::do_stop(const data_t&)
   if (m_mode == "readout") {
 
     dunedaq::iomanager::ConnectionRef cref;
-    cref.uid = m_timesync_connection;
+    cref.uid = m_timesync_topic;
+    cref.dir = dunedaq::iomanager::Direction::kInput;
     get_iomanager()->remove_callback<dfmessages::TimeSync>(cref);
   }
   else if (m_mode == "df") {

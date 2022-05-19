@@ -87,7 +87,7 @@ private:
   int m_df_algs {0};
   int m_df_num_frames {0};
 
-  std::string m_timesync_connection;
+  std::string m_timesync_topic;
   std::string m_df2dqm_connection;
   std::string m_dqm2df_connection;
 
