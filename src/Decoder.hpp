@@ -40,7 +40,11 @@ decodewib(daqdataformats::TriggerRecord& record)
   std::map<int, std::vector<detdataformats::wib::WIBFrame*>> wibframes;
 
   for (auto& fragment : fragments) {
-    if (fragment->get_fragment_type() == daqdataformats::FragmentType::kTriggerPrimitives) {
+    // 20-May-2022, KAB: I wonder if the following check should be on the desired fragment type
+    // instead of a veto on undesired fragment types (to avoid having to update this as new types are added)
+    if (fragment->get_fragment_type() == daqdataformats::FragmentType::kTriggerPrimitives ||
+        fragment->get_fragment_type() == daqdataformats::FragmentType::kTriggerActivities ||
+        fragment->get_fragment_type() == daqdataformats::FragmentType::kTriggerCandidates) {
       continue;
     }
     auto id = fragment->get_element_id();
