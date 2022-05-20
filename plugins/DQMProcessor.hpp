@@ -76,10 +76,10 @@ private:
   std::chrono::milliseconds m_source_timeout{ 1000 };
 
   // Configuration parameters
-  dqmprocessor::StandardDQM m_standard_dqm_hist;
-  dqmprocessor::StandardDQM m_standard_dqm_mean_rms;
-  dqmprocessor::StandardDQM m_standard_dqm_fourier;
-  dqmprocessor::StandardDQM m_standard_dqm_fourier_sum;
+  dqmprocessor::StandardDQM m_hist_conf;
+  dqmprocessor::StandardDQM m_mean_rms_conf;
+  dqmprocessor::StandardDQM m_fourier_conf;
+  dqmprocessor::StandardDQM m_fourier_sum_conf;
 
   // DF configuration parameters
   double m_df_seconds {0};

@@ -78,10 +78,10 @@ DQMProcessor::do_configure(const nlohmann::json& args)
 
   m_mode = conf.mode;
 
-  m_standard_dqm_hist = conf.sdqm_hist;
-  m_standard_dqm_mean_rms = conf.sdqm_mean_rms;
-  m_standard_dqm_fourier = conf.sdqm_fourier;
-  m_standard_dqm_fourier_sum = conf.sdqm_fourier_sum;
+  m_hist_conf = conf.hist;
+  m_mean_rms_conf = conf.mean_rms;
+  m_fourier_conf = conf.fourier;
+  m_fourier_sum_conf = conf.fourier_sum;
 
   m_df_seconds = conf.df_seconds;
   m_df_offset = conf.df_offset;
@@ -175,7 +175,6 @@ DQMProcessor::RequestMaker()
   {
     std::shared_ptr<AnalysisModule> mod;
     double between_time;
-    double default_unavailable_time;
     int number_of_frames;
     std::shared_ptr<std::thread> running_thread;
     std::string name;
@@ -207,12 +206,12 @@ DQMProcessor::RequestMaker()
                                                       CHANNELS_PER_LINK * m_link_idx.size(),
                                                       m_link_idx,
                                                       1. / m_clock_frequency * TICKS_BETWEEN_TIMESTAMP,
-                                                      m_standard_dqm_fourier.num_frames);
+                                                      m_fourier_conf.num_frames);
   auto fouriersum = std::make_shared<FourierContainer>("fft_sums_display",
                                                       4,
                                                       m_link_idx,
                                                       1. / m_clock_frequency * TICKS_BETWEEN_TIMESTAMP,
-                                                      m_standard_dqm_fourier_sum.num_frames,
+                                                      m_fourier_sum_conf.num_frames,
                                                       true);
 
   // Whether an algorithm is enabled or not depends on the value of the bitfield m_df_algs
@@ -228,49 +227,44 @@ DQMProcessor::RequestMaker()
   // Initial tasks
   // Add some offset time to let the other parts of the DAQ start
   // Typically the first and maybe second requests of data fails
-  if (m_standard_dqm_hist.how_often > 0)
+  if (m_hist_conf.how_often > 0)
     map[std::chrono::system_clock::now() + std::chrono::seconds(m_offset_from_channel_map)] = {
       hist,
-      m_standard_dqm_hist.how_often,
-      m_standard_dqm_hist.unavailable_time,
-      m_standard_dqm_hist.num_frames,
+      m_hist_conf.how_often,
+      m_hist_conf.num_frames,
       nullptr,
-      "Histogram every " + std::to_string(m_standard_dqm_hist.how_often) + " s"
+      "Histogram every " + std::to_string(m_hist_conf.how_often) + " s"
     };
-  if (m_standard_dqm_mean_rms.how_often > 0)
+  if (m_mean_rms_conf.how_often > 0)
     map[std::chrono::system_clock::now() + std::chrono::seconds(m_offset_from_channel_map)] = {
       mean_rms,
-      m_standard_dqm_mean_rms.how_often,
-      m_standard_dqm_mean_rms.unavailable_time,
-      m_standard_dqm_mean_rms.num_frames,
+      m_mean_rms_conf.how_often,
+      m_mean_rms_conf.num_frames,
       nullptr,
-      "Mean and RMS every " + std::to_string(m_standard_dqm_mean_rms.how_often) + " s"
+      "Mean and RMS every " + std::to_string(m_mean_rms_conf.how_often) + " s"
     };
-  if (m_standard_dqm_fourier.how_often > 0)
+  if (m_fourier_conf.how_often > 0)
     map[std::chrono::system_clock::now() + std::chrono::seconds(m_offset_from_channel_map)] = {
       fourier,
-      m_standard_dqm_fourier.how_often,
-      m_standard_dqm_fourier.unavailable_time,
-      m_standard_dqm_fourier.num_frames,
+      m_fourier_conf.how_often,
+      m_fourier_conf.num_frames,
       nullptr,
-      "Fourier every " + std::to_string(m_standard_dqm_fourier.how_often) + " s"
+      "Fourier every " + std::to_string(m_fourier_conf.how_often) + " s"
     };
 
-  if (m_standard_dqm_fourier_sum.how_often > 0)
+  if (m_fourier_sum_conf.how_often > 0)
     map[std::chrono::system_clock::now() + std::chrono::seconds(m_offset_from_channel_map)] = {
       fouriersum,
-      m_standard_dqm_fourier_sum.how_often,
-      m_standard_dqm_fourier_sum.unavailable_time,
-      m_standard_dqm_fourier_sum.num_frames,
+      m_fourier_sum_conf.how_often,
+      m_fourier_sum_conf.num_frames,
       nullptr,
-      "Summed Fourier every " + std::to_string(m_standard_dqm_fourier_sum.how_often) + " s"
+      "Summed Fourier every " + std::to_string(m_fourier_sum_conf.how_often) + " s"
     };
 
   if (m_mode == "df" && m_df_seconds > 0) {
     map[std::chrono::system_clock::now() + std::chrono::milliseconds(1000 * m_offset_from_channel_map + static_cast<int>(m_df_offset * 1000))] = {
       dfmodule,
       m_df_seconds,
-      5,
       -1, // Number of frames, unused
       nullptr,
       "Algorithms on TRs from DF every " + std::to_string(m_df_seconds) + " s"
@@ -278,10 +272,10 @@ DQMProcessor::RequestMaker()
   }
 
 
-  map[std::chrono::system_clock::now() + std::chrono::seconds(m_channel_map_delay)] = { chfiller, 3,
-                                                                      3,
-                                                                      1, // Request only one frame for each link
-                                                                      nullptr,  "Channel map filler" };
+  map[std::chrono::system_clock::now() + std::chrono::seconds(m_channel_map_delay)] = { chfiller,
+                                                                                        3,
+                                                                                        1, // Request only one frame for each link
+                                                                                        nullptr,  "Channel map filler" };
 
   // Main loop, running forever
   while (m_run_marker) {
@@ -328,10 +322,10 @@ DQMProcessor::RequestMaker()
     if (algo->get_is_running()) {
       TLOG(5) << "ALGORITHM " << analysis_instance.name << " already running";
       map[std::chrono::system_clock::now() +
-          std::chrono::milliseconds(static_cast<int>(analysis_instance.default_unavailable_time) * 1000)] = {
+          // We wait 10% of the time between runs of the algorithm
+          std::chrono::milliseconds(static_cast<int>(analysis_instance.between_time * 100.0))] = {
         algo,
         analysis_instance.between_time,
-        analysis_instance.default_unavailable_time,
         analysis_instance.number_of_frames,
         previous_thread,
         analysis_instance.name
@@ -405,7 +399,6 @@ DQMProcessor::RequestMaker()
         std::chrono::milliseconds(static_cast<int>(analysis_instance.between_time) * 1000)] = {
       algo,
       analysis_instance.between_time,
-      analysis_instance.default_unavailable_time,
       analysis_instance.number_of_frames,
       current_thread,
       analysis_instance.name
