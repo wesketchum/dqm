@@ -80,6 +80,7 @@ private:
   dqmprocessor::StandardDQM m_mean_rms_conf;
   dqmprocessor::StandardDQM m_fourier_conf;
   dqmprocessor::StandardDQM m_fourier_sum_conf;
+  dqmprocessor::StandardDQM m_channel_mask_conf;
 
   // DF configuration parameters
   double m_df_seconds {0};
@@ -116,6 +117,7 @@ private:
   iomanager::FollySPSCQueue<std::unique_ptr<daqdataformats::TriggerRecord>> dftrs{"FollyQueue", 100};
 
   std::string m_mode;
+  std::string m_frontend_type;
   int m_readout_window_offset;
 
   // Constants used in DQMProcessor.cpp

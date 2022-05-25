@@ -1,12 +1,12 @@
 /**
- * @file ChannelMapHD.hpp Implementation of the channel map for the horizontal drift
+ * @file ChannelMapPD2HD.hpp Implementation of the channel map for the horizontal drift
  *
  * This is part of the DUNE DAQ , copyright 2020.
  * Licensing/copyright details are in the COPYING file that you should have
  * received with this code.
  */
-#ifndef DQM_SRC_CHANNELMAPHD_HPP_
-#define DQM_SRC_CHANNELMAPHD_HPP_
+#ifndef DQM_SRC_CHANNELMAPPD2HD_HPP_
+#define DQM_SRC_CHANNELMAPPD2HD_HPP_
 
 // DQM
 #include "ChannelMap.hpp"
@@ -26,12 +26,12 @@
 
 namespace dunedaq::dqm {
 
-class ChannelMapHD : public ChannelMap
+class ChannelMapPD2HD : public ChannelMap
 {
   std::map<int, std::map<int, std::pair<int, int>>> m_map;
 
 public:
-  ChannelMapHD();
+  ChannelMapPD2HD();
   int get_channel(int channel);
   int get_plane(int channel);
   bool is_filled();
@@ -39,22 +39,22 @@ public:
   std::map<int, std::map<int, std::pair<int, int>>> get_map();
 };
 
-ChannelMapHD::ChannelMapHD()
+ChannelMapPD2HD::ChannelMapPD2HD()
 {
-  m_chmap_service = dunedaq::detchannelmaps::make_map("ProtoDUNESP1ChannelMap");
+  m_chmap_service = dunedaq::detchannelmaps::make_map("PD2HDChannelMap");
 }
 
 std::map<int, std::map<int, std::pair<int, int>>>
-ChannelMapHD::get_map()
+ChannelMapPD2HD::get_map()
 {
   return m_map;
 }
 
 void
-ChannelMapHD::fill(daqdataformats::TriggerRecord& record)
+ChannelMapPD2HD::fill(daqdataformats::TriggerRecord& record)
 {
   if (is_filled()) {
-    TLOG_DEBUG(5) << "ChannelMapHD already filled";
+    TLOG_DEBUG(5) << "ChannelMapPD2HD already filled";
     return;
   }
 
@@ -93,11 +93,11 @@ ChannelMapHD::fill(daqdataformats::TriggerRecord& record)
 }
 
 bool
-ChannelMapHD::is_filled()
+ChannelMapPD2HD::is_filled()
 {
   return m_is_filled;
 }
 
 } // namespace dunedaq::dqm
 
-#endif // DQM_SRC_CHANNELMAPHD_HPP_
+#endif // DQM_SRC_CHANNELMAPPD2HD_HPP_

@@ -11,6 +11,10 @@
 #include "daqdataformats/Fragment.hpp"
 #include "daqdataformats/TriggerRecord.hpp"
 #include "detdataformats/wib/WIBFrame.hpp"
+#include "detdataformats/wib2/WIB2Frame.hpp"
+
+#include "ers/Issue.hpp"
+#include "dqm/DQMIssues.hpp"
 
 #include <climits>
 #include <map>
@@ -20,24 +24,13 @@
 namespace dunedaq {
 namespace dqm {
 
-class Decoder
-{
-public:
-  /**
-   * @brief Decode a Trigger Record
-   * @param record The Trigger Record to be decoded
-   * @return A map whose keys are the GeoID indexes and the values are
-   *         vectors of pointers to the wibframes
-   */
-  std::map<int, std::vector<detdataformats::wib::WIBFrame*>> decode(dunedaq::daqdataformats::TriggerRecord& record);
-};
-
-std::map<int, std::vector<detdataformats::wib::WIBFrame*>>
-decodewib(daqdataformats::TriggerRecord& record)
+template<class T>
+std::map<int, std::vector<T*>>
+decode_frame(daqdataformats::TriggerRecord& record)
 {
   std::vector<std::unique_ptr<daqdataformats::Fragment>>& fragments = record.get_fragments_ref();
 
-  std::map<int, std::vector<detdataformats::wib::WIBFrame*>> wibframes;
+  std::map<int, std::vector<T*>> frames;
 
   for (auto& fragment : fragments) {
     // 20-May-2022, KAB: I wonder if the following check should be on the desired fragment type
@@ -50,24 +43,36 @@ decodewib(daqdataformats::TriggerRecord& record)
     auto id = fragment->get_element_id();
     auto element_id = id.element_id;
     int num_chunks =
-      (fragment->get_size() - sizeof(daqdataformats::FragmentHeader)) / sizeof(detdataformats::wib::WIBFrame);
-    std::vector<detdataformats::wib::WIBFrame*> tmp;
+      (fragment->get_size() - sizeof(daqdataformats::FragmentHeader)) / sizeof(T);
+    std::vector<T*> tmp;
     for (int i = 0; i < num_chunks; ++i) {
-      detdataformats::wib::WIBFrame* frame = reinterpret_cast<detdataformats::wib::WIBFrame*>( // NOLINT
-        static_cast<char*>(fragment->get_data()) + (i * 464));
+      T* frame = reinterpret_cast<T*>( // NOLINT
+      static_cast<char*>(fragment->get_data()) + (i * sizeof(T)));
       tmp.push_back(frame);
     }
-    wibframes[element_id] = tmp;
+    frames[element_id] = tmp;
   }
 
-  return wibframes;
+  return frames;
 }
 
-std::map<int, std::vector<detdataformats::wib::WIBFrame*>>
-Decoder::decode(daqdataformats::TriggerRecord& record)
-{
-  return decodewib(record);
+template<class T>
+std::map<int, std::vector<T*>>
+decode(dunedaq::daqdataformats::TriggerRecord& record) {
 }
+
+template <>
+std::map<int, std::vector<detdataformats::wib::WIBFrame*>>
+decode(dunedaq::daqdataformats::TriggerRecord& record) {
+  return decode_frame<detdataformats::wib::WIBFrame>(record);
+}
+
+template <>
+std::map<int, std::vector<detdataformats::wib2::WIB2Frame*>>
+decode(dunedaq::daqdataformats::TriggerRecord& record) {
+  return decode_frame<detdataformats::wib2::WIB2Frame>(record);
+}
+
 
 } // namespace dqm
 } // namespace dunedaq

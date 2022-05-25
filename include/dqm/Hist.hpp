@@ -10,8 +10,6 @@
 
 // DQM
 #include "AnalysisModule.hpp"
-#include "Decoder.hpp"
-#include "Exporter.hpp"
 
 #include "daqdataformats/TriggerRecord.hpp"
 

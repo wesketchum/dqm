@@ -11,7 +11,6 @@
 // dqm
 #include "AnalysisModule.hpp"
 #include "DQMIssues.hpp"
-#include "Decoder.hpp"
 
 #include "daqdataformats/TriggerRecord.hpp"
 #include "logging/Logging.hpp"

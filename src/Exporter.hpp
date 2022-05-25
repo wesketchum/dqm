@@ -17,7 +17,7 @@ class KafkaStream
 {
 public:
   explicit KafkaStream(const std::string& param);
-  void kafka_exporter(std::string input, std::string topic);
+  void kafka_exporter(const std::string& input, const std::string& topic);
   RdKafka::Producer* m_producer;
 };
 
@@ -36,7 +36,7 @@ KafkaStream::KafkaStream(const std::string& param)
 }
 
 void
-KafkaStream::kafka_exporter(std::string input, std::string topic)
+KafkaStream::kafka_exporter(const std::string& input, const std::string& topic)
 {
   RdKafka::ErrorCode err = m_producer->produce(topic,
                                                RdKafka::Topic::PARTITION_UA,
@@ -55,7 +55,7 @@ KafkaStream::kafka_exporter(std::string input, std::string topic)
 }
 
 void
-KafkaExport(std::string& kafka_address, std::string input, std::string topic)
+KafkaExport(const std::string& kafka_address, const std::string& input, const std::string& topic)
 {
   static dqm::KafkaStream stream(kafka_address);
   stream.kafka_exporter(input, topic);

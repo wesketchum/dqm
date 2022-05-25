@@ -13,6 +13,7 @@
 // #include "ChannelMap.hpp"
 #include "ChannelMap.hpp"
 #include "ChannelMapHD.hpp"
+#include "ChannelMapPD2HD.hpp"
 #include "ChannelMapVD.hpp"
 
 #include "daqdataformats/TriggerRecord.hpp"
@@ -34,14 +35,16 @@ public:
   run(std::unique_ptr<daqdataformats::TriggerRecord> record,
       std::atomic<bool>& run_mark,
       std::shared_ptr<ChannelMap>& map,
-      std::string kafka_address);
+      std::string& frontend_type,
+      const std::string& kafka_address);
 };
 
 std::unique_ptr<daqdataformats::TriggerRecord>
 ChannelMapFiller::run(std::unique_ptr<daqdataformats::TriggerRecord> record,
                       std::atomic<bool>&,
                       std::shared_ptr<ChannelMap>& map,
-                      std::string)
+                      std::string& frontend_type,
+                      const std::string&)
 {
   set_is_running(true);
 
@@ -52,8 +55,12 @@ ChannelMapFiller::run(std::unique_ptr<daqdataformats::TriggerRecord> record,
 
   if (m_cmap_name == "HD") {
     map.reset(new ChannelMapHD);
-  } else if (m_cmap_name == "VD") {
+  }
+  else if (m_cmap_name == "VD") {
     map.reset(new ChannelMapVD);
+  }
+  else if (m_cmap_name == "PD2HD") {
+    map.reset(new ChannelMapPD2HD);
   }
 
   map->fill(*record);
@@ -64,7 +71,7 @@ ChannelMapFiller::run(std::unique_ptr<daqdataformats::TriggerRecord> record,
 ChannelMapFiller::ChannelMapFiller(std::string name, std::string cmap_name)
   : m_name(name)
 {
-  if (cmap_name != "HD" && cmap_name != "VD") {
+  if (cmap_name != "HD" && cmap_name != "VD" && cmap_name != "PD2HD") {
     TLOG() << "Wrong channel map name";
   } else {
     m_cmap_name = cmap_name;

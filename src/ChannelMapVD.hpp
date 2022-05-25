@@ -42,7 +42,7 @@ class ChannelMapVD : public ChannelMap
 
 public:
   ChannelMapVD();
-  void fill(daqdataformats::TriggerRecord& tr);
+  void fill(daqdataformats::TriggerRecord& record);
   std::map<int, std::map<int, std::pair<int, int>>> get_map();
 };
 
@@ -60,7 +60,7 @@ ChannelMapVD::get_map()
 }
 
 void
-ChannelMapVD::fill(daqdataformats::TriggerRecord& tr)
+ChannelMapVD::fill(daqdataformats::TriggerRecord& record)
 {
 
   if (is_filled()) {
@@ -68,8 +68,7 @@ ChannelMapVD::fill(daqdataformats::TriggerRecord& tr)
     return;
   }
 
-  Decoder dec;
-  auto wibframes = dec.decode(tr);
+  auto wibframes = decode<detdataformats::wib::WIBFrame>(record);
 
   // If we get no frames then return and since
   // the map is not filled it will run again soon
