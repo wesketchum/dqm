@@ -270,7 +270,6 @@ DQMProcessor::RequestMaker()
     map[std::chrono::system_clock::now() + std::chrono::seconds(m_offset_from_channel_map)] = {
       channel_mask,
       m_channel_mask_conf.how_often,
-      m_channel_mask_conf.unavailable_time,
       m_channel_mask_conf.num_frames,
       nullptr,
       "Channel Mask every " + std::to_string(m_channel_mask_conf.how_often) + " s"
