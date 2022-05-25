@@ -15,14 +15,15 @@
 #include "ChannelMap.hpp"
 
 #include "appfwk/DAQModule.hpp"
-#include "appfwk/DAQSink.hpp"
-#include "appfwk/DAQSource.hpp"
+#include "iomanager/IOManager.hpp"
+#include "iomanager/Sender.hpp"
+#include "iomanager/Receiver.hpp"
 #include "daqdataformats/TriggerRecord.hpp"
 #include "dfmessages/TriggerDecision.hpp"
 #include "timinglibs/TimestampEstimator.hpp"
 #include <ipm/Receiver.hpp>
 
-#include "appfwk/FollyQueue.hpp"
+#include "iomanager/FollyQueue.hpp"
 
 #include <atomic>
 #include <chrono>
@@ -56,8 +57,8 @@ public:
   void do_stop(const data_t&);
   void do_configure(const data_t&);
 
-  void dispatch_timesync(ipm::Receiver::Response message);
-  void dispatch_trigger_record(ipm::Receiver::Response message);
+  void dispatch_timesync(dfmessages::TimeSync& timesyncmsg);
+  void dispatch_trigger_record(std::unique_ptr<daqdataformats::TriggerRecord>& tr);
 
   void RequestMaker();
   dfmessages::TriggerDecision CreateRequest(std::vector<dfmessages::GeoID>& m_links, int number_of_frames);
@@ -68,20 +69,18 @@ public:
 
 private:
   std::atomic<bool> m_run_marker;
-  using trigger_record_source_qt = appfwk::DAQSource<std::unique_ptr<daqdataformats::TriggerRecord>>;
-  std::unique_ptr<trigger_record_source_qt> m_source;
-  using trigger_decision_sink_qt = appfwk::DAQSink<dfmessages::TriggerDecision>;
-  std::unique_ptr<trigger_decision_sink_qt> m_sink;
+  std::shared_ptr<iomanager::ReceiverConcept<std::unique_ptr<daqdataformats::TriggerRecord>>> m_receiver;
+  std::shared_ptr<iomanager::SenderConcept<dfmessages::TriggerDecision>> m_sender;
 
   std::chrono::milliseconds m_sink_timeout{ 1000 };
   std::chrono::milliseconds m_source_timeout{ 1000 };
 
   // Configuration parameters
-  dqmprocessor::StandardDQM m_standard_dqm_hist;
-  dqmprocessor::StandardDQM m_standard_dqm_mean_rms;
-  dqmprocessor::StandardDQM m_standard_dqm_fourier;
-  dqmprocessor::StandardDQM m_standard_dqm_fourier_sum;
-  dqmprocessor::StandardDQM m_standard_channel_mask;
+  dqmprocessor::StandardDQM m_hist_conf;
+  dqmprocessor::StandardDQM m_mean_rms_conf;
+  dqmprocessor::StandardDQM m_fourier_conf;
+  dqmprocessor::StandardDQM m_fourier_sum_conf;
+  dqmprocessor::StandardDQM m_channel_mask_conf;
 
   // DF configuration parameters
   double m_df_seconds {0};
@@ -89,7 +88,7 @@ private:
   int m_df_algs {0};
   int m_df_num_frames {0};
 
-  std::string m_timesync_connection;
+  std::string m_timesync_topic;
   std::string m_df2dqm_connection;
   std::string m_dqm2df_connection;
 
@@ -115,7 +114,7 @@ private:
   std::shared_ptr<ChannelMap> m_map;
 
   // std::list<std::unique_ptr<daqdataformats::TriggerRecord>> dftrs;
-  appfwk::FollySPSCQueue<std::unique_ptr<daqdataformats::TriggerRecord>> dftrs{"FollyQueue", 100};
+  iomanager::FollySPSCQueue<std::unique_ptr<daqdataformats::TriggerRecord>> dftrs{"FollyQueue", 100};
 
   std::string m_mode;
   std::string m_frontend_type;

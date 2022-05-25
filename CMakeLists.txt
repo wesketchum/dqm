@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.12)
-project(dqm VERSION 1.3.4)
+project(dqm VERSION 1.3.5)
 
 find_package(daq-cmake REQUIRED)
 
@@ -11,6 +11,7 @@ find_package(daqdataformats REQUIRED)
 find_package(detdataformats REQUIRED)
 find_package(detchannelmaps REQUIRED)
 find_package(dfmessages REQUIRED)
+find_package(iomanager REQUIRED)
 find_package(RdKafka REQUIRED)
 find_package(timinglibs REQUIRED)
 find_package(Boost COMPONENTS unit_test_framework program_options REQUIRED)

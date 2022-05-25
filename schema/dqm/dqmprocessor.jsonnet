@@ -35,8 +35,6 @@ local dqmprocessor = {
     standard_dqm: s.record("StandardDQM", [
         s.field("how_often", self.time, 0,
                 doc="Algorithm is run every x seconds"),
-        s.field("unavailable_time", self.time, 0,
-                doc="When it's time to run the algorithm but it's already running wait this time"),
         s.field("num_frames", self.count, 0,
                 doc="How many frames do we process in each instance of the algorithm")
     ], doc="Standard DQM analysis"),
@@ -46,13 +44,13 @@ local dqmprocessor = {
         s.field("region", self.index, 0, doc="The region index"),
         s.field("channel_map", self.string, doc='"HD" or "VD"'),
         s.field("mode", self.string, doc='readout or df',),
-        s.field("sdqm_hist", self.standard_dqm,      # This one is for the raw event display
+        s.field("hist", self.standard_dqm,      # This one is for the raw event display
                 doc="Standard dqm"),
-        s.field("sdqm_mean_rms", self.standard_dqm,  # This one is for the Mean and RMS
+        s.field("mean_rms", self.standard_dqm,  # This one is for the Mean and RMS
                 doc="Standard dqm"),
-        s.field("sdqm_fourier", self.standard_dqm,   # This one is for fourier transforms
+        s.field("fourier", self.standard_dqm,   # This one is for fourier transforms
                 doc="Fourier"),
-        s.field("sdqm_fourier_sum", self.standard_dqm, # This one is for summed fourier transforms
+        s.field("fourier_sum", self.standard_dqm, # This one is for summed fourier transforms
                 doc="Fourier sum"),
         s.field("sdqm_channel_mask", self.standard_dqm, # This one is for the WIB2 channel masks
                 doc="Channel mask"),
@@ -62,8 +60,8 @@ local dqmprocessor = {
                 doc="Index of each link that is sending data"),
         s.field("clock_frequency", self.big_count,
                 doc="Clock frequency in Hz"),
-        s.field("timesync_connection_name", self.netmgr_name,
-                doc="Connection to use for receiving TimeSync messages"),
+        s.field("timesync_topic_name", self.netmgr_name,
+                doc="Topic to use for receiving TimeSync messages"),
         s.field("df2dqm_connection_name", self.netmgr_name,
                 doc="Connection to use for receiving TRs from DF"),
         s.field("dqm2df_connection_name", self.netmgr_name,

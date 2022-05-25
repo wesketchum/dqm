@@ -22,7 +22,6 @@
 #include "ChannelMask.hpp"
 
 // DUNE-DAQ includes
-#include "appfwk/DAQSource.hpp"
 #include "daqdataformats/ComponentRequest.hpp"
 #include "daqdataformats/Fragment.hpp"
 #include "daqdataformats/GeoID.hpp"
@@ -81,11 +80,11 @@ DQMProcessor::do_configure(const nlohmann::json& args)
   m_mode = conf.mode;
   m_frontend_type = conf.frontend_type;
 
-  m_standard_dqm_hist = conf.sdqm_hist;
-  m_standard_dqm_mean_rms = conf.sdqm_mean_rms;
-  m_standard_dqm_fourier = conf.sdqm_fourier;
-  m_standard_dqm_fourier_sum = conf.sdqm_fourier_sum;
-  m_standard_channel_mask = conf.sdqm_channel_mask;
+  m_hist_conf = conf.hist;
+  m_mean_rms_conf = conf.mean_rms;
+  m_fourier_conf = conf.fourier;
+  m_fourier_sum_conf = conf.fourier_sum;
+  m_channel_mask_conf = conf.channel_mask;
 
   m_df_seconds = conf.df_seconds;
   m_df_offset = conf.df_offset;
@@ -98,16 +97,19 @@ DQMProcessor::do_configure(const nlohmann::json& args)
   m_region = conf.region;
   m_readout_window_offset = conf.readout_window_offset;
 
-  m_timesync_connection = conf.timesync_connection_name;
+  m_timesync_topic = conf.timesync_topic_name;
   m_df2dqm_connection = conf.df2dqm_connection_name;
   m_dqm2df_connection = conf.dqm2df_connection_name;
 
   if (m_mode == "df") {
-      networkmanager::NetworkManager::get().start_listening(m_df2dqm_connection);
+      // networkmanager::NetworkManager::get().start_listening(m_df2dqm_connection);
   }
   else if (m_mode == "readout") {
-    m_source.reset(new trigger_record_source_qt("trigger_record_q_dqm"));
-    m_sink.reset(new trigger_decision_sink_qt("trigger_decision_q_dqm"));
+    dunedaq::iomanager::ConnectionRef cref;
+    cref.uid = "trigger_record_q_dqm";
+    m_receiver = get_iom_receiver<std::unique_ptr<daqdataformats::TriggerRecord>>(cref);
+    cref.uid = "trigger_decision_q_dqm";
+    m_sender = get_iom_sender<dfmessages::TriggerDecision>(cref);
   }
 }
 
@@ -119,14 +121,19 @@ DQMProcessor::do_start(const nlohmann::json& args)
     m_time_est.reset(new timinglibs::TimestampEstimator(m_clock_frequency));
 
     m_received_timesync_count.store(0);
-    networkmanager::NetworkManager::get().start_listening(m_timesync_connection);
-    networkmanager::NetworkManager::get().register_callback(
-      m_timesync_connection, std::bind(&DQMProcessor::dispatch_timesync, this, std::placeholders::_1));
+
+    dunedaq::iomanager::ConnectionRef cref;
+    cref.uid = m_timesync_topic;
+    cref.dir = dunedaq::iomanager::Direction::kInput;
+    get_iomanager()->add_callback<dfmessages::TimeSync>(cref, std::bind(&DQMProcessor::dispatch_timesync, this, std::placeholders::_1));
+
   }
 
   if (m_mode == "df") {
-  networkmanager::NetworkManager::get().register_callback(m_df2dqm_connection,
-    std::bind(&DQMProcessor::dispatch_trigger_record, this, std::placeholders::_1));
+    dunedaq::iomanager::ConnectionRef cref;
+    cref.uid = m_df2dqm_connection;
+    get_iomanager()->add_callback<std::unique_ptr<daqdataformats::TriggerRecord>>(cref, std::bind(&DQMProcessor::dispatch_trigger_record, this, std::placeholders::_1));
+
   }
 
   m_run_marker.store(true);
@@ -148,8 +155,16 @@ DQMProcessor::do_stop(const data_t&)
   m_running_thread->join();
 
   if (m_mode == "readout") {
-    networkmanager::NetworkManager::get().clear_callback(m_timesync_connection);
-    networkmanager::NetworkManager::get().stop_listening(m_timesync_connection);
+
+    dunedaq::iomanager::ConnectionRef cref;
+    cref.uid = m_timesync_topic;
+    cref.dir = dunedaq::iomanager::Direction::kInput;
+    get_iomanager()->remove_callback<dfmessages::TimeSync>(cref);
+  }
+  else if (m_mode == "df") {
+    dunedaq::iomanager::ConnectionRef cref;
+    cref.uid = m_df2dqm_connection;
+    get_iomanager()->remove_callback<std::unique_ptr<daqdataformats::TriggerRecord>>(cref);
   }
   TLOG() << get_name() << ": received " << m_received_timesync_count.load() << " TimeSync messages.";
 }
@@ -163,7 +178,6 @@ DQMProcessor::RequestMaker()
   {
     std::shared_ptr<AnalysisModule> mod;
     double between_time;
-    double default_unavailable_time;
     int number_of_frames;
     std::shared_ptr<std::thread> running_thread;
     std::string name;
@@ -195,12 +209,12 @@ DQMProcessor::RequestMaker()
                                                       CHANNELS_PER_LINK * m_link_idx.size(),
                                                       m_link_idx,
                                                       1. / m_clock_frequency * TICKS_BETWEEN_TIMESTAMP,
-                                                      m_standard_dqm_fourier.num_frames);
+                                                      m_fourier_conf.num_frames);
   auto fouriersum = std::make_shared<FourierContainer>("fft_sums_display",
                                                       4,
                                                       m_link_idx,
                                                       1. / m_clock_frequency * TICKS_BETWEEN_TIMESTAMP,
-                                                      m_standard_dqm_fourier_sum.num_frames,
+                                                      m_fourier_sum_conf.num_frames,
                                                       true);
   auto channel_mask = std::make_shared<ChannelMask>("channel_mask_display",
                                                     m_link_idx);
@@ -218,59 +232,54 @@ DQMProcessor::RequestMaker()
   // Initial tasks
   // Add some offset time to let the other parts of the DAQ start
   // Typically the first and maybe second requests of data fails
-  if (m_standard_dqm_hist.how_often > 0)
+  if (m_hist_conf.how_often > 0)
     map[std::chrono::system_clock::now() + std::chrono::seconds(m_offset_from_channel_map)] = {
       hist,
-      m_standard_dqm_hist.how_often,
-      m_standard_dqm_hist.unavailable_time,
-      m_standard_dqm_hist.num_frames,
+      m_hist_conf.how_often,
+      m_hist_conf.num_frames,
       nullptr,
-      "Histogram every " + std::to_string(m_standard_dqm_hist.how_often) + " s"
+      "Histogram every " + std::to_string(m_hist_conf.how_often) + " s"
     };
-  if (m_standard_dqm_mean_rms.how_often > 0)
+  if (m_mean_rms_conf.how_often > 0)
     map[std::chrono::system_clock::now() + std::chrono::seconds(m_offset_from_channel_map)] = {
       mean_rms,
-      m_standard_dqm_mean_rms.how_often,
-      m_standard_dqm_mean_rms.unavailable_time,
-      m_standard_dqm_mean_rms.num_frames,
+      m_mean_rms_conf.how_often,
+      m_mean_rms_conf.num_frames,
       nullptr,
-      "Mean and RMS every " + std::to_string(m_standard_dqm_mean_rms.how_often) + " s"
+      "Mean and RMS every " + std::to_string(m_mean_rms_conf.how_often) + " s"
     };
-  if (m_standard_dqm_fourier.how_often > 0)
+  if (m_fourier_conf.how_often > 0)
     map[std::chrono::system_clock::now() + std::chrono::seconds(m_offset_from_channel_map)] = {
       fourier,
-      m_standard_dqm_fourier.how_often,
-      m_standard_dqm_fourier.unavailable_time,
-      m_standard_dqm_fourier.num_frames,
+      m_fourier_conf.how_often,
+      m_fourier_conf.num_frames,
       nullptr,
-      "Fourier every " + std::to_string(m_standard_dqm_fourier.how_often) + " s"
+      "Fourier every " + std::to_string(m_fourier_conf.how_often) + " s"
     };
 
-  if (m_standard_dqm_fourier_sum.how_often > 0)
+  if (m_fourier_sum_conf.how_often > 0)
     map[std::chrono::system_clock::now() + std::chrono::seconds(m_offset_from_channel_map)] = {
       fouriersum,
-      m_standard_dqm_fourier_sum.how_often,
-      m_standard_dqm_fourier_sum.unavailable_time,
-      m_standard_dqm_fourier_sum.num_frames,
+      m_fourier_sum_conf.how_often,
+      m_fourier_sum_conf.num_frames,
       nullptr,
-      "Summed Fourier every " + std::to_string(m_standard_dqm_fourier_sum.how_often) + " s"
+      "Summed Fourier every " + std::to_string(m_fourier_sum_conf.how_often) + " s"
     };
 
-  if (m_standard_channel_mask.how_often > 0)
+  if (m_channel_mask_conf.how_often > 0)
     map[std::chrono::system_clock::now() + std::chrono::seconds(m_offset_from_channel_map)] = {
       channel_mask,
-      m_standard_channel_mask.how_often,
-      m_standard_channel_mask.unavailable_time,
-      m_standard_channel_mask.num_frames,
+      m_channel_mask_conf.how_often,
+      m_channel_mask_conf.unavailable_time,
+      m_channel_mask_conf.num_frames,
       nullptr,
-      "Channel Mask every " + std::to_string(m_standard_channel_mask.how_often) + " s"
+      "Channel Mask every " + std::to_string(m_channel_mask_conf.how_often) + " s"
     };
 
   if (m_mode == "df" && m_df_seconds > 0) {
     map[std::chrono::system_clock::now() + std::chrono::milliseconds(1000 * m_offset_from_channel_map + static_cast<int>(m_df_offset * 1000))] = {
       dfmodule,
       m_df_seconds,
-      5,
       -1, // Number of frames, unused
       nullptr,
       "Algorithms on TRs from DF every " + std::to_string(m_df_seconds) + " s"
@@ -278,10 +287,10 @@ DQMProcessor::RequestMaker()
   }
 
 
-  map[std::chrono::system_clock::now() + std::chrono::seconds(m_channel_map_delay)] = { chfiller, 3,
-                                                                      3,
-                                                                      1, // Request only one frame for each link
-                                                                      nullptr,  "Channel map filler" };
+  map[std::chrono::system_clock::now() + std::chrono::seconds(m_channel_map_delay)] = { chfiller,
+                                                                                        3,
+                                                                                        1, // Request only one frame for each link
+                                                                                        nullptr,  "Channel map filler" };
 
   // Main loop, running forever
   while (m_run_marker) {
@@ -328,10 +337,10 @@ DQMProcessor::RequestMaker()
     if (algo->get_is_running()) {
       TLOG(5) << "ALGORITHM " << analysis_instance.name << " already running";
       map[std::chrono::system_clock::now() +
-          std::chrono::milliseconds(static_cast<int>(analysis_instance.default_unavailable_time) * 1000)] = {
+          // We wait 10% of the time between runs of the algorithm
+          std::chrono::milliseconds(static_cast<int>(analysis_instance.between_time * 100.0))] = {
         algo,
         analysis_instance.between_time,
-        analysis_instance.default_unavailable_time,
         analysis_instance.number_of_frames,
         previous_thread,
         analysis_instance.name
@@ -358,8 +367,8 @@ DQMProcessor::RequestMaker()
     if (m_mode == "readout") {
       request = CreateRequest(m_links, analysis_instance.number_of_frames);
       try {
-        m_sink->push(request, m_sink_timeout);
-      } catch (const ers::Issue& excpt) {
+        m_sender->send(std::move(request), m_sink_timeout);
+      } catch (iomanager::TimeoutExpired&) {
         TLOG() << "DQM: Unable to push to the request queue";
         continue;
       }
@@ -374,7 +383,7 @@ DQMProcessor::RequestMaker()
 
     if (m_mode == "readout") {
       try {
-        m_source->pop(element, m_source_timeout);
+        element = m_receiver->receive(m_source_timeout);
       } catch (const ers::Issue& excpt) {
         TLOG() << "DQM: Unable to pop from the data queue";
         continue;
@@ -405,7 +414,6 @@ DQMProcessor::RequestMaker()
         std::chrono::milliseconds(static_cast<int>(analysis_instance.between_time) * 1000)] = {
       algo,
       analysis_instance.between_time,
-      analysis_instance.default_unavailable_time,
       analysis_instance.number_of_frames,
       current_thread,
       analysis_instance.name
@@ -474,10 +482,9 @@ DQMProcessor::CreateRequest(std::vector<dfmessages::GeoID>& m_links, int number_
 
 
 void
-DQMProcessor::dispatch_trigger_record(ipm::Receiver::Response message)
+DQMProcessor::dispatch_trigger_record(std::unique_ptr<daqdataformats::TriggerRecord>& tr)
 {
-  dftrs.push(std::move(serialization::deserialize<std::unique_ptr<daqdataformats::TriggerRecord>>(message.data)),
-             std::chrono::milliseconds(100));
+  dftrs.push(std::move(tr), std::chrono::milliseconds(100));
 }
 
 
@@ -490,16 +497,16 @@ DQMProcessor::dfrequest()
   trmon.trigger_type = 1;
   trmon.data_destination = m_df2dqm_connection;
 
-  auto trmon_message = serialization::serialize(trmon, serialization::kMsgPack);
-  networkmanager::NetworkManager::get().send_to(m_dqm2df_connection, static_cast<const void*>(trmon_message.data()), trmon_message.size(), m_sink_timeout);
+  // auto trmon_message = serialization::serialize(trmon, serialization::kMsgPack);
+  // networkmanager::NetworkManager::get().send_to(m_dqm2df_connection, ;
+  get_iom_sender<dfmessages::TRMonRequest>(m_dqm2df_connection)->send(std::move(trmon), m_sink_timeout);
 }
 
 
 void
-DQMProcessor::dispatch_timesync(ipm::Receiver::Response message)
+DQMProcessor::dispatch_timesync(dfmessages::TimeSync& timesyncmsg)
 {
   ++m_received_timesync_count;
-  auto timesyncmsg = serialization::deserialize<dfmessages::TimeSync>(message.data);
   TLOG_DEBUG(13) << "Received TimeSync message with DAQ time= " << timesyncmsg.daq_time
                  << ", run=" << timesyncmsg.run_number << " (local run number is " << m_run_number << ")";
   if (m_time_est.get() != nullptr) {
