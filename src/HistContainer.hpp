@@ -225,26 +225,26 @@ HistContainer::run_wib2frame(std::unique_ptr<daqdataformats::TriggerRecord> reco
     keys.push_back(key);
   }
 
-  uint64_t min_timestamp = 0; // NOLINT(build/unsigned)
+  uint64_t min_timestamp = -1; // NOLINT(build/unsigned)
   // We run over all links until we find one that has a non-empty vector of frames
   for (auto& key : keys) {
     if (!wibframes[key].empty()) {
-      min_timestamp = wibframes[key].front()->get_timestamp();
-      break;
+      min_timestamp = std::min(wibframes[key].front()->get_timestamp(), min_timestamp);
     }
   }
   uint64_t timestamp = 0; // NOLINT(build/unsigned)
 
   // Check that all the wibframes vectors have the same size, if not, something
   // bad has happened, for now don't do anything
-  // auto size = wibframes.begin()->second.size();
-  // for (auto& vec : wibframes) {
-  //   if (vec.second.size() != size) {
-  //     ers::error(InvalidData(ERS_HERE, "the size of the vector of frames is different for each link"));
-  //     set_is_running(false);
-  //     return std::move(record);
-  //   }
-  // }
+  auto size = wibframes.begin()->second.size();
+  for (auto& vec : wibframes) {
+    if (vec.second.size() != size) {
+      // ers::error(InvalidData(ERS_HERE, "the size of the vector of frames is different for each link"));
+      TLOG() << "Size for each fragment is different, the first fragment has size " << second.size() << " but got size " << vec.second.size();
+      // set_is_running(false);
+      // return std::move(record);
+    }
+  }
 
 
   // Main loop
