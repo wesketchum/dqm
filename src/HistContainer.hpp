@@ -240,7 +240,7 @@ HistContainer::run_wib2frame(std::unique_ptr<daqdataformats::TriggerRecord> reco
   for (auto& vec : wibframes) {
     if (vec.second.size() != size) {
       // ers::error(InvalidData(ERS_HERE, "the size of the vector of frames is different for each link"));
-      TLOG() << "Size for each fragment is different, the first fragment has size " << second.size() << " but got size " << vec.second.size();
+      TLOG() << "Size for each fragment is different, the first fragment has size " << size << " but got size " << vec.second.size();
       // set_is_running(false);
       // return std::move(record);
     }

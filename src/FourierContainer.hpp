@@ -207,7 +207,7 @@ FourierContainer::run_wib2frame(std::unique_ptr<daqdataformats::TriggerRecord> r
   auto size = wibframes.begin()->second.size();
   for (auto& vec : wibframes) {
     if (vec.second.size() != size) {
-      TLOG() << "Size for each fragment is different, the first fragment has size " << second.size() << " but got size " << vec.second.size();
+      TLOG() << "Size for each fragment is different, the first fragment has size " << size << " but got size " << vec.second.size();
   //     ers::error(InvalidData(ERS_HERE, "the size of the vector of frames is different for each link"));
   //     return std::move(record);
     }

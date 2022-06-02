@@ -208,12 +208,12 @@ DQMProcessor::RequestMaker()
   auto fourier = std::make_shared<FourierContainer>("fft_display",
                                                       CHANNELS_PER_LINK * m_link_idx.size(),
                                                       m_link_idx,
-                                                      1. / m_clock_frequency * (strcmp(m_frontend_type, "wib") ? 32 : 25),
+                                                    1. / m_clock_frequency * (strcmp(m_frontend_type.c_str(), "wib") ? 32 : 25),
                                                       m_fourier_conf.num_frames);
   auto fouriersum = std::make_shared<FourierContainer>("fft_sums_display",
                                                       4,
                                                       m_link_idx,
-                                                      1. / m_clock_frequency * (strcmp(m_frontend_type, "wib") ? 32 : 25),
+                                                       1. / m_clock_frequency * (strcmp(m_frontend_type.c_str(), "wib") ? 32 : 25),
                                                       m_fourier_sum_conf.num_frames,
                                                       true);
   auto channel_mask = std::make_shared<ChannelMask>("channel_mask_display",
