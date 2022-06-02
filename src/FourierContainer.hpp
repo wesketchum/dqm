@@ -205,12 +205,13 @@ FourierContainer::run_wib2frame(std::unique_ptr<daqdataformats::TriggerRecord> r
   // Check that all the wibframes vectors have the same size, if not, something
   // bad has happened, for now don't do anything
   auto size = wibframes.begin()->second.size();
-  // for (auto& vec : wibframes) {
-  //   if (vec.second.size() != size) {
+  for (auto& vec : wibframes) {
+    if (vec.second.size() != size) {
+      TLOG() << "Size for each fragment is different, the first fragment has size " << size << " but got size " << vec.second.size();
   //     ers::error(InvalidData(ERS_HERE, "the size of the vector of frames is different for each link"));
   //     return std::move(record);
-  //   }
-  // }
+    }
+  }
 
   // Normal mode, fourier transform for every channel
   if (!m_global_mode) {
