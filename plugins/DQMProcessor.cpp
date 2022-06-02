@@ -198,22 +198,22 @@ DQMProcessor::RequestMaker()
 
   // Raw event display
   auto hist = std::make_shared<HistContainer>(
-      "raw_display", CHANNELS_PER_LINK * m_link_idx.size(), m_link_idx, 100, 0, 5000, false);
+      "raw_display", CHANNELS_PER_LINK * m_link_idx.size(), m_link_idx, 100, 0, 17000, false);
   // Mean and RMS
   auto mean_rms = std::make_shared<HistContainer>(
-      "rmsm_display", CHANNELS_PER_LINK * m_link_idx.size(), m_link_idx, 100, 0, 5000, true);
+      "rmsm_display", CHANNELS_PER_LINK * m_link_idx.size(), m_link_idx, 100, 0, 17000, true);
   // Fourier transform
   // The Delta of time between frames is the inverse of the sampling frequency (clock frequency)
   // but because we are sampling every TICKS_BETWEEN_TIMESTAMP ticks we have to multiply by that
   auto fourier = std::make_shared<FourierContainer>("fft_display",
                                                       CHANNELS_PER_LINK * m_link_idx.size(),
                                                       m_link_idx,
-                                                      1. / m_clock_frequency * TICKS_BETWEEN_TIMESTAMP,
+                                                      1. / m_clock_frequency * (strcmp(m_frontend_type, "wib") ? 32 : 25),
                                                       m_fourier_conf.num_frames);
   auto fouriersum = std::make_shared<FourierContainer>("fft_sums_display",
                                                       4,
                                                       m_link_idx,
-                                                      1. / m_clock_frequency * TICKS_BETWEEN_TIMESTAMP,
+                                                      1. / m_clock_frequency * (strcmp(m_frontend_type, "wib") ? 32 : 25),
                                                       m_fourier_sum_conf.num_frames,
                                                       true);
   auto channel_mask = std::make_shared<ChannelMask>("channel_mask_display",
