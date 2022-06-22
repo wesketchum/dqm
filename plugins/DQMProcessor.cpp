@@ -30,7 +30,6 @@
 #include "dfmessages/TimeSync.hpp"
 #include "dfmessages/TriggerDecision.hpp"
 #include "dfmessages/TRMonRequest.hpp"
-#include "networkmanager/NetworkManager.hpp"
 #include "dfmessages/TriggerRecord_serialization.hpp"
 
 // C++ includes
