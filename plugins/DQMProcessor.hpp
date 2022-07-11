@@ -61,7 +61,7 @@ public:
   void dispatch_trigger_record(std::unique_ptr<daqdataformats::TriggerRecord>& tr);
 
   void RequestMaker();
-  dfmessages::TriggerDecision CreateRequest(std::vector<dfmessages::GeoID>& m_links, int number_of_frames);
+  dfmessages::TriggerDecision CreateRequest(std::vector<dfmessages::SourceID>& m_links, int number_of_frames);
 
   void dfrequest();
 
@@ -99,7 +99,6 @@ private:
   std::string m_kafka_address;
   std::vector<int> m_link_idx;
 
-  uint16_t m_region; // NOLINT(build/unsigned)
   int m_clock_frequency;
 
   std::unique_ptr<std::thread> m_running_thread;

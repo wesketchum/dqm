@@ -35,13 +35,13 @@ decode_frame(daqdataformats::TriggerRecord& record)
   for (auto& fragment : fragments) {
     // 20-May-2022, KAB: I wonder if the following check should be on the desired fragment type
     // instead of a veto on undesired fragment types (to avoid having to update this as new types are added)
-    if (fragment->get_fragment_type() == daqdataformats::FragmentType::kTriggerPrimitives ||
-        fragment->get_fragment_type() == daqdataformats::FragmentType::kTriggerActivities ||
-        fragment->get_fragment_type() == daqdataformats::FragmentType::kTriggerCandidates) {
+    if (fragment->get_fragment_type() == daqdataformats::FragmentType::kTP ||
+        fragment->get_fragment_type() == daqdataformats::FragmentType::kTA ||
+        fragment->get_fragment_type() == daqdataformats::FragmentType::kTC) {
       continue;
     }
     auto id = fragment->get_element_id();
-    auto element_id = id.element_id;
+    auto element_id = id.id;
     int num_chunks =
       (fragment->get_size() - sizeof(daqdataformats::FragmentHeader)) / sizeof(T);
     std::vector<T*> tmp;
