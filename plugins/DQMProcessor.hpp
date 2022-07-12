@@ -54,7 +54,7 @@ public:
 
   void do_print(const data_t&);
   void do_start(const data_t&);
-  void do_stop(const data_t&);
+  void do_drain_dataflow(const data_t&);
   void do_configure(const data_t&);
 
   void dispatch_timesync(dfmessages::TimeSync& timesyncmsg);

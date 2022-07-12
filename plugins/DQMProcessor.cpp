@@ -50,7 +50,7 @@ DQMProcessor::DQMProcessor(const std::string& name)
 {
   register_command("start", &DQMProcessor::do_start);
   register_command("conf", &DQMProcessor::do_configure);
-  register_command("stop", &DQMProcessor::do_stop);
+  register_command("drain_dataflow", &DQMProcessor::do_drain_dataflow);
 }
 
 void
@@ -149,7 +149,7 @@ DQMProcessor::do_start(const nlohmann::json& args)
 }
 
 void
-DQMProcessor::do_stop(const data_t&)
+DQMProcessor::do_drain_dataflow(const data_t&)
 {
   m_run_marker.store(false);
   m_running_thread->join();
