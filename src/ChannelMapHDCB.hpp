@@ -5,8 +5,8 @@
  * Licensing/copyright details are in the COPYING file that you should have
  * received with this code.
  */
-#ifndef DQM_SRC_CHANNELMAPPD2HD_HPP_
-#define DQM_SRC_CHANNELMAPPD2HD_HPP_
+#ifndef DQM_SRC_CHANNELMAPHDCB_HPP_
+#define DQM_SRC_CHANNELMAPHDCB_HPP_
 
 // DQM
 #include "ChannelMap.hpp"
@@ -101,4 +101,4 @@ ChannelMapHDCB::is_filled()
 
 } // namespace dunedaq::dqm
 
-#endif // DQM_SRC_CHANNELMAPPD2HD_HPP_
+#endif // DQM_SRC_CHANNELMAPHDCB_HPP_
