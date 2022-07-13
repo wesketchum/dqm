@@ -75,7 +75,7 @@ ChannelMapFiller::run(std::unique_ptr<daqdataformats::TriggerRecord> record,
 ChannelMapFiller::ChannelMapFiller(std::string name, std::string cmap_name)
   : m_name(name)
 {
-  if (cmap_name != "HD" && cmap_name != "VD" && cmap_name != "PD2HD") {
+  if (cmap_name != "HD" && cmap_name != "VD" && cmap_name != "PD2HD" && cmap_name != "HDCB") {
     TLOG() << "Wrong channel map name";
   } else {
     m_cmap_name = cmap_name;
