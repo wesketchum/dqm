@@ -33,8 +33,6 @@ decode_frame(daqdataformats::TriggerRecord& record)
   std::map<int, std::vector<T*>> frames;
 
   for (auto& fragment : fragments) {
-    // 20-May-2022, KAB: I wonder if the following check should be on the desired fragment type
-    // instead of a veto on undesired fragment types (to avoid having to update this as new types are added)
     if (fragment->get_fragment_type() == daqdataformats::FragmentType::kTP ||
         fragment->get_fragment_type() == daqdataformats::FragmentType::kTA ||
         fragment->get_fragment_type() == daqdataformats::FragmentType::kTC) {
