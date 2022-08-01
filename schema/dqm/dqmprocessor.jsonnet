@@ -66,7 +66,6 @@ local dqmprocessor = {
                 doc="Connection to use for sending TRMon messages to DF"),
         s.field("readout_window_offset", self.big_count,
                 doc="Offset to use for the windows requested to readout"),
-
         s.field("df_seconds", self.time,
                 doc="Number of seconds between requests to DF for TRs"),
         s.field("df_offset", self.time,
