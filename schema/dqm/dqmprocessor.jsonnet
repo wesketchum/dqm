@@ -52,8 +52,6 @@ local dqmprocessor = {
                 doc="Fourier"),
         s.field("fourier_sum", self.standard_dqm, # This one is for summed fourier transforms
                 doc="Fourier sum"),
-        s.field("channel_mask", self.standard_dqm, # This one is for the WIB2 channel masks
-                doc="Channel mask"),
         s.field("kafka_address", self.string,
                 doc="Address used for sending to the kafka broker"),
         s.field("link_idx", self.index_list,
@@ -68,7 +66,6 @@ local dqmprocessor = {
                 doc="Connection to use for sending TRMon messages to DF"),
         s.field("readout_window_offset", self.big_count,
                 doc="Offset to use for the windows requested to readout"),
-
         s.field("df_seconds", self.time,
                 doc="Number of seconds between requests to DF for TRs"),
         s.field("df_offset", self.time,
