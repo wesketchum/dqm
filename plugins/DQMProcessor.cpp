@@ -182,7 +182,7 @@ DQMProcessor::RequestMaker()
   std::vector<daqdataformats::SourceID> m_links;
 
   for (auto i : m_link_idx) {
-    m_links.push_back({ daqdataformats::SourceID::Subsystem::kDRO, static_cast<unsigned int>(i) });
+    m_links.push_back({ daqdataformats::SourceID::Subsystem::kDetectorReadout, static_cast<unsigned int>(i) });
   }
 
   // Map that holds the tasks and times when to do them

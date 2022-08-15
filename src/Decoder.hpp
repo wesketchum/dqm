@@ -33,9 +33,9 @@ decode_frame(daqdataformats::TriggerRecord& record)
   std::map<int, std::vector<T*>> frames;
 
   for (auto& fragment : fragments) {
-    if (fragment->get_fragment_type() == daqdataformats::FragmentType::kTP ||
-        fragment->get_fragment_type() == daqdataformats::FragmentType::kTA ||
-        fragment->get_fragment_type() == daqdataformats::FragmentType::kTC) {
+    if (fragment->get_fragment_type() == daqdataformats::FragmentType::kSW_TriggerPrimitive ||
+        fragment->get_fragment_type() == daqdataformats::FragmentType::kTriggerActivity ||
+        fragment->get_fragment_type() == daqdataformats::FragmentType::kTriggerCandidate) {
       continue;
     }
     auto id = fragment->get_element_id();
