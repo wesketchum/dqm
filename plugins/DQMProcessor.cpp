@@ -23,7 +23,7 @@
 // DUNE-DAQ includes
 #include "daqdataformats/ComponentRequest.hpp"
 #include "daqdataformats/Fragment.hpp"
-#include "daqdataformats/GeoID.hpp"
+#include "daqdataformats/SourceID.hpp"
 #include "daqdataformats/TriggerRecord.hpp"
 #include "detdataformats/wib/WIBFrame.hpp"
 #include "dfmessages/TimeSync.hpp"
@@ -91,7 +91,6 @@ DQMProcessor::do_configure(const nlohmann::json& args)
   m_link_idx = conf.link_idx;
   m_clock_frequency = conf.clock_frequency;
   m_channel_map = conf.channel_map;
-  m_region = conf.region;
   m_readout_window_offset = conf.readout_window_offset;
 
   m_timesync_topic = conf.timesync_topic_name;
@@ -180,10 +179,10 @@ DQMProcessor::RequestMaker()
     std::string name;
   };
 
-  std::vector<daqdataformats::GeoID> m_links;
+  std::vector<daqdataformats::SourceID> m_links;
 
   for (auto i : m_link_idx) {
-    m_links.push_back({ daqdataformats::GeoID::SystemType::kTPC, m_region, static_cast<unsigned int>(i) });
+    m_links.push_back({ daqdataformats::SourceID::Subsystem::kDetectorReadout, static_cast<unsigned int>(i) });
   }
 
   // Map that holds the tasks and times when to do them
@@ -427,7 +426,7 @@ DQMProcessor::RequestMaker()
 } // NOLINT Function length
 
 dfmessages::TriggerDecision
-DQMProcessor::CreateRequest(std::vector<dfmessages::GeoID>& m_links, int number_of_frames)
+DQMProcessor::CreateRequest(std::vector<dfmessages::SourceID>& m_links, int number_of_frames)
 {
   auto timestamp = m_time_est->get_timestamp_estimate();
   dfmessages::TriggerDecision decision;

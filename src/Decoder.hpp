@@ -33,11 +33,13 @@ decode_frame(daqdataformats::TriggerRecord& record)
   std::map<int, std::vector<T*>> frames;
 
   for (auto& fragment : fragments) {
-    if (fragment->get_fragment_type() != daqdataformats::FragmentType::kTPCData) {
+    if (fragment->get_fragment_type() == daqdataformats::FragmentType::kSW_TriggerPrimitive ||
+        fragment->get_fragment_type() == daqdataformats::FragmentType::kTriggerActivity ||
+        fragment->get_fragment_type() == daqdataformats::FragmentType::kTriggerCandidate) {
       continue;
     }
     auto id = fragment->get_element_id();
-    auto element_id = id.element_id;
+    auto element_id = id.id;
     int num_chunks =
       (fragment->get_size() - sizeof(daqdataformats::FragmentHeader)) / sizeof(T);
     std::vector<T*> tmp;
