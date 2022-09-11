@@ -14,7 +14,7 @@
 #include "detdataformats/wib2/WIB2Frame.hpp"
 
 #include "ers/Issue.hpp"
-#include "dqm/DQMIssues.hpp"
+#include "dqm/Issues.hpp"
 
 #include <climits>
 #include <map>

@@ -11,7 +11,7 @@
 // DQM
 #include "Constants.hpp"
 #include "Decoder.hpp"
-#include "dqm/DQMIssues.hpp"
+#include "dqm/Issues.hpp"
 
 #include "daqdataformats/TriggerRecord.hpp"
 #include "detchannelmaps/TPCChannelMap.hpp"

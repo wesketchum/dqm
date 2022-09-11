@@ -12,7 +12,7 @@
 #include "AnalysisModule.hpp"
 #include "ChannelMap.hpp"
 #include "Constants.hpp"
-#include "dqm/DQMIssues.hpp"
+#include "dqm/Issues.hpp"
 #include "HistContainer.hpp"
 #include "FourierContainer.hpp"
 

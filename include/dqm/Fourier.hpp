@@ -10,7 +10,7 @@
 
 // dqm
 #include "AnalysisModule.hpp"
-#include "DQMIssues.hpp"
+#include "Issues.hpp"
 
 #include "daqdataformats/TriggerRecord.hpp"
 #include "logging/Logging.hpp"

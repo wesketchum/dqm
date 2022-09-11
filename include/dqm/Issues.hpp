@@ -1,5 +1,5 @@
 /**
- * @file DQMIssues.hpp DQM system related ERS issues
+ * @file Issues.hpp DQM system related ERS issues
  *
  * This is part of the DUNE DAQ , copyright 2020.
  * Licensing/copyright details are in the COPYING file that you should have
