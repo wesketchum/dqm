@@ -141,7 +141,7 @@ DQMProcessor::do_start(const nlohmann::json& args)
   // channel map
   m_map = std::shared_ptr<ChannelMap>(new ChannelMapEmpty);
 
-  m_running_thread.reset(new std::thread(&DQMProcessor::RequestMaker, this));
+  m_running_thread.reset(new std::thread(&DQMProcessor::do_work, this));
 }
 
 void
@@ -166,7 +166,7 @@ DQMProcessor::do_drain_dataflow(const data_t&)
 }
 
 void
-DQMProcessor::RequestMaker()
+DQMProcessor::do_work()
 {
 
   // Helper struct with the necessary information about an instance
@@ -350,7 +350,7 @@ DQMProcessor::RequestMaker()
     // Now it's the time to do something
     dfmessages::TriggerDecision request;
     if (m_mode == "readout") {
-      request = CreateRequest(m_sids, analysis_instance.number_of_frames);
+      request = create_readout_request(m_sids, analysis_instance.number_of_frames);
       try {
         m_sender->send(std::move(request), m_sink_timeout);
       } catch (iomanager::TimeoutExpired&) {
@@ -427,7 +427,7 @@ DQMProcessor::RequestMaker()
 } // NOLINT Function length
 
 dfmessages::TriggerDecision
-DQMProcessor::CreateRequest(std::vector<dfmessages::SourceID>& m_sids, int number_of_frames)
+DQMProcessor::create_readout_request(std::vector<dfmessages::SourceID>& m_sids, int number_of_frames)
 {
   auto timestamp = m_time_est->get_timestamp_estimate();
   dfmessages::TriggerDecision decision;
@@ -442,7 +442,7 @@ DQMProcessor::CreateRequest(std::vector<dfmessages::SourceID>& m_sids, int numbe
 
   int window_size = number_of_frames * TICKS_BETWEEN_TIMESTAMP;
 
-  for (auto& link : m_sids) {
+  for (auto& sid : m_sids) {
     // TLOG() << "ONE LINK";
     daqdataformats::ComponentRequest request;
     request.component = sid;
