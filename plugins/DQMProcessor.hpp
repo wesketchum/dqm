@@ -61,7 +61,7 @@ public:
   void dispatch_trigger_record(std::unique_ptr<daqdataformats::TriggerRecord>& tr);
 
   void RequestMaker();
-  dfmessages::TriggerDecision CreateRequest(std::vector<dfmessages::SourceID>& m_links, int number_of_frames);
+  dfmessages::TriggerDecision CreateRequest(std::vector<dfmessages::SourceID>& m_sids, int number_of_frames);
 
   void dfrequest();
 

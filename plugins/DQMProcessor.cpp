@@ -179,11 +179,12 @@ DQMProcessor::RequestMaker()
     std::string name;
   };
 
-  std::vector<daqdataformats::SourceID> m_links;
+  std::vector<daqdataformats::SourceID> m_sids;
 
   for (auto i : m_link_idx) {
-    m_links.push_back({ daqdataformats::SourceID::Subsystem::kDetectorReadout, static_cast<unsigned int>(i) });
+    m_sids.push_back({ daqdataformats::SourceID::Subsystem::kDetectorReadout, static_cast<unsigned int>(i) });
   }
+  std::sort(m_sids.begin(), m_sids.end());
 
   // Map that holds the tasks and times when to do them
   std::map<std::chrono::time_point<std::chrono::system_clock>, AnalysisInstance> map;
@@ -349,7 +350,7 @@ DQMProcessor::RequestMaker()
     // Now it's the time to do something
     dfmessages::TriggerDecision request;
     if (m_mode == "readout") {
-      request = CreateRequest(m_links, analysis_instance.number_of_frames);
+      request = CreateRequest(m_sids, analysis_instance.number_of_frames);
       try {
         m_sender->send(std::move(request), m_sink_timeout);
       } catch (iomanager::TimeoutExpired&) {
@@ -426,7 +427,7 @@ DQMProcessor::RequestMaker()
 } // NOLINT Function length
 
 dfmessages::TriggerDecision
-DQMProcessor::CreateRequest(std::vector<dfmessages::SourceID>& m_links, int number_of_frames)
+DQMProcessor::CreateRequest(std::vector<dfmessages::SourceID>& m_sids, int number_of_frames)
 {
   auto timestamp = m_time_est->get_timestamp_estimate();
   dfmessages::TriggerDecision decision;
@@ -441,10 +442,10 @@ DQMProcessor::CreateRequest(std::vector<dfmessages::SourceID>& m_links, int numb
 
   int window_size = number_of_frames * TICKS_BETWEEN_TIMESTAMP;
 
-  for (auto& link : m_links) {
+  for (auto& link : m_sids) {
     // TLOG() << "ONE LINK";
     daqdataformats::ComponentRequest request;
-    request.component = link;
+    request.component = sid;
     // Some offset is required to avoid having delayed requests in readout
     // which make the TRB to take longer and longer to create the trigger records
     // 10^5 was tried at first but wasn't enough. At 50 MHz, 10^5 = 2 ms
@@ -456,7 +457,7 @@ DQMProcessor::CreateRequest(std::vector<dfmessages::SourceID>& m_links, int numb
     decision.components.push_back(request);
   }
 
-  TLOG_DEBUG(10) << "Making request (trigger decision) asking for " << m_links.size()
+  TLOG_DEBUG(10) << "Making request (trigger decision) asking for " << m_sids.size()
                  << " links and with the beginning of the window at timestamp " << timestamp - window_size
                  << " and the end of the window at timestamp " << timestamp;
   ;
