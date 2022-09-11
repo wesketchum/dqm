@@ -8,15 +8,14 @@
 #ifndef DQM_INCLUDE_DQM_STDEV_HPP_
 #define DQM_INCLUDE_DQM_STDEV_HPP_
 
-#include "AnalysisModule.hpp"
-
 #include <cmath>
 
 /**
  * Basic StDev calculation implementation
  * Fill values, then compute the StDev at the end
  */
-namespace dunedaq::dqm {
+namespace dunedaq {
+namespace dqm {
 
 class StDev
 {
@@ -67,8 +66,9 @@ StDev::clean()
 double
 StDev::mean()
 {
-  if (m_mean_set)
+  if (m_mean_set) {
     return m_mean;
+  }
   m_mean = m_sum / m_nentries;
   m_mean_set = true;
   return m_mean;
@@ -77,10 +77,10 @@ StDev::mean()
 double
 StDev::std()
 {
-  if (m_std_set)
+  if (m_std_set) {
     return m_std;
+  }
   if (m_nentries <= 1) {
-    ers::error(InvalidInput(ERS_HERE, "number of entries is 0 or 1 for the StDev"));
     return -1;
   }
   m_mean = mean();
@@ -89,6 +89,7 @@ StDev::std()
   return m_std;
 }
 
-} // namespace dunedaq::dqm
+} // namespace dunedaq
+} // namespace dqm
 
 #endif // DQM_INCLUDE_DQM_STDEV_HPP_

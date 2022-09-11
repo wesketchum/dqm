@@ -8,16 +8,14 @@
 #ifndef DQM_INCLUDE_DQM_RMS_HPP_
 #define DQM_INCLUDE_DQM_RMS_HPP_
 
-#include "dqm/AnalysisModule.hpp"
-#include "dqm/Issues.hpp"
-
 #include <cmath>
 
 /**
  * Basic RMS calculation implementation
  * Fill values, then compute the RMS at the end
  */
-namespace dunedaq::dqm {
+namespace dunedaq {
+namespace dqm {
 
 class RMS
 {
@@ -67,7 +65,6 @@ RMS::rms()
   if (m_rms_set)
     return m_rms;
   if (not m_nentries) {
-    ers::error(InvalidInput(ERS_HERE, "number of entries is 0 for the RMS"));
     return -1;
   }
   m_rms = sqrt(m_sum_sq / m_nentries);
@@ -75,6 +72,7 @@ RMS::rms()
   return m_rms;
 }
 
-} // namespace dunedaq::dqm
+} // namespace dqm
+} // namespace dunedaq
 
 #endif // DQM_INCLUDE_DQM_RMS_HPP_
