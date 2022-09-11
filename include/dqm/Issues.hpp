@@ -44,6 +44,8 @@ ERS_DECLARE_ISSUE(dqm, EmptyData, "Data is empty after removing empty fragments"
 
 ERS_DECLARE_ISSUE(dqm, TimestampsNotAligned, "Timestamps are not aligned, DQM will align them", ((std::string)empty))
 
+ERS_DECLARE_ISSUE(dqm, InvalidInput, "Invalid input: ", ((std::string)why))
+
 
 } // namespace dunedaq
 
