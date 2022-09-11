@@ -38,5 +38,7 @@ target_include_directories(dqm_DQMProcessor_duneDAQModule PUBLIC $ENV{FFTW_INC})
 
 # Unit tests
 daq_add_unit_test(Fourier_test LINK_LIBRARIES ${DQM_DEPENDENCIES})
+daq_add_unit_test(RMS_test LINK_LIBRARIES ${DQM_DEPENDENCIES})
+daq_add_unit_test(StDev_test LINK_LIBRARIES ${DQM_DEPENDENCIES})
 
 daq_install()

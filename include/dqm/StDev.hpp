@@ -43,6 +43,7 @@ public:
 void
 StDev::fill(double const x)
 {
+  m_nentries++;
   m_sum += x;
   m_sum_sq += x * x;
 }
