@@ -22,12 +22,8 @@
 
 // DUNE-DAQ includes
 #include "daqdataformats/ComponentRequest.hpp"
-#include "daqdataformats/Fragment.hpp"
 #include "daqdataformats/SourceID.hpp"
-#include "daqdataformats/TriggerRecord.hpp"
-#include "detdataformats/wib/WIBFrame.hpp"
 #include "dfmessages/TimeSync.hpp"
-#include "dfmessages/TriggerDecision.hpp"
 #include "dfmessages/TRMonRequest.hpp"
 #include "dfmessages/TriggerRecord_serialization.hpp"
 
@@ -37,7 +33,6 @@
 #include <memory>
 #include <string>
 #include <thread>
-#include <utility>
 #include <vector>
 
 namespace dunedaq {
@@ -79,9 +74,10 @@ DQMProcessor::do_configure(const nlohmann::json& args)
   m_frontend_type = conf.frontend_type;
 
   m_hist_conf = conf.hist;
-  m_mean_rms_conf = conf.mean_rms;
-  m_fourier_conf = conf.fourier;
-  m_fourier_sum_conf = conf.fourier_sum;
+  m_rms_conf = conf.rms;
+  m_std_conf = conf.stdev;
+  m_fourier_channel_conf = conf.fourier_channel;
+  m_fourier_plane_conf = conf.fourier_plane;
 
   m_df_seconds = conf.df_seconds;
   m_df_offset = conf.df_offset;
@@ -206,12 +202,12 @@ DQMProcessor::do_work()
                                                       CHANNELS_PER_LINK * m_link_idx.size(),
                                                       m_link_idx,
                                                     1. / m_clock_frequency * (strcmp(m_frontend_type.c_str(), "wib") ? 32 : 25),
-                                                      m_fourier_conf.num_frames);
+                                                      m_fourier_channel_conf.num_frames);
   auto fouriersum = std::make_shared<FourierContainer>("fft_sums_display",
                                                       4,
                                                       m_link_idx,
                                                        1. / m_clock_frequency * (strcmp(m_frontend_type.c_str(), "wib") ? 32 : 25),
-                                                      m_fourier_sum_conf.num_frames,
+                                                      m_fourier_plane_conf.num_frames,
                                                       true);
 
   // Whether an algorithm is enabled or not depends on the value of the bitfield m_df_algs
@@ -235,30 +231,30 @@ DQMProcessor::do_work()
       nullptr,
       "Histogram every " + std::to_string(m_hist_conf.how_often) + " s"
     };
-  if (m_mean_rms_conf.how_often > 0)
+  if (m_std_conf.how_often > 0)
     map[std::chrono::system_clock::now() + std::chrono::seconds(m_offset_from_channel_map)] = {
       mean_rms,
-      m_mean_rms_conf.how_often,
-      m_mean_rms_conf.num_frames,
+      m_std_conf.how_often,
+      m_std_conf.num_frames,
       nullptr,
-      "Mean and RMS every " + std::to_string(m_mean_rms_conf.how_often) + " s"
+      "Mean and RMS every " + std::to_string(m_std_conf.how_often) + " s"
     };
-  if (m_fourier_conf.how_often > 0)
+  if (m_fourier_channel_conf.how_often > 0)
     map[std::chrono::system_clock::now() + std::chrono::seconds(m_offset_from_channel_map)] = {
       fourier,
-      m_fourier_conf.how_often,
-      m_fourier_conf.num_frames,
+      m_fourier_channel_conf.how_often,
+      m_fourier_channel_conf.num_frames,
       nullptr,
-      "Fourier every " + std::to_string(m_fourier_conf.how_often) + " s"
+      "Fourier every " + std::to_string(m_fourier_channel_conf.how_often) + " s"
     };
 
-  if (m_fourier_sum_conf.how_often > 0)
+  if (m_fourier_plane_conf.how_often > 0)
     map[std::chrono::system_clock::now() + std::chrono::seconds(m_offset_from_channel_map)] = {
       fouriersum,
-      m_fourier_sum_conf.how_often,
-      m_fourier_sum_conf.num_frames,
+      m_fourier_plane_conf.how_often,
+      m_fourier_plane_conf.num_frames,
       nullptr,
-      "Summed Fourier every " + std::to_string(m_fourier_sum_conf.how_often) + " s"
+      "Summed Fourier every " + std::to_string(m_fourier_plane_conf.how_often) + " s"
     };
 
   if (m_mode == "df" && m_df_seconds > 0) {

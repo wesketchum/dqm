@@ -21,17 +21,14 @@
 #include "daqdataformats/TriggerRecord.hpp"
 #include "dfmessages/TriggerDecision.hpp"
 #include "timinglibs/TimestampEstimator.hpp"
-#include <ipm/Receiver.hpp>
+#include "ipm/Receiver.hpp"
 
 #include "iomanager/FollyQueue.hpp"
 
 #include <atomic>
 #include <chrono>
-#include <memory>
 #include <string>
-#include <utility>
 #include <vector>
-#include <list>
 
 namespace dunedaq::dqm {
 
@@ -77,10 +74,10 @@ private:
 
   // Configuration parameters
   dqmprocessor::StandardDQM m_hist_conf;
-  dqmprocessor::StandardDQM m_mean_rms_conf;
-  dqmprocessor::StandardDQM m_fourier_conf;
-  dqmprocessor::StandardDQM m_fourier_sum_conf;
-  dqmprocessor::StandardDQM m_channel_mask_conf;
+  dqmprocessor::StandardDQM m_std_conf;
+  dqmprocessor::StandardDQM m_rms_conf;
+  dqmprocessor::StandardDQM m_fourier_channel_conf;
+  dqmprocessor::StandardDQM m_fourier_plane_conf;
 
   // DF configuration parameters
   double m_df_seconds {0};
@@ -112,7 +109,6 @@ private:
   std::string m_channel_map;
   std::shared_ptr<ChannelMap> m_map;
 
-  // std::list<std::unique_ptr<daqdataformats::TriggerRecord>> dftrs;
   iomanager::FollySPSCQueue<std::unique_ptr<daqdataformats::TriggerRecord>> dftrs{"FollyQueue", 100};
 
   std::string m_mode;

@@ -43,13 +43,15 @@ local dqmprocessor = {
     conf: s.record("Conf", [
         s.field("channel_map", self.string, doc='"HD" or "VD"'),
         s.field("mode", self.string, doc='readout or df',),
-        s.field("hist", self.standard_dqm,      # This one is for the raw event display
+        s.field("hist", self.standard_dqm,  # Parameters for the raw data stream
                 doc="Standard dqm"),
-        s.field("mean_rms", self.standard_dqm,  # This one is for the Mean and RMS
+        s.field("rms", self.standard_dqm,  # Parameters for the RMS stream
                 doc="Standard dqm"),
-        s.field("fourier", self.standard_dqm,   # This one is for fourier transforms
+        s.field("stdev", self.standard_dqm,  # Parameters for the standard deviation stream
+                doc="Standard dqm"),
+        s.field("fourier_channel", self.standard_dqm, # Parameters for fourier transforms for each individual channel
                 doc="Fourier"),
-        s.field("fourier_sum", self.standard_dqm, # This one is for summed fourier transforms
+        s.field("fourier_plane", self.standard_dqm, # Parameters for fourier transforms for planes
                 doc="Fourier sum"),
         s.field("kafka_address", self.string,
                 doc="Address used for sending to the kafka broker"),
