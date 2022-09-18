@@ -1,5 +1,5 @@
 /**
- * @file StDev.hpp Simple 1D histogram implementation
+ * @file STD.hpp Simple Standard Deviation implementation
  *
  * This is part of the DUNE DAQ , copyright 2020.
  * Licensing/copyright details are in the COPYING file that you should have
@@ -11,13 +11,13 @@
 #include <cmath>
 
 /**
- * Basic StDev calculation implementation
- * Fill values, then compute the StDev at the end
+ * Basic STD calculation implementation
+ * Fill values, then compute the STD at the end
  */
 namespace dunedaq {
 namespace dqm {
 
-class StDev
+class STD
 {
 
 public:
@@ -40,7 +40,7 @@ public:
 
 
 void
-StDev::fill(double const x)
+STD::fill(double const x)
 {
   m_nentries++;
   m_sum += x;
@@ -48,13 +48,13 @@ StDev::fill(double const x)
 }
 
 bool
-StDev::is_running() const
+STD::is_running() const
 {
   return true;
 }
 
 void
-StDev::clean()
+STD::clean()
 {
   m_sum = 0;
   m_sum_sq = 0;
@@ -64,7 +64,7 @@ StDev::clean()
 }
 
 double
-StDev::mean()
+STD::mean()
 {
   if (m_mean_set) {
     return m_mean;
@@ -75,7 +75,7 @@ StDev::mean()
 }
 
 double
-StDev::std()
+STD::std()
 {
   if (m_std_set) {
     return m_std;

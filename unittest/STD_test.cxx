@@ -13,7 +13,7 @@
 
 #include "boost/test/unit_test.hpp"
 
-#include "dqm/StDev.hpp"
+#include "dqm/STD.hpp"
 
 #include <vector>
 #include <random>
@@ -31,7 +31,7 @@ StDev_test_case(int n, double low, double high)
 
   std::uniform_real_distribution<double> dist(low, high);
 
-  StDev std;
+  STD std;
   std::vector<double> v;
   for (int i = 0; i < n; i++) {
     double num = dist(mt);
