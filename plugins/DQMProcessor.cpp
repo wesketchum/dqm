@@ -12,6 +12,7 @@
 #include "dqm/dqmprocessor/Nljs.hpp"
 #include "dqm/dqmprocessor/Structs.hpp"
 #include "dqm/dqmprocessorinfo/InfoNljs.hpp"
+#include "dqm/DQMLogging.hpp"
 
 #include "ChannelMapEmpty.hpp"
 #include "ChannelMapFiller.hpp"
@@ -19,6 +20,7 @@
 #include "DQMProcessor.hpp"
 #include "FourierContainer.hpp"
 #include "HistContainer.hpp"
+#include "STDModule.hpp"
 
 // DUNE-DAQ includes
 #include "daqdataformats/ComponentRequest.hpp"
@@ -75,7 +77,7 @@ DQMProcessor::do_configure(const nlohmann::json& args)
 
   m_hist_conf = conf.hist;
   m_rms_conf = conf.rms;
-  m_std_conf = conf.stdev;
+  m_std_conf = conf.std;
   m_fourier_channel_conf = conf.fourier_channel;
   m_fourier_plane_conf = conf.fourier_plane;
 
@@ -195,6 +197,9 @@ DQMProcessor::do_work()
   // Mean and RMS
   auto mean_rms = std::make_shared<HistContainer>(
       "rmsm_display", CHANNELS_PER_LINK * m_link_idx.size(), m_link_idx, 100, 0, 17000, true);
+  // STD
+  auto std = std::make_shared<STDModule>(
+                                         "std", CHANNELS_PER_LINK * m_link_idx.size(), m_link_idx);
   // Fourier transform
   // The Delta of time between frames is the inverse of the sampling frequency (clock frequency)
   // but because we are sampling every TICKS_BETWEEN_TIMESTAMP ticks we have to multiply by that
@@ -233,11 +238,11 @@ DQMProcessor::do_work()
     };
   if (m_std_conf.how_often > 0)
     map[std::chrono::system_clock::now() + std::chrono::seconds(m_offset_from_channel_map)] = {
-      mean_rms,
+      std,
       m_std_conf.how_often,
       m_std_conf.num_frames,
       nullptr,
-      "Mean and RMS every " + std::to_string(m_std_conf.how_often) + " s"
+      "STD every " + std::to_string(m_std_conf.how_often) + " s"
     };
   if (m_fourier_channel_conf.how_often > 0)
     map[std::chrono::system_clock::now() + std::chrono::seconds(m_offset_from_channel_map)] = {

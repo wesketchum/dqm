@@ -16,7 +16,6 @@
 #include "Exporter.hpp"
 #include "dqm/Issues.hpp"
 #include "dqm/STD.hpp"
-#include "STDModule.hpp"
 
 #include "daqdataformats/TriggerRecord.hpp"
 #include "detdataformats/tde/TDE16Frame.hpp"
