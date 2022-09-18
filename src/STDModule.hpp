@@ -16,6 +16,7 @@
 #include "Exporter.hpp"
 #include "dqm/Issues.hpp"
 #include "dqm/STD.hpp"
+#include "dqm/FormatUtils.hpp"
 
 #include "daqdataformats/TriggerRecord.hpp"
 #include "detdataformats/tde/TDE16Frame.hpp"
@@ -42,15 +43,12 @@ public:
       std::string& frontend_type,
       const std::string& kafka_address = "");
 
+  template <class T>
   std::unique_ptr<daqdataformats::TriggerRecord>
-  run_wibframe(std::unique_ptr<daqdataformats::TriggerRecord> record,
-               std::shared_ptr<ChannelMap>& map,
-               const std::string& kafka_address = "");
+  run_(std::unique_ptr<daqdataformats::TriggerRecord> record,
+       std::shared_ptr<ChannelMap>& map,
+       const std::string& kafka_address = "");
 
-  std::unique_ptr<daqdataformats::TriggerRecord>
-  run_wib2frame(std::unique_ptr<daqdataformats::TriggerRecord> record,
-                std::shared_ptr<ChannelMap>& map,
-                const std::string& kafka_address = "");
   std::unique_ptr<daqdataformats::TriggerRecord>
   run_tdeframe(std::unique_ptr<daqdataformats::TriggerRecord> record,
                 std::shared_ptr<ChannelMap>& map,
@@ -92,43 +90,54 @@ STDModule::STDModule(std::string name,
 }
 
 std::unique_ptr<daqdataformats::TriggerRecord>
-STDModule::run_wibframe(std::unique_ptr<daqdataformats::TriggerRecord> record,
-                            std::shared_ptr<ChannelMap>& map,
-                            const std::string& kafka_address)
+STDModule::run_tdeframe(std::unique_ptr<daqdataformats::TriggerRecord> record,
+                             std::shared_ptr<ChannelMap>& map,
+                             const std::string& kafka_address)
 {
-  auto wibframes = decode<detdataformats::wib::WIBFrame>(*record);
+  TLOG() << "Running run_tdeframe";
+  auto wibframes = decode<detdataformats::tde::TDE16Frame>(*record);
+  return std::move(record);
+}
 
-  if (wibframes.size() == 0) {
+template <class T>
+std::unique_ptr<daqdataformats::TriggerRecord>
+STDModule::run_(std::unique_ptr<daqdataformats::TriggerRecord> record,
+               std::shared_ptr<ChannelMap>& map,
+               const std::string& kafka_address)
+{
+  auto frames = decode<T>(*record);
+
+  if (frames.size() == 0) {
     // throw issue
     TLOG() << "Found no frames";
     return std::move(record);
   }
 
   // Remove empty fragments
-  for (auto& vec : wibframes)
+  for (auto& vec : frames)
     if (!vec.second.size())
-      wibframes.erase(vec.first);
+      frames.erase(vec.first);
 
   // Get all the keys
   std::vector<int> keys;
-  for (auto& [key, value] : wibframes) {
+  for (auto& [key, value] : frames) {
     keys.push_back(key);
   }
 
   uint64_t min_timestamp = 0; // NOLINT(build/unsigned)
   // We run over all links until we find one that has a non-empty vector of frames
   for (auto& key : keys) {
-    if (!wibframes[key].empty()) {
-      min_timestamp = wibframes[key].front()->get_wib_header()->get_timestamp();
+    if (!frames[key].empty()) {
+      min_timestamp = get_timestamp<T>(frames[key].front());
       break;
     }
   }
   uint64_t timestamp = 0; // NOLINT(build/unsigned)
 
-  // Check that all the wibframes vectors have the same size, if not, something
+  // Check that all the frames vectors have the same size, if not, something
   // bad has happened, for now don't do anything
-  // auto size = wibframes.begin()->second.size();
-  // for (auto& vec : wibframes) {
+  // auto size = frames.begin()->second.size();
+  // for (auto& vec : frames) {
   //   if (vec.second.size() != size) {
   //     ers::error(InvalidData(ERS_HERE, "the size of the vector of frames is different for each link"));
   //     set_is_running(false);
@@ -146,16 +155,16 @@ STDModule::run_wibframe(std::unique_ptr<daqdataformats::TriggerRecord> record,
   // Fill for every frame, outer loop so it is done frame by frame
   // This is needed for sending frame by frame
   // The order does not matter for the mean and RMS
-  for (size_t ifr = 0; ifr < wibframes[keys[0]].size(); ++ifr) {
+  for (size_t ifr = 0; ifr < frames[keys[0]].size(); ++ifr) {
     // Fill for every link
     for (size_t ikey = 0; ikey < keys.size(); ++ikey) {
-      auto fr = wibframes[keys[ikey]][ifr];
+      auto fr = frames[keys[ikey]][ifr];
 
       // Timestamps are too big for them to be displayed nicely, subtract the minimum timestamp
-      timestamp = fr->get_wib_header()->get_timestamp() - min_timestamp;
+      timestamp = get_timestamp<T>(fr) - min_timestamp;
 
       for (int ich = 0; ich < CHANNELS_PER_LINK; ++ich) {
-        fill(ich, keys[ikey], fr->get_channel(ich));
+        fill(ich, keys[ikey], get_adc<T>(fr, ich));
       }
     }
   }
@@ -167,95 +176,10 @@ STDModule::run_wibframe(std::unique_ptr<daqdataformats::TriggerRecord> record,
   clean();
 
   return std::move(record);
+
 }
 
-std::unique_ptr<daqdataformats::TriggerRecord>
-STDModule::run_wib2frame(std::unique_ptr<daqdataformats::TriggerRecord> record,
-                             std::shared_ptr<ChannelMap>& map,
-                             const std::string& kafka_address)
-{
-  auto wibframes = decode<detdataformats::wib2::WIB2Frame>(*record);
 
-  if (wibframes.size() == 0) {
-    // throw issue
-    TLOG() << "Found no frames";
-    return std::move(record);
-  }
-
-  // Remove empty fragments
-  for (auto& vec : wibframes)
-    if (!vec.second.size())
-      wibframes.erase(vec.first);
-
-  // Get all the keys
-  std::vector<int> keys;
-  for (auto& [key, value] : wibframes) {
-    keys.push_back(key);
-  }
-
-  uint64_t min_timestamp = -1; // NOLINT(build/unsigned)
-  // We run over all links until we find one that has a non-empty vector of frames
-  for (auto& key : keys) {
-    if (!wibframes[key].empty()) {
-      min_timestamp = std::min(wibframes[key].front()->get_timestamp(), min_timestamp);
-    }
-  }
-  uint64_t timestamp = 0; // NOLINT(build/unsigned)
-
-  // Check that all the wibframes vectors have the same size, if not, something
-  // bad has happened, for now don't do anything
-  auto size = wibframes.begin()->second.size();
-  for (auto& vec : wibframes) {
-    if (vec.second.size() != size) {
-      // ers::error(InvalidData(ERS_HERE, "the size of the vector of frames is different for each link"));
-      TLOG() << "Size for each fragment is different, the first fragment has size " << size << " but got size " << vec.second.size();
-      // set_is_running(false);
-      // return std::move(record);
-    }
-  }
-
-
-  // Main loop
-  // If only the mean and rms are to be sent all frames are processed
-  // and at the end the result is transmitted
-  // If it's in the raw display mode then the result is saved for
-  // every frame and sent at the end
-
-  // Fill for every frame, outer loop so it is done frame by frame
-  // This is needed for sending frame by frame
-  // The order does not matter for the mean and RMS
-  for (size_t ifr = 0; ifr < wibframes[keys[0]].size(); ++ifr) {
-    // Fill for every link
-    for (size_t ikey = 0; ikey < keys.size(); ++ikey) {
-      auto fr = wibframes[keys[ikey]][ifr];
-
-      // Timestamps are too big for them to be displayed nicely, subtract the minimum timestamp
-      timestamp = fr->get_timestamp() - min_timestamp;
-
-      for (int ich = 0; ich < CHANNELS_PER_LINK; ++ich) {
-        fill(ich, keys[ikey], fr->get_adc(ich));
-      }
-    }
-    // After we are done with all the links, if needed save the info for later
-  }
-  transmit(kafka_address,
-              map,
-              "DQM",
-              record->get_header_ref().get_run_number(),
-              record->get_header_ref().get_trigger_timestamp());
-  clean();
-  return std::move(record);
-}
-
-std::unique_ptr<daqdataformats::TriggerRecord>
-STDModule::run_tdeframe(std::unique_ptr<daqdataformats::TriggerRecord> record,
-                             std::shared_ptr<ChannelMap>& map,
-                             const std::string& kafka_address)
-{
-  TLOG() << "Running run_tdeframe";
-  auto wibframes = decode<detdataformats::tde::TDE16Frame>(*record);
-  return std::move(record);
-}
 
 std::unique_ptr<daqdataformats::TriggerRecord>
 STDModule::run(std::unique_ptr<daqdataformats::TriggerRecord> record,
@@ -266,22 +190,22 @@ STDModule::run(std::unique_ptr<daqdataformats::TriggerRecord> record,
 {
   if (frontend_type == "wib") {
     set_is_running(true);
-    auto ret = run_wibframe(std::move(record), map, kafka_address);
+    auto ret = run_<detdataformats::wib::WIBFrame>(std::move(record), map, kafka_address);
     set_is_running(false);
     return ret;
   }
   else if (frontend_type == "wib2") {
     set_is_running(true);
-    auto ret = run_wib2frame(std::move(record), map, kafka_address);
+    auto ret = run_<detdataformats::wib2::WIB2Frame>(std::move(record), map, kafka_address);
     set_is_running(false);
     return ret;
   }
-  else if (frontend_type == "tde") {
-    set_is_running(true);
-    auto ret = run_tdeframe(std::move(record), map, kafka_address);
-    set_is_running(false);
-    return ret;
-  }
+  // else if (frontend_type == "tde") {
+  //   set_is_running(true);
+  //   auto ret = run_<detdataformats::wib::WIBFrame>(std::move(record), map, kafka_address);
+  //   set_is_running(false);
+  //   return ret;
+  // }
   return record;
 }
 
