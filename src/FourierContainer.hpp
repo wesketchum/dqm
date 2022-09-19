@@ -14,7 +14,7 @@
 #include "Constants.hpp"
 #include "Decoder.hpp"
 #include "Exporter.hpp"
-#include "dqm/Fourier.hpp"
+#include "dqm/algs/Fourier.hpp"
 #include "dqm/Issues.hpp"
 
 #include "daqdataformats/TriggerRecord.hpp"

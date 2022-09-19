@@ -13,7 +13,7 @@
 
 #include "boost/test/unit_test.hpp"
 
-#include "dqm/STD.hpp"
+#include "dqm/algs/STD.hpp"
 
 #include <vector>
 #include <random>

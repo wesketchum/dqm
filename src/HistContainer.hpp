@@ -15,13 +15,14 @@
 #include "Decoder.hpp"
 #include "Exporter.hpp"
 #include "dqm/Issues.hpp"
-#include "dqm/Hist.hpp"
+#include "dqm/algs/Hist.hpp"
+#include "dqm/FormatUtils.hpp"
+#include "dqm/Pipeline.hpp"
 
 #include "daqdataformats/TriggerRecord.hpp"
 
 #include <cstdlib>
 #include <map>
-#include <memory>
 #include <string>
 #include <vector>
 
@@ -31,14 +32,19 @@ class HistContainer : public AnalysisModule
 {
 
 public:
-  HistContainer(std::string name, int nhist, int steps, double low, double high, bool only_mean = false);
+  HistContainer(std::string name, int nhist, int steps, double low, double high);
   HistContainer(std::string name,
                 int nhist,
                 std::vector<int>& link_idx,
                 int steps,
                 double low,
-                double high,
-                bool only_mean);
+                double high);
+
+  template <class T>
+  std::unique_ptr<daqdataformats::TriggerRecord>
+  run_(std::unique_ptr<daqdataformats::TriggerRecord> record,
+       std::shared_ptr<ChannelMap>& map,
+       const std::string& kafka_address = "");
 
   std::unique_ptr<daqdataformats::TriggerRecord>
   run(std::unique_ptr<daqdataformats::TriggerRecord> record,
@@ -51,22 +57,12 @@ public:
   run_wibframe(std::unique_ptr<daqdataformats::TriggerRecord> record,
                std::shared_ptr<ChannelMap>& map,
                const std::string& kafka_address = "");
-  std::unique_ptr<daqdataformats::TriggerRecord>
-  run_wib2frame(std::unique_ptr<daqdataformats::TriggerRecord> record,
-                std::shared_ptr<ChannelMap>& map,
-                const std::string& kafka_address = "");
   void transmit(const std::string& kafka_address,
                 std::shared_ptr<ChannelMap>& map,
                 const std::string& topicname,
                 int run_num,
                 time_t timestamp);
-  void transmit_mean_and_rms(const std::string& kafka_address,
-                             std::shared_ptr<ChannelMap>& map,
-                             const std::string& topicname,
-                             int run_num,
-                             time_t timestamp);
   void clean();
-  void append_to_string(std::uint64_t timestamp, std::shared_ptr<ChannelMap>& map); // NOLINT(build/unsigned)
   void fill(int ch, double value);
   void fill(int ch, int link, double value);
   int get_local_index(int ch, int link);
@@ -75,15 +71,12 @@ private:
   std::string m_name;
   std::vector<Hist> histvec;
   int m_size;
-  std::map<int, std::string> m_to_send;
   std::map<int, int> m_index;
-  bool m_only_mean_rms = false;
 };
 
-HistContainer::HistContainer(std::string name, int nhist, int steps, double low, double high, bool only_mean)
+HistContainer::HistContainer(std::string name, int nhist, int steps, double low, double high)
   : m_name(name)
   , m_size(nhist)
-  , m_only_mean_rms(only_mean)
 {
   for (int i = 0; i < m_size; ++i)
     histvec.emplace_back(Hist(steps, low, high));
@@ -94,11 +87,9 @@ HistContainer::HistContainer(std::string name,
                              std::vector<int>& link_idx,
                              int steps,
                              double low,
-                             double high,
-                             bool only_mean)
+                             double high)
   : m_name(name)
   , m_size(nhist)
-  , m_only_mean_rms(only_mean)
 {
   for (int i = 0; i < m_size; ++i) {
     histvec.emplace_back(Hist(steps, low, high));
@@ -110,44 +101,36 @@ HistContainer::HistContainer(std::string name,
   }
 }
 
+template <class T>
 std::unique_ptr<daqdataformats::TriggerRecord>
-HistContainer::run_wibframe(std::unique_ptr<daqdataformats::TriggerRecord> record,
-                            std::shared_ptr<ChannelMap>& map,
-                            const std::string& kafka_address)
+HistContainer::run_(std::unique_ptr<daqdataformats::TriggerRecord> record,
+                    std::shared_ptr<ChannelMap>& map,
+                    const std::string& kafka_address)
 {
-  auto wibframes = decode<detdataformats::wib::WIBFrame>(*record);
-
-  if (wibframes.size() == 0) {
-    // throw issue
-    TLOG() << "Found no frames";
-    return std::move(record);
-  }
-
-  // Remove empty fragments
-  for (auto& vec : wibframes)
-    if (!vec.second.size())
-      wibframes.erase(vec.first);
+  auto frames = decode<T>(*record);
+  Pipeline<T>({"remove_empty", "check_empty", "make_same_size", "check_timestamp_aligned"});
+  pipe(frames);
 
   // Get all the keys
   std::vector<int> keys;
-  for (auto& [key, value] : wibframes) {
+  for (auto& [key, value] : frames) {
     keys.push_back(key);
   }
 
   uint64_t min_timestamp = 0; // NOLINT(build/unsigned)
   // We run over all links until we find one that has a non-empty vector of frames
   for (auto& key : keys) {
-    if (!wibframes[key].empty()) {
-      min_timestamp = wibframes[key].front()->get_wib_header()->get_timestamp();
+    if (!frames[key].empty()) {
+      min_timestamp = get_timestamp<T>(frames[key].front());
       break;
     }
   }
   uint64_t timestamp = 0; // NOLINT(build/unsigned)
 
-  // Check that all the wibframes vectors have the same size, if not, something
+  // Check that all the frames vectors have the same size, if not, something
   // bad has happened, for now don't do anything
-  // auto size = wibframes.begin()->second.size();
-  // for (auto& vec : wibframes) {
+  // auto size = frames.begin()->second.size();
+  // for (auto& vec : frames) {
   //   if (vec.second.size() != size) {
   //     ers::error(InvalidData(ERS_HERE, "the size of the vector of frames is different for each link"));
   //     set_is_running(false);
@@ -165,168 +148,30 @@ HistContainer::run_wibframe(std::unique_ptr<daqdataformats::TriggerRecord> recor
   // Fill for every frame, outer loop so it is done frame by frame
   // This is needed for sending frame by frame
   // The order does not matter for the mean and RMS
-  for (size_t ifr = 0; ifr < wibframes[keys[0]].size(); ++ifr) {
+  for (size_t ifr = 0; ifr < frames[keys[0]].size(); ++ifr) {
     // Fill for every link
     for (size_t ikey = 0; ikey < keys.size(); ++ikey) {
-      auto fr = wibframes[keys[ikey]][ifr];
+      auto fr = frames[keys[ikey]][ifr];
 
       // Timestamps are too big for them to be displayed nicely, subtract the minimum timestamp
-      timestamp = fr->get_wib_header()->get_timestamp() - min_timestamp;
+      timestamp = get_timestamp<T>(fr) - min_timestamp;
 
       for (int ich = 0; ich < CHANNELS_PER_LINK; ++ich) {
-        fill(ich, keys[ikey], fr->get_channel(ich));
+        fill(ich, keys[ikey], get_adc<T>(fr, ich));
       }
     }
     // After we are done with all the links, if needed save the info for later
-    if (!m_only_mean_rms) {
-      append_to_string(timestamp, map);
-      clean();
-    }
   }
-  if (m_only_mean_rms) {
-    transmit_mean_and_rms(kafka_address,
-                          map,
-                          "testdunedqm",
-                          record->get_header_ref().get_run_number(),
-                          record->get_header_ref().get_trigger_timestamp());
-  } else {
-    transmit(kafka_address,
-             map,
-             "testdunedqm",
-             record->get_header_ref().get_run_number(),
-             record->get_header_ref().get_trigger_timestamp());
-  }
+  transmit(kafka_address,
+           map,
+           "DQM",
+           record->get_header_ref().get_run_number(),
+           record->get_header_ref().get_trigger_timestamp());
   clean();
 
   return std::move(record);
 }
 
-std::unique_ptr<daqdataformats::TriggerRecord>
-HistContainer::run_wib2frame(std::unique_ptr<daqdataformats::TriggerRecord> record,
-                             std::shared_ptr<ChannelMap>& map,
-                             const std::string& kafka_address)
-{
-  auto wibframes = decode<detdataformats::wib2::WIB2Frame>(*record);
-
-  if (wibframes.size() == 0) {
-    // throw issue
-    TLOG() << "Found no frames";
-    return std::move(record);
-  }
-
-  // Remove empty fragments
-  for (auto& vec : wibframes)
-    if (!vec.second.size())
-      wibframes.erase(vec.first);
-
-  // Get all the keys
-  std::vector<int> keys;
-  for (auto& [key, value] : wibframes) {
-    keys.push_back(key);
-  }
-
-  uint64_t min_timestamp = -1; // NOLINT(build/unsigned)
-  // We run over all links until we find one that has a non-empty vector of frames
-  for (auto& key : keys) {
-    if (!wibframes[key].empty()) {
-      min_timestamp = std::min(wibframes[key].front()->get_timestamp(), min_timestamp);
-    }
-  }
-  uint64_t timestamp = 0; // NOLINT(build/unsigned)
-
-  // Check that all the wibframes vectors have the same size, if not, something
-  // bad has happened, for now don't do anything
-  auto size = wibframes.begin()->second.size();
-  for (auto& vec : wibframes) {
-    if (vec.second.size() != size) {
-      // ers::error(InvalidData(ERS_HERE, "the size of the vector of frames is different for each link"));
-      TLOG() << "Size for each fragment is different, the first fragment has size " << size << " but got size " << vec.second.size();
-      // set_is_running(false);
-      // return std::move(record);
-    }
-  }
-
-
-  // Main loop
-  // If only the mean and rms are to be sent all frames are processed
-  // and at the end the result is transmitted
-  // If it's in the raw display mode then the result is saved for
-  // every frame and sent at the end
-
-  // Fill for every frame, outer loop so it is done frame by frame
-  // This is needed for sending frame by frame
-  // The order does not matter for the mean and RMS
-  for (size_t ifr = 0; ifr < wibframes[keys[0]].size(); ++ifr) {
-    // Fill for every link
-    for (size_t ikey = 0; ikey < keys.size(); ++ikey) {
-      auto fr = wibframes[keys[ikey]][ifr];
-
-      // Timestamps are too big for them to be displayed nicely, subtract the minimum timestamp
-      timestamp = fr->get_timestamp() - min_timestamp;
-
-      for (int ich = 0; ich < CHANNELS_PER_LINK; ++ich) {
-        fill(ich, keys[ikey], fr->get_adc(ich));
-      }
-    }
-    // After we are done with all the links, if needed save the info for later
-    if (!m_only_mean_rms) {
-      append_to_string(timestamp, map);
-      clean();
-    }
-  }
-  if (m_only_mean_rms) {
-    transmit_mean_and_rms(kafka_address,
-                          map,
-                          "testdunedqm",
-                          record->get_header_ref().get_run_number(),
-                          record->get_header_ref().get_trigger_timestamp());
-  } else {
-    transmit(kafka_address,
-             map,
-             "testdunedqm",
-             record->get_header_ref().get_run_number(),
-             record->get_header_ref().get_trigger_timestamp());
-  }
-  clean();
-  return std::move(record);
-}
-
-std::unique_ptr<daqdataformats::TriggerRecord>
-HistContainer::run(std::unique_ptr<daqdataformats::TriggerRecord> record,
-                   std::atomic<bool>&,
-                   std::shared_ptr<ChannelMap>& map,
-                   std::string& frontend_type,
-                   const std::string& kafka_address)
-{
-  if (frontend_type == "wib") {
-    set_is_running(true);
-    auto ret = run_wibframe(std::move(record), map, kafka_address);
-    set_is_running(false);
-    return ret;
-  }
-  else if (frontend_type == "wib2") {
-    set_is_running(true);
-    auto ret = run_wib2frame(std::move(record), map, kafka_address);
-    set_is_running(false);
-    return ret;
-  }
-  return record;
-}
-
-void
-HistContainer::append_to_string(std::uint64_t timestamp, std::shared_ptr<ChannelMap>& cmap) // NOLINT(build/unsigned)
-{
-  auto channel_order = cmap->get_map();
-  for (auto& [plane, map] : channel_order) {
-    m_to_send[plane] += std::to_string(timestamp) + "\n";
-    for (auto& [offch, pair] : map) {
-      int link = pair.first;
-      int ch = pair.second;
-      m_to_send[plane] += std::to_string(static_cast<int>(histvec[get_local_index(ch, link)].m_sum)) + " ";
-    }
-    m_to_send[plane] += "\n";
-  }
-}
 
 void
 HistContainer::transmit(const std::string& kafka_address,
@@ -337,14 +182,46 @@ HistContainer::transmit(const std::string& kafka_address,
 {
   // Placeholders
   std::string dataname = m_name;
-  std::string metadata = "";
-  int subrun = 0;
-  int event = 0;
   std::string partition = getenv("DUNEDAQ_PARTITION");
   std::string app_name = getenv("DUNEDAQ_APPLICATION_NAME");
   std::string datasource = partition + "_" + app_name;
+
   // One message is sent for every plane
   auto channel_order = cmap->get_map();
+  for (auto& [plane, map] : channel_order) {
+    std::stringstream output;
+    output << "{";
+    output << "\"source\": \"" << datasource << "\",";
+    output << "\"run_number\": \"" << run_num << "\",";
+    output << "\"partition\": \"" << partition << "\",";
+    output << "\"app_name\": \"" << app_name << "\",";
+    output << "\"plane\": \"" << plane << "\",";
+    output << "\"algorithm\": \"" << "std" << "\"";
+    output << "}\n\n\n";
+    std::vector<int> channels;
+    for (auto& [offch, pair] : map) {
+      channels.push_back(offch);
+    }
+    auto bytes = serialization::serialize(channels, serialization::kMsgPack);
+    for (auto& b : bytes) {
+      output << b;
+    }
+    output << "\n\n\n";
+    std::vector<float> values;
+    for (auto& [offch, pair] : map) {
+      int link = pair.first;
+      int ch = pair.second;
+      for (const auto& entry : histvec[get_local_index(ch, link)]) {
+        values.push_back(entry);
+      }
+    }
+    bytes = serialization::serialize(values, serialization::kMsgPack);
+    for (auto& b : bytes) {
+      output << b;
+    }
+    TLOG_DEBUG(5) << "Size of the message in bytes: " << output.str().size();
+    KafkaExport(kafka_address, output.str(), topicname);
+  }
 
   for (auto& [key, value] : channel_order) {
     std::stringstream output;
@@ -358,54 +235,34 @@ HistContainer::transmit(const std::string& kafka_address,
     TLOG_DEBUG(5) << "Size of the message in bytes: " << output.str().size();
     KafkaExport(kafka_address, output.str(), topicname);
   }
-  m_to_send.clear();
 }
 
-void
-HistContainer::transmit_mean_and_rms(const std::string& kafka_address,
-                                     std::shared_ptr<ChannelMap>& cmap,
-                                     const std::string& topicname,
-                                     int run_num,
-                                     time_t timestamp)
+std::unique_ptr<daqdataformats::TriggerRecord>
+HistContainer::run(std::unique_ptr<daqdataformats::TriggerRecord> record,
+                   std::atomic<bool>&,
+                   std::shared_ptr<ChannelMap>& map,
+                   std::string& frontend_type,
+                   const std::string& kafka_address)
 {
-  // Placeholders
-  std::string dataname = m_name;
-  std::string metadata = "";
-  int subrun = 0;
-  int event = 0;
-  std::string partition = getenv("DUNEDAQ_PARTITION");
-  std::string app_name = getenv("DUNEDAQ_APPLICATION_NAME");
-  std::string datasource = partition + "_" + app_name;
-
-  // TLOG() << "DATASOURCE " << datasource;
-
-  // One message is sent for every plane
-  auto channel_order = cmap->get_map();
-  for (auto& [plane, map] : channel_order) {
-    std::stringstream output;
-    output << datasource << ";" << dataname << ";" << run_num << ";" << subrun << ";" << event << ";" << timestamp
-           << ";" << metadata << ";" << partition << ";" << app_name << ";" << 0 << ";" << plane << ";";
-    for (auto& [offch, pair] : map) {
-      output << offch << " ";
-    }
-    output << "\n";
-    output << "Mean\n";
-    for (auto& [offch, pair] : map) {
-      int link = pair.first;
-      int ch = pair.second;
-      output << histvec[get_local_index(ch, link)].mean() << " ";
-    }
-    output << "\n";
-    output << "RMS\n";
-    for (auto& [offch, pair] : map) {
-      int link = pair.first;
-      int ch = pair.second;
-      output << histvec[get_local_index(ch, link)].std() << " ";
-    }
-    output << "\n";
-    TLOG_DEBUG(5) << "Size of the message in bytes: " << output.str().size();
-    KafkaExport(kafka_address, output.str(), topicname);
+  if (frontend_type == "wib") {
+    set_is_running(true);
+    auto ret = run_<detdataformats::wib::WIBFrame>(std::move(record), map, kafka_address);
+    set_is_running(false);
+    return ret;
   }
+  else if (frontend_type == "wib2") {
+    set_is_running(true);
+    auto ret = run_<detdataformats::wib2::WIB2Frame>(std::move(record), map, kafka_address);
+    set_is_running(false);
+    return ret;
+  }
+  // else if (frontend_type == "tde") {
+  //   set_is_running(true);
+  //   auto ret = run_<detdataformats::wib::WIBFrame>(std::move(record), map, kafka_address);
+  //   set_is_running(false);
+  //   return ret;
+  // }
+  return record;
 }
 
 void

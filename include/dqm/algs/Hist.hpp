@@ -9,7 +9,6 @@
 #define DQM_INCLUDE_DQM_HIST_HPP_
 
 // DQM
-#include <cstdlib>
 #include <vector>
 
 /**

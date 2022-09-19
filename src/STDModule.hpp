@@ -15,7 +15,7 @@
 #include "Decoder.hpp"
 #include "Exporter.hpp"
 #include "dqm/Issues.hpp"
-#include "dqm/STD.hpp"
+#include "dqm/algs/STD.hpp"
 #include "dqm/FormatUtils.hpp"
 #include "dqm/Pipeline.hpp"
 
