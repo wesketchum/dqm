@@ -13,6 +13,9 @@
 #include "ChannelMap.hpp"
 #include "Constants.hpp"
 #include "dqm/Issues.hpp"
+
+#include "RMSModule.hpp"
+#include "STDModule.hpp"
 #include "CounterModule.hpp"
 #include "FourierContainer.hpp"
 
@@ -26,10 +29,10 @@ class DFModule : public AnalysisModule
 {
 
 public:
-  DFModule(bool enable_hist, bool enable_mean_rms, bool enable_fourier, bool enable_fourier_sum,
+  DFModule(bool enable_raw, bool enable_rms, bool enable_std, bool enable_fourier_channel, bool enable_fourier_sum_plane,
            int clock_frequency, std::vector<int>& ids, int num_frames, std::string& frontend_type);
 
-  bool m_enable_hist, m_enable_mean_rms, m_enable_fourier, m_enable_fourier_sum;
+  bool m_enable_raw, m_enable_rms, m_enable_std, m_enable_fourier_channel, m_enable_fourier_plane;
   int m_clock_frequency;
   std::unique_ptr<daqdataformats::TriggerRecord>
   run(std::unique_ptr<daqdataformats::TriggerRecord> record,
@@ -40,8 +43,10 @@ public:
 
 private:
 
-  std::shared_ptr<CounterModule> m_hist;
-  std::shared_ptr<FourierContainer> m_fourier, m_fourier_sum;
+  std::shared_ptr<RMSModule> m_rms;
+  std::shared_ptr<STDModule> m_std;
+  std::shared_ptr<CounterModule> m_raw;
+  std::shared_ptr<FourierContainer> m_fourier_channel, m_fourier_plane;
 
   std::vector<int> m_ids;
 
@@ -49,30 +54,36 @@ private:
 
 };
 
-DFModule::DFModule(bool enable_hist, bool enable_mean_rms, bool enable_fourier, bool enable_fourier_sum,
+DFModule::DFModule(bool enable_raw, bool enable_rms, bool enable_std, bool enable_fourier_channel, bool enable_fourier_sum_plane,
                    int clock_frequency, std::vector<int>& ids, int num_frames, std::string& frontend_type) :
-    m_enable_hist(enable_hist),
-    m_enable_mean_rms(enable_mean_rms),
-    m_enable_fourier(enable_fourier),
-    m_enable_fourier_sum(enable_fourier_sum),
+    m_enable_raw(enable_raw),
+    m_enable_rms(enable_rms),
+    m_enable_std(enable_std),
+    m_enable_fourier_channel(enable_fourier_channel),
+    m_enable_fourier_plane(enable_fourier_sum_plane),
     m_clock_frequency(clock_frequency),
     m_ids(ids),
     m_num_frames(num_frames)
 
 {
-  if (m_enable_hist) {
-    m_hist = std::make_shared<CounterModule>(
-                                                 "raw_display", CHANNELS_PER_LINK * m_ids.size(), m_ids);
+  if (m_enable_raw) {
+    m_raw = std::make_shared<CounterModule>("raw", CHANNELS_PER_LINK * m_ids.size(), m_ids);
   }
-  if (m_enable_fourier) {
-    m_fourier = std::make_shared<FourierContainer>("fft_display",
+  if (m_enable_rms) {
+    m_rms = std::make_shared<RMSModule>("rms", CHANNELS_PER_LINK * m_ids.size(), m_ids);
+  }
+  if (m_enable_std) {
+    m_std = std::make_shared<STDModule>("std", CHANNELS_PER_LINK * m_ids.size(), m_ids);
+  }
+  if (m_enable_fourier_channel) {
+    m_fourier_channel = std::make_shared<FourierContainer>("fft_display",
                                                     CHANNELS_PER_LINK * m_ids.size(),
                                                     m_ids,
                                                    1. / m_clock_frequency * (strcmp(frontend_type.c_str(), "wib") ? 32 : 25),
                                                     m_num_frames);
   }
-  if (m_enable_fourier_sum) {
-    m_fourier_sum = std::make_shared<FourierContainer>("fft_sums_display",
+  if (m_enable_fourier_plane) {
+    m_fourier_plane = std::make_shared<FourierContainer>("fft_sums_display",
                                                        4,
                                                        m_ids,
                                                        1. / m_clock_frequency * (strcmp(frontend_type.c_str(), "wib") ? 32 : 25),
@@ -90,8 +101,8 @@ DFModule::run(std::unique_ptr<daqdataformats::TriggerRecord> record,
 {
   set_is_running(true);
 
-  std::vector<std::shared_ptr<AnalysisModule>> list {m_hist, m_fourier, m_fourier_sum};
-  std::vector<bool> will_run {m_enable_hist, m_enable_fourier, m_enable_fourier_sum};
+  std::vector<std::shared_ptr<AnalysisModule>> list {m_raw, m_fourier_channel, m_fourier_plane};
+  std::vector<bool> will_run {m_enable_raw, m_enable_fourier_channel, m_enable_fourier_plane};
 
   for(size_t i=0; i < list.size(); ++i) {
     if (!will_run[i]) continue;
