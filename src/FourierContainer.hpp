@@ -144,7 +144,7 @@ FourierContainer::run_wibframe(std::unique_ptr<daqdataformats::TriggerRecord> re
     }
     transmit(kafka_address,
              map,
-             "testdunedqm",
+             "DQM",
              record->get_header_ref().get_run_number(),
              record->get_header_ref().get_trigger_timestamp());
   }
@@ -181,7 +181,7 @@ FourierContainer::run_wibframe(std::unique_ptr<daqdataformats::TriggerRecord> re
       transform[i] += fouriervec[1].m_transform[i] + fouriervec[2].m_transform[i];
     }
     fouriervec[m_size-1].m_transform = transform;
-    transmit_global(kafka_address, map, "testdunedqm", record->get_header_ref().get_run_number(), record->get_header_ref().get_trigger_timestamp());
+    transmit_global(kafka_address, map, "DQM", record->get_header_ref().get_run_number(), record->get_header_ref().get_trigger_timestamp());
   }
 
   return std::move(record);
@@ -227,7 +227,7 @@ FourierContainer::run_wib2frame(std::unique_ptr<daqdataformats::TriggerRecord> r
     }
     transmit(kafka_address,
              map,
-             "testdunedqm",
+             "DQM",
              record->get_header_ref().get_run_number(),
              record->get_header_ref().get_trigger_timestamp());
   }
@@ -264,7 +264,7 @@ FourierContainer::run_wib2frame(std::unique_ptr<daqdataformats::TriggerRecord> r
       transform[i] += fouriervec[1].m_transform[i] + fouriervec[2].m_transform[i];
     }
     fouriervec[m_size-1].m_transform = transform;
-    transmit_global(kafka_address, map, "testdunedqm", record->get_header_ref().get_run_number(), record->get_header_ref().get_trigger_timestamp());
+    transmit_global(kafka_address, map, "DQM", record->get_header_ref().get_run_number(), record->get_header_ref().get_trigger_timestamp());
   }
 
   return std::move(record);
