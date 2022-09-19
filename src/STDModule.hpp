@@ -17,6 +17,7 @@
 #include "dqm/Issues.hpp"
 #include "dqm/STD.hpp"
 #include "dqm/FormatUtils.hpp"
+#include "dqm/Pipeline.hpp"
 
 #include "daqdataformats/TriggerRecord.hpp"
 #include "detdataformats/tde/TDE16Frame.hpp"
@@ -106,17 +107,8 @@ STDModule::run_(std::unique_ptr<daqdataformats::TriggerRecord> record,
                const std::string& kafka_address)
 {
   auto frames = decode<T>(*record);
-
-  if (frames.size() == 0) {
-    // throw issue
-    TLOG() << "Found no frames";
-    return std::move(record);
-  }
-
-  // Remove empty fragments
-  for (auto& vec : frames)
-    if (!vec.second.size())
-      frames.erase(vec.first);
+  auto pipe = Pipeline<T>({"remove_empty", "check_empty", "make_same_size", "check_timestamp_aligned"});
+  pipe(frames);
 
   // Get all the keys
   std::vector<int> keys;
@@ -218,9 +210,6 @@ STDModule::transmit(const std::string& kafka_address,
 {
   // Placeholders
   std::string dataname = m_name;
-  std::string metadata = "";
-  int subrun = 0;
-  int event = 0;
   std::string partition = getenv("DUNEDAQ_PARTITION");
   std::string app_name = getenv("DUNEDAQ_APPLICATION_NAME");
   std::string datasource = partition + "_" + app_name;
