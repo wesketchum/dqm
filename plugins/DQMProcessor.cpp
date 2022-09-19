@@ -195,9 +195,6 @@ DQMProcessor::do_work()
   // Raw event display
   auto hist = std::make_shared<HistContainer>(
       "raw_display", CHANNELS_PER_LINK * m_link_idx.size(), m_link_idx, 100, 0, 17000, false);
-  // Mean and RMS
-  auto mean_rms = std::make_shared<HistContainer>(
-      "rmsm_display", CHANNELS_PER_LINK * m_link_idx.size(), m_link_idx, 100, 0, 17000, true);
   // STD
   auto std = std::make_shared<STDModule>("std", CHANNELS_PER_LINK * m_link_idx.size(), m_link_idx);
   // RMS

@@ -47,7 +47,7 @@ local dqmprocessor = {
                 doc="Standard dqm"),
         s.field("rms", self.standard_dqm,  # Parameters for the RMS stream
                 doc="Standard dqm"),
-        s.field("stdev", self.standard_dqm,  # Parameters for the standard deviation stream
+        s.field("std", self.standard_dqm,  # Parameters for the standard deviation stream
                 doc="Standard dqm"),
         s.field("fourier_channel", self.standard_dqm, # Parameters for fourier transforms for each individual channel
                 doc="Fourier"),
