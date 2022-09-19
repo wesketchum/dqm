@@ -13,7 +13,7 @@
 #include "ChannelMap.hpp"
 #include "Constants.hpp"
 #include "dqm/Issues.hpp"
-#include "HistContainer.hpp"
+#include "CounterModule.hpp"
 #include "FourierContainer.hpp"
 
 #include "daqdataformats/TriggerRecord.hpp"
@@ -40,7 +40,7 @@ public:
 
 private:
 
-  std::shared_ptr<HistContainer> m_hist, m_mean_rms;
+  std::shared_ptr<CounterModule> m_hist;
   std::shared_ptr<FourierContainer> m_fourier, m_fourier_sum;
 
   std::vector<int> m_ids;
@@ -61,12 +61,8 @@ DFModule::DFModule(bool enable_hist, bool enable_mean_rms, bool enable_fourier, 
 
 {
   if (m_enable_hist) {
-    m_hist = std::make_shared<HistContainer>(
-                                                 "raw_display", CHANNELS_PER_LINK * m_ids.size(), m_ids, 100, 0, 17000, false);
-  }
-  if (m_enable_mean_rms) {
-    m_mean_rms = std::make_shared<HistContainer>(
-                                                     "rmsm_display", CHANNELS_PER_LINK * m_ids.size(), m_ids, 100, 0, 17000, true);
+    m_hist = std::make_shared<CounterModule>(
+                                                 "raw_display", CHANNELS_PER_LINK * m_ids.size(), m_ids);
   }
   if (m_enable_fourier) {
     m_fourier = std::make_shared<FourierContainer>("fft_display",
@@ -94,8 +90,8 @@ DFModule::run(std::unique_ptr<daqdataformats::TriggerRecord> record,
 {
   set_is_running(true);
 
-  std::vector<std::shared_ptr<AnalysisModule>> list {m_hist, m_mean_rms, m_fourier, m_fourier_sum};
-  std::vector<bool> will_run {m_enable_hist, m_enable_mean_rms, m_enable_fourier, m_enable_fourier_sum};
+  std::vector<std::shared_ptr<AnalysisModule>> list {m_hist, m_fourier, m_fourier_sum};
+  std::vector<bool> will_run {m_enable_hist, m_enable_fourier, m_enable_fourier_sum};
 
   for(size_t i=0; i < list.size(); ++i) {
     if (!will_run[i]) continue;
