@@ -29,13 +29,12 @@ public:
    * @brief Add an entry to the histogram
    * @param x The number that is being added
    */
-  void fill(double const x);
+  void fill(const double x);
 
   bool is_running() const;
   void clean();
 
-  double mean();
-  double std();
+  double std() const;
 };
 
 
@@ -59,23 +58,10 @@ STD::clean()
   m_sum = 0;
   m_sum_sq = 0;
   m_nentries = 0;
-  m_std_set = false;
-  m_mean_set = false;
 }
 
 double
-STD::mean()
-{
-  if (m_mean_set) {
-    return m_mean;
-  }
-  m_mean = m_sum / m_nentries;
-  m_mean_set = true;
-  return m_mean;
-}
-
-double
-STD::std()
+STD::std() const
 {
   if (m_std_set) {
     return m_std;
@@ -83,10 +69,8 @@ STD::std()
   if (m_nentries <= 1) {
     return -1;
   }
-  m_mean = mean();
-  m_std = sqrt((m_sum_sq + m_nentries * m_mean * m_mean - 2 * m_sum * m_mean) / (m_nentries - 1));
-  m_std_set = true;
-  return m_std;
+  auto mean = m_sum / m_nentries;
+  return sqrt((m_sum_sq + m_nentries * mean * mean - 2 * m_sum * mean) / (m_nentries - 1));
 }
 
 } // namespace dunedaq

@@ -22,24 +22,22 @@ class RMS
 
 public:
   int m_nentries = 0;
-  double m_sum_sq = 0, m_rms;
-  bool m_rms_set = false;
+  double m_sum_sq = 0;
 
   /**
    * @brief Add an entry to the histogram
    * @param x The number that is being added
    */
-  void fill(double const x);
+  void fill(const double x);
 
   bool is_running() const;
   void clean();
 
-  double mean();
-  double rms();
+  double rms() const;
 };
 
 void
-RMS::fill(double const x)
+RMS::fill(const double x)
 {
   m_nentries++;
   m_sum_sq += x * x;
@@ -56,20 +54,16 @@ RMS::clean()
 {
   m_sum_sq = 0;
   m_nentries = 0;
-  m_rms_set = false;
 }
 
 double
-RMS::rms()
+RMS::rms() const
 {
-  if (m_rms_set)
-    return m_rms;
   if (not m_nentries) {
     return -1;
   }
-  m_rms = sqrt(m_sum_sq / m_nentries);
-  m_rms_set = true;
-  return m_rms;
+  return sqrt(m_sum_sq / m_nentries);
+
 }
 
 } // namespace dqm
