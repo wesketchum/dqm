@@ -21,6 +21,7 @@
 #include "FourierContainer.hpp"
 #include "HistContainer.hpp"
 #include "STDModule.hpp"
+#include "RMSModule.hpp"
 
 // DUNE-DAQ includes
 #include "daqdataformats/ComponentRequest.hpp"
@@ -198,8 +199,9 @@ DQMProcessor::do_work()
   auto mean_rms = std::make_shared<HistContainer>(
       "rmsm_display", CHANNELS_PER_LINK * m_link_idx.size(), m_link_idx, 100, 0, 17000, true);
   // STD
-  auto std = std::make_shared<STDModule>(
-                                         "std", CHANNELS_PER_LINK * m_link_idx.size(), m_link_idx);
+  auto std = std::make_shared<STDModule>("std", CHANNELS_PER_LINK * m_link_idx.size(), m_link_idx);
+  // RMS
+  auto rms = std::make_shared<RMSModule>("rms", CHANNELS_PER_LINK * m_link_idx.size(), m_link_idx);
   // Fourier transform
   // The Delta of time between frames is the inverse of the sampling frequency (clock frequency)
   // but because we are sampling every TICKS_BETWEEN_TIMESTAMP ticks we have to multiply by that
@@ -243,6 +245,14 @@ DQMProcessor::do_work()
       m_std_conf.num_frames,
       nullptr,
       "STD every " + std::to_string(m_std_conf.how_often) + " s"
+    };
+  if (m_rms_conf.how_often > 0)
+    map[std::chrono::system_clock::now() + std::chrono::seconds(m_offset_from_channel_map)] = {
+      rms,
+      m_rms_conf.how_often,
+      m_rms_conf.num_frames,
+      nullptr,
+      "RMS every " + std::to_string(m_rms_conf.how_often) + " s"
     };
   if (m_fourier_channel_conf.how_often > 0)
     map[std::chrono::system_clock::now() + std::chrono::seconds(m_offset_from_channel_map)] = {
