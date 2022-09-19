@@ -43,7 +43,7 @@ local dqmprocessor = {
     conf: s.record("Conf", [
         s.field("channel_map", self.string, doc='"HD" or "VD"'),
         s.field("mode", self.string, doc='readout or df',),
-        s.field("hist", self.standard_dqm,  # Parameters for the raw data stream
+        s.field("raw", self.standard_dqm,  # Parameters for the raw data stream
                 doc="Standard dqm"),
         s.field("rms", self.standard_dqm,  # Parameters for the RMS stream
                 doc="Standard dqm"),
@@ -71,7 +71,7 @@ local dqmprocessor = {
                 doc="Number of seconds between requests to DF for TRs"),
         s.field("df_offset", self.time,
                 doc="Number of seconds to offset so that when there are multiple DF apps the rate is maintained"),
-        s.field("df_algs", self.big_count,
+        s.field("df_algs", self.string,
                 doc="Bitfield where the bits are whether an algorith is turned on or off for TRs coming from DF"),
         s.field("df_num_frames", self.count,
                 doc="Bitfield where the bits are whether an algorith is turned on or off for TRs coming from DF"),

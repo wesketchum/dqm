@@ -77,7 +77,7 @@ DQMProcessor::do_configure(const nlohmann::json& args)
   m_mode = conf.mode;
   m_frontend_type = conf.frontend_type;
 
-  m_hist_conf = conf.hist;
+  m_raw_conf = conf.raw;
   m_rms_conf = conf.rms;
   m_std_conf = conf.std;
   m_fourier_channel_conf = conf.fourier_channel;
@@ -219,8 +219,12 @@ DQMProcessor::do_work()
 
   // Whether an algorithm is enabled or not depends on the value of the bitfield m_df_algs
   TLOG() << "m_df_algs = " << m_df_algs;
-  auto dfmodule = std::make_shared<DFModule>(m_df_algs & 1, m_df_algs & 2,
-                                             m_df_algs & 4, m_df_algs & 8,
+  auto tmp = m_df_algs.end();
+  auto dfmodule = std::make_shared<DFModule>(m_df_algs.find("raw") != std::string::npos,
+                                             m_df_algs.find("rms") != std::string::npos,
+                                             m_df_algs.find("std") != std::string::npos,
+                                             m_df_algs.find("fourier_channel") != std::string::npos,
+                                             m_df_algs.find("fourier_plane") != std::string::npos,
                                              m_clock_frequency, m_link_idx,
                                              m_df_num_frames, m_frontend_type);
 
@@ -230,13 +234,13 @@ DQMProcessor::do_work()
   // Initial tasks
   // Add some offset time to let the other parts of the DAQ start
   // Typically the first and maybe second requests of data fails
-  if (m_hist_conf.how_often > 0)
+  if (m_raw_conf.how_often > 0)
     map[std::chrono::system_clock::now() + std::chrono::seconds(m_offset_from_channel_map)] = {
       raw,
-      m_hist_conf.how_often,
-      m_hist_conf.num_frames,
+      m_raw_conf.how_often,
+      m_raw_conf.num_frames,
       nullptr,
-      "Histogram every " + std::to_string(m_hist_conf.how_often) + " s"
+      "Histogram every " + std::to_string(m_raw_conf.how_often) + " s"
     };
   if (m_std_conf.how_often > 0)
     map[std::chrono::system_clock::now() + std::chrono::seconds(m_offset_from_channel_map)] = {

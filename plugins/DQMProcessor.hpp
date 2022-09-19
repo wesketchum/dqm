@@ -73,7 +73,7 @@ private:
   std::chrono::milliseconds m_source_timeout{ 1000 };
 
   // Configuration parameters
-  dqmprocessor::StandardDQM m_hist_conf;
+  dqmprocessor::StandardDQM m_raw_conf;
   dqmprocessor::StandardDQM m_std_conf;
   dqmprocessor::StandardDQM m_rms_conf;
   dqmprocessor::StandardDQM m_fourier_channel_conf;
@@ -82,7 +82,7 @@ private:
   // DF configuration parameters
   double m_df_seconds {0};
   double m_df_offset {0};
-  int m_df_algs {0};
+  std::string m_df_algs;
   int m_df_num_frames {0};
 
   std::string m_timesync_topic;
