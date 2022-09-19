@@ -39,7 +39,7 @@ void
 Counter::fill(double const x)
 {
   m_nentries++;
-  count.push_back(x)
+  count.push_back(x);
 }
 
 void

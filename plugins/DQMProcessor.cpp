@@ -19,7 +19,8 @@
 #include "DFModule.hpp"
 #include "DQMProcessor.hpp"
 #include "FourierContainer.hpp"
-#include "HistContainer.hpp"
+// #include "HistContainer.hpp"
+#include "CounterModule.hpp"
 #include "STDModule.hpp"
 #include "RMSModule.hpp"
 
@@ -193,8 +194,10 @@ DQMProcessor::do_work()
   // Instances of analysis modules
 
   // Raw event display
-  auto hist = std::make_shared<HistContainer>(
-      "raw_display", CHANNELS_PER_LINK * m_link_idx.size(), m_link_idx, 100, 0, 17000, false);
+  auto raw = std::make_shared<CounterModule>(
+        "raw_display", CHANNELS_PER_LINK * m_link_idx.size(), m_link_idx);
+  // auto hist = std::make_shared<HistContainer>(
+  //     "raw_display", CHANNELS_PER_LINK * m_link_idx.size(), m_link_idx, 100, 0, 17000, false);
   // STD
   auto std = std::make_shared<STDModule>("std", CHANNELS_PER_LINK * m_link_idx.size(), m_link_idx);
   // RMS
@@ -229,7 +232,7 @@ DQMProcessor::do_work()
   // Typically the first and maybe second requests of data fails
   if (m_hist_conf.how_often > 0)
     map[std::chrono::system_clock::now() + std::chrono::seconds(m_offset_from_channel_map)] = {
-      hist,
+      raw,
       m_hist_conf.how_often,
       m_hist_conf.num_frames,
       nullptr,

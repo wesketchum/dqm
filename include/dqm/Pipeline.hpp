@@ -95,6 +95,15 @@ public:
       }
     }
   }
+  Pipeline(std::vector<std::string>&& names) {
+    for (auto& name: names) {
+      if (m_available_functions.find(name) != m_available_functions.end()) {
+        m_function_names.push_back(name);
+        m_functions.push_back(m_available_functions[name]);
+      }
+    }
+
+  }
 
   void operator() (std::map<int, std::vector<T*>>& arg) {
     for (size_t i = 0; i < m_functions.size(); ++i) {
