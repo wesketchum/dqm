@@ -30,7 +30,6 @@ public:
    */
   void fill(const double x);
 
-  bool is_running() const;
   void clean();
 
   double rms() const;
@@ -41,12 +40,6 @@ RMS::fill(const double x)
 {
   m_nentries++;
   m_sum_sq += x * x;
-}
-
-bool
-RMS::is_running() const
-{
-  return true;
 }
 
 void

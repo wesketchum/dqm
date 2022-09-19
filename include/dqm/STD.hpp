@@ -31,7 +31,6 @@ public:
    */
   void fill(const double x);
 
-  bool is_running() const;
   void clean();
 
   double std() const;
@@ -44,12 +43,6 @@ STD::fill(double const x)
   m_nentries++;
   m_sum += x;
   m_sum_sq += x * x;
-}
-
-bool
-STD::is_running() const
-{
-  return true;
 }
 
 void
