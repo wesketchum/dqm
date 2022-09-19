@@ -101,8 +101,8 @@ DFModule::run(std::unique_ptr<daqdataformats::TriggerRecord> record,
 {
   set_is_running(true);
 
-  std::vector<std::shared_ptr<AnalysisModule>> list {m_raw, m_fourier_channel, m_fourier_plane};
-  std::vector<bool> will_run {m_enable_raw, m_enable_fourier_channel, m_enable_fourier_plane};
+  std::vector<std::shared_ptr<AnalysisModule>> list {m_raw, m_std, m_fourier_channel, m_fourier_plane};
+  std::vector<bool> will_run {m_enable_raw, m_enable_std, m_enable_fourier_channel, m_enable_fourier_plane};
 
   for(size_t i=0; i < list.size(); ++i) {
     if (!will_run[i]) continue;
