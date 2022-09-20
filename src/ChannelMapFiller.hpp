@@ -9,13 +9,14 @@
 #define DQM_SRC_CHANNELMAPFILLER_HPP_
 
 // DQM
-#include "AnalysisModule.hpp"
+#include "dqm/AnalysisModule.hpp"
 // #include "ChannelMap.hpp"
 #include "ChannelMap.hpp"
 #include "ChannelMapHD.hpp"
 #include "ChannelMapPD2HD.hpp"
 #include "ChannelMapVD.hpp"
 #include "ChannelMapHDCB.hpp"
+#include "dqm/DQMFormats.hpp"
 
 #include "daqdataformats/TriggerRecord.hpp"
 
@@ -34,20 +35,15 @@ public:
 
   std::unique_ptr<daqdataformats::TriggerRecord>
   run(std::unique_ptr<daqdataformats::TriggerRecord> record,
-      std::atomic<bool>& run_mark,
-      std::shared_ptr<ChannelMap>& map,
-      std::string& frontend_type,
-      const std::string& kafka_address);
+      DQMArgs& args);
 };
 
 std::unique_ptr<daqdataformats::TriggerRecord>
 ChannelMapFiller::run(std::unique_ptr<daqdataformats::TriggerRecord> record,
-                      std::atomic<bool>&,
-                      std::shared_ptr<ChannelMap>& map,
-                      std::string&,
-                      const std::string&)
+                      DQMArgs& args)
 {
   set_is_running(true);
+  auto map = args.map;
 
   // Prevent running multiple times
   if (map->is_filled()) {

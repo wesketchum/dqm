@@ -65,7 +65,7 @@ public:
   void get_info(opmonlib::InfoCollector& ci, int /*level*/);
 
 private:
-  std::atomic<bool> m_run_marker;
+  std::shared_ptr<std::atomic<bool>> m_run_marker;
   std::shared_ptr<iomanager::ReceiverConcept<std::unique_ptr<daqdataformats::TriggerRecord>>> m_receiver;
   std::shared_ptr<iomanager::SenderConcept<dfmessages::TriggerDecision>> m_sender;
 

@@ -10,7 +10,7 @@
 #define DQM_SRC_CounterModule_HPP_
 
 // DQM
-#include "AnalysisModule.hpp"
+#include "dqm/AnalysisModule.hpp"
 #include "ChannelMap.hpp"
 #include "Constants.hpp"
 #include "Decoder.hpp"
@@ -40,16 +40,12 @@ public:
 
   std::unique_ptr<daqdataformats::TriggerRecord>
   run(std::unique_ptr<daqdataformats::TriggerRecord> record,
-      std::atomic<bool>& run_mark,
-      std::shared_ptr<ChannelMap>& map,
-      std::string& frontend_type,
-      const std::string& kafka_address = "");
+      DQMArgs& args);
 
   template <class T>
   std::unique_ptr<daqdataformats::TriggerRecord>
   run_(std::unique_ptr<daqdataformats::TriggerRecord> record,
-       std::shared_ptr<ChannelMap>& map,
-       const std::string& kafka_address = "");
+       DQMArgs& args);
 
   std::unique_ptr<daqdataformats::TriggerRecord>
   run_tdeframe(std::unique_ptr<daqdataformats::TriggerRecord> record,
@@ -104,9 +100,11 @@ std::unique_ptr<daqdataformats::TriggerRecord>
 template <class T>
 std::unique_ptr<daqdataformats::TriggerRecord>
  CounterModule::run_(std::unique_ptr<daqdataformats::TriggerRecord> record,
-               std::shared_ptr<ChannelMap>& map,
-               const std::string& kafka_address)
+                     DQMArgs& args)
 {
+  auto map = args.map;
+  auto kafka_address = args.kafka_address;
+
   auto frames = decode<T>(*record);
   auto pipe = Pipeline<T>({"remove_empty", "check_empty", "make_same_size", "check_timestamp_aligned"});
   pipe(frames);
@@ -176,20 +174,19 @@ std::unique_ptr<daqdataformats::TriggerRecord>
 
 std::unique_ptr<daqdataformats::TriggerRecord>
  CounterModule::run(std::unique_ptr<daqdataformats::TriggerRecord> record,
-                   std::atomic<bool>&,
-                   std::shared_ptr<ChannelMap>& map,
-                   std::string& frontend_type,
-                   const std::string& kafka_address)
+                    DQMArgs& args)
 {
+  auto frontend_type = args.frontend_type;
+
   if (frontend_type == "wib") {
     set_is_running(true);
-    auto ret = run_<detdataformats::wib::WIBFrame>(std::move(record), map, kafka_address);
+    auto ret = run_<detdataformats::wib::WIBFrame>(std::move(record), args);
     set_is_running(false);
     return ret;
   }
   else if (frontend_type == "wib2") {
     set_is_running(true);
-    auto ret = run_<detdataformats::wib2::WIB2Frame>(std::move(record), map, kafka_address);
+    auto ret = run_<detdataformats::wib2::WIB2Frame>(std::move(record), args);
     set_is_running(false);
     return ret;
   }

@@ -9,7 +9,7 @@
 #define DQM_SRC_DFMODULE_HPP_
 
 // DQM
-#include "AnalysisModule.hpp"
+#include "dqm/AnalysisModule.hpp"
 #include "ChannelMap.hpp"
 #include "Constants.hpp"
 #include "dqm/Issues.hpp"
@@ -36,10 +36,7 @@ public:
   int m_clock_frequency;
   std::unique_ptr<daqdataformats::TriggerRecord>
   run(std::unique_ptr<daqdataformats::TriggerRecord> record,
-      std::atomic<bool>& run_mark,
-      std::shared_ptr<ChannelMap>& map,
-      std::string& frontend_type,
-      const std::string& kafka_address);
+      DQMArgs& args);
 
 private:
 
@@ -94,12 +91,13 @@ DFModule::DFModule(bool enable_raw, bool enable_rms, bool enable_std, bool enabl
 
 std::unique_ptr<daqdataformats::TriggerRecord>
 DFModule::run(std::unique_ptr<daqdataformats::TriggerRecord> record,
-              std::atomic<bool>& run_mark,
-              std::shared_ptr<ChannelMap>& map,
-              std::string& frontend_type,
-              const std::string& kafka_address)
+              DQMArgs& args)
 {
   set_is_running(true);
+  auto run_mark = args.run_mark;
+  auto map = args.map;
+  auto frontend_type = args.frontend_type;
+  auto kafka_address = args.kafka_address;
 
   std::vector<std::shared_ptr<AnalysisModule>> list {m_raw, m_std, m_fourier_channel, m_fourier_plane};
   std::vector<bool> will_run {m_enable_raw, m_enable_std, m_enable_fourier_channel, m_enable_fourier_plane};
@@ -110,7 +108,8 @@ DFModule::run(std::unique_ptr<daqdataformats::TriggerRecord> record,
       set_is_running(false);
       return std::move(record);
     }
-    record = list[i]->run(std::move(record), run_mark, map, frontend_type, kafka_address);
+    DQMArgs args {run_mark, map, frontend_type, kafka_address};
+    record = list[i]->run(std::move(record), args);
   }
 
   set_is_running(false);

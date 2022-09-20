@@ -9,13 +9,14 @@
 #define DQM_SRC_FOURIERCONTAINER_HPP_
 
 // DQM
-#include "AnalysisModule.hpp"
+#include "dqm/AnalysisModule.hpp"
 #include "ChannelMap.hpp"
 #include "Constants.hpp"
 #include "Decoder.hpp"
 #include "Exporter.hpp"
 #include "dqm/algs/Fourier.hpp"
 #include "dqm/Issues.hpp"
+#include "dqm/DQMFormats.hpp"
 
 #include "daqdataformats/TriggerRecord.hpp"
 
@@ -44,20 +45,17 @@ public:
 
   std::unique_ptr<daqdataformats::TriggerRecord>
   run(std::unique_ptr<daqdataformats::TriggerRecord> record,
-      std::atomic<bool>& run_mark,
-      std::shared_ptr<ChannelMap>& map,
-      std::string& frontend_type,
-      const std::string& kafka_address = "");
+      DQMArgs& args);
 
   std::unique_ptr<daqdataformats::TriggerRecord>
   run_wibframe(std::unique_ptr<daqdataformats::TriggerRecord> record,
-               std::atomic<bool>& run_mark,
+               std::shared_ptr<std::atomic<bool>> run_mark,
                std::shared_ptr<ChannelMap>& map,
                const std::string& kafka_address = "");
 
   std::unique_ptr<daqdataformats::TriggerRecord>
   run_wib2frame(std::unique_ptr<daqdataformats::TriggerRecord> record,
-                std::atomic<bool>& run_mark,
+                std::shared_ptr<std::atomic<bool>> run_mark,
                 std::shared_ptr<ChannelMap>& map,
                 const std::string& kafka_address = "");
 
@@ -107,7 +105,7 @@ FourierContainer::FourierContainer(std::string name, int size, std::vector<int>&
 
 std::unique_ptr<daqdataformats::TriggerRecord>
 FourierContainer::run_wibframe(std::unique_ptr<daqdataformats::TriggerRecord> record,
-                               std::atomic<bool>& run_mark,
+                               std::shared_ptr<std::atomic<bool>> run_mark,
                                std::shared_ptr<ChannelMap>& map,
                                const std::string& kafka_address)
 {
@@ -169,7 +167,7 @@ FourierContainer::run_wibframe(std::unique_ptr<daqdataformats::TriggerRecord> re
       }
 
     for (size_t ich = 0; ich < m_size - 1; ++ich) {
-      if (!run_mark) {
+      if (!run_mark.get()) {
         return std::move(record);
       }
       fouriervec[ich].compute_fourier_transform();
@@ -189,7 +187,7 @@ FourierContainer::run_wibframe(std::unique_ptr<daqdataformats::TriggerRecord> re
 
 std::unique_ptr<daqdataformats::TriggerRecord>
 FourierContainer::run_wib2frame(std::unique_ptr<daqdataformats::TriggerRecord> record,
-                                std::atomic<bool>& run_mark,
+                                std::shared_ptr<std::atomic<bool>> run_mark,
                                 std::shared_ptr<ChannelMap>& map,
                                 const std::string& kafka_address)
 {
@@ -252,7 +250,7 @@ FourierContainer::run_wib2frame(std::unique_ptr<daqdataformats::TriggerRecord> r
       }
 
     for (size_t ich = 0; ich < m_size - 1; ++ich) {
-      if (!run_mark) {
+      if (!run_mark.get()) {
         return std::move(record);
       }
       fouriervec[ich].compute_fourier_transform();
@@ -273,11 +271,12 @@ FourierContainer::run_wib2frame(std::unique_ptr<daqdataformats::TriggerRecord> r
 
 std::unique_ptr<daqdataformats::TriggerRecord>
 FourierContainer::run(std::unique_ptr<daqdataformats::TriggerRecord> record,
-                      std::atomic<bool>& run_mark,
-                      std::shared_ptr<ChannelMap>& map,
-                      std::string& frontend_type,
-                      const std::string& kafka_address)
+                      DQMArgs& args)
 {
+  auto frontend_type = args.frontend_type;
+  auto run_mark = args.run_mark;
+  auto map = args.map;
+  auto kafka_address = args.kafka_address;
   if (frontend_type == "wib") {
     set_is_running(true);
     auto ret = run_wibframe(std::move(record), run_mark, map, kafka_address);

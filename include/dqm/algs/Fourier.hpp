@@ -9,7 +9,7 @@
 #define DQM_INCLUDE_DQM_FOURIER_HPP_
 
 // dqm
-#include "AnalysisModule.hpp"
+#include "dqm/AnalysisModule.hpp"
 #include "dqm/Issues.hpp"
 
 #include "daqdataformats/TriggerRecord.hpp"

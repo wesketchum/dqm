@@ -5,8 +5,8 @@
  * Licensing/copyright details are in the COPYING file that you should have
  * received with this code.
  */
-#ifndef DQM_SRC_FRAMEUTILS_HPP_
-#define DQM_SRC_FRAMEUTILS_HPP_
+#ifndef DQM_INCLUDE_DQM_FORMATUTILS_HPP_
+#define DQM_INCLUDE_DQM_FORMATUTILS_HPP_
 
 #include "detdataformats/wib/WIBFrame.hpp"
 #include "detdataformats/wib2/WIB2Frame.hpp"
@@ -35,4 +35,4 @@ inline uint16_t get_adc(detdataformats::wib2::WIB2Frame* fr, int ch) {
 
 } // namespace dunedaq::dqm
 
-#endif // DQM_SRC_FRAMEUTILS_HPP_
+#endif // DQM_INCLUDE_DQM_FORMATUTILS_HPP_
