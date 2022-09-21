@@ -16,7 +16,7 @@ local dqmprocessor = {
 
     string : s.string("string", doc="A string"),
 
-    time : s.number("Time", "f4", doc="A time"),
+    time : s.number("Time", "i4", doc="A time"),
 
     count : s.number("Count", "i4",
                      doc="A count of not too many things"),

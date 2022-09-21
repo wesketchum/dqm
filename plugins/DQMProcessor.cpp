@@ -411,7 +411,7 @@ DQMProcessor::do_work()
     element.reset(nullptr);
 
     // Add a new entry for the current instance
-    TLOG() << "Starting to run \"" << analysis_instance.name << "\"";
+    TLOG() << "Running \"" << analysis_instance.name << "\"";
     map[std::chrono::system_clock::now() +
         std::chrono::milliseconds(static_cast<int>(analysis_instance.between_time) * 1000)] = {
       algo,
