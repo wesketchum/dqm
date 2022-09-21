@@ -242,7 +242,7 @@ DQMProcessor::do_work()
       m_raw_conf.how_often,
       m_raw_conf.num_frames,
       nullptr,
-      "Histogram every " + std::to_string(m_raw_conf.how_often) + " s"
+      "Raw data every " + std::to_string(m_raw_conf.how_often) + " s"
     };
   if (m_std_conf.how_often > 0)
     map[std::chrono::system_clock::now() + std::chrono::seconds(m_offset_from_channel_map)] = {
@@ -266,7 +266,7 @@ DQMProcessor::do_work()
       m_fourier_channel_conf.how_often,
       m_fourier_channel_conf.num_frames,
       nullptr,
-      "Fourier every " + std::to_string(m_fourier_channel_conf.how_often) + " s"
+      "Fourier (for every channel) every " + std::to_string(m_fourier_channel_conf.how_often) + " s"
     };
 
   if (m_fourier_plane_conf.how_often > 0)
@@ -275,7 +275,7 @@ DQMProcessor::do_work()
       m_fourier_plane_conf.how_often,
       m_fourier_plane_conf.num_frames,
       nullptr,
-      "Summed Fourier every " + std::to_string(m_fourier_plane_conf.how_often) + " s"
+      "Fourier (for every plane) every " + std::to_string(m_fourier_plane_conf.how_often) + " s"
     };
 
   if (m_mode == "df" && m_df_seconds > 0) {
