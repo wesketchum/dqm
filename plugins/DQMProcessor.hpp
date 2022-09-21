@@ -108,13 +108,14 @@ private:
   std::atomic<uint64_t> m_received_timesync_count{ 0 }; // NOLINT(build/unsigned)
 
   std::string m_channel_map;
-  std::shared_ptr<ChannelMap> m_map;
 
   iomanager::FollySPSCQueue<std::unique_ptr<daqdataformats::TriggerRecord>> dftrs{"FollyQueue", 100};
 
   std::string m_mode;
   std::string m_frontend_type;
   int m_readout_window_offset;
+
+  DQMArgs m_dqm_args;
 
   // Constants used in DQMProcessor.cpp
   static constexpr int m_channel_map_delay {2};                // How much time in s to wait until running the channel map

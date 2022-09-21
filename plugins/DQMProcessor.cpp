@@ -98,6 +98,13 @@ DQMProcessor::do_configure(const nlohmann::json& args)
   m_df2dqm_connection = conf.df2dqm_connection_name;
   m_dqm2df_connection = conf.dqm2df_connection_name;
 
+  // The channel map pointer is set to the empty channel map that is not filled
+  // and allows the first check to pass for it to be filled with the actual
+  // channel map
+  m_dqm_args = DQMArgs{m_run_marker, std::shared_ptr<ChannelMap>(new ChannelMapEmpty),
+                     m_frontend_type, m_kafka_address,
+                     m_kafka_topic};
+
   if (m_mode == "df") {
       // networkmanager::NetworkManager::get().start_listening(m_df2dqm_connection);
   }
@@ -136,11 +143,6 @@ DQMProcessor::do_start(const nlohmann::json& args)
   m_run_marker = std::make_shared<std::atomic<bool>>(true);
 
   m_run_number.store(daqdataformats::run_number_t(args.at("run").get<daqdataformats::run_number_t>()));
-
-  // The channel map pointer is set to the empty channel map that is not filled
-  // and allows the first check to pass for it to be filled with the actual
-  // channel map
-  m_map = std::shared_ptr<ChannelMap>(new ChannelMapEmpty);
 
   m_running_thread.reset(new std::thread(&DQMProcessor::do_work, this));
 }
@@ -316,7 +318,7 @@ DQMProcessor::do_work()
 
     // If the channel map filler has already run and has worked then remove the entry
     // and keep running
-    if (analysis_instance.mod == chfiller && m_map->is_filled()) {
+    if (analysis_instance.mod == chfiller && m_dqm_args.map->is_filled()) {
       // If the channel map filling has not finished yet
       // we wait until the it has finished and the thread is joined
       if (analysis_instance.running_thread != nullptr && analysis_instance.running_thread->joinable()) {
@@ -403,10 +405,9 @@ DQMProcessor::do_work()
     ++m_data_count;
     ++m_total_data_count;
 
-    DQMArgs args {m_run_marker, m_map, m_frontend_type, m_kafka_address, m_kafka_topic};
     auto memfunc = &AnalysisModule::run;
     auto current_thread =
-      std::make_shared<std::thread>(memfunc, std::ref(*algo), std::move(element), std::ref(args));
+      std::make_shared<std::thread>(memfunc, std::ref(*algo), std::move(element), std::ref(m_dqm_args));
     element.reset(nullptr);
 
     // Add a new entry for the current instance
