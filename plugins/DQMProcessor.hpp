@@ -116,6 +116,7 @@ private:
   int m_readout_window_offset;
 
   DQMArgs m_dqm_args;
+  int m_max_frames;
 
   // Constants used in DQMProcessor.cpp
   static constexpr int m_channel_map_delay {2};                // How much time in s to wait until running the channel map

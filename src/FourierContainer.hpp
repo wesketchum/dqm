@@ -100,7 +100,7 @@ FourierContainer::run_(std::unique_ptr<daqdataformats::TriggerRecord> record,
                        DQMArgs& args)
 {
   auto map = args.map;
-  auto frames = decode<T>(*record);
+  auto frames = decode<T>(*record, args.max_frames);
   // std::uint64_t timestamp = 0; // NOLINT(build/unsigned)
 
   // Remove empty fragments

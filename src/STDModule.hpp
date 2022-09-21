@@ -104,7 +104,7 @@ STDModule::run_(std::unique_ptr<daqdataformats::TriggerRecord> record,
 {
   auto map = args.map;
 
-  auto frames = decode<T>(*record);
+  auto frames = decode<T>(*record, args.max_frames);
   auto pipe = Pipeline<T>({"remove_empty", "check_empty", "make_same_size", "check_timestamp_aligned"});
   pipe(frames);
 

@@ -19,6 +19,7 @@ struct DQMArgs {
   std::string frontend_type;
   std::string kafka_address;
   std::string kafka_topic;
+  int max_frames;
 };
 
 } // namespace dunedaq::dqm

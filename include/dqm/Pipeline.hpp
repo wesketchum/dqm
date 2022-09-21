@@ -87,7 +87,8 @@ class Pipeline
   };
 
 public:
-  Pipeline(std::vector<std::string>& names) {
+  Pipeline(std::vector<std::string>& names)
+  {
     for (auto& name: names) {
       if (m_available_functions.find(name) != m_available_functions.end()) {
         m_function_names.push_back(name);

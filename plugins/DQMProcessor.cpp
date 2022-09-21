@@ -98,12 +98,14 @@ DQMProcessor::do_configure(const nlohmann::json& args)
   m_df2dqm_connection = conf.df2dqm_connection_name;
   m_dqm2df_connection = conf.dqm2df_connection_name;
 
+  m_max_frames = conf.max_num_frames;
+
   // The channel map pointer is set to the empty channel map that is not filled
   // and allows the first check to pass for it to be filled with the actual
   // channel map
   m_dqm_args = DQMArgs{m_run_marker, std::shared_ptr<ChannelMap>(new ChannelMapEmpty),
-                     m_frontend_type, m_kafka_address,
-                     m_kafka_topic};
+                       m_frontend_type, m_kafka_address,
+                       m_kafka_topic, m_max_frames};
 
   if (m_mode == "df") {
       // networkmanager::NetworkManager::get().start_listening(m_df2dqm_connection);

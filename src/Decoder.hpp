@@ -26,7 +26,7 @@ namespace dqm {
 
 template<class T>
 std::map<int, std::vector<T*>>
-decode_frame(daqdataformats::TriggerRecord& record)
+decode_frame(daqdataformats::TriggerRecord& record, int max_frames)
 {
   std::vector<std::unique_ptr<daqdataformats::Fragment>>& fragments = record.get_fragments_ref();
 
@@ -43,6 +43,9 @@ decode_frame(daqdataformats::TriggerRecord& record)
     int num_chunks =
       (fragment->get_size() - sizeof(daqdataformats::FragmentHeader)) / sizeof(T);
     std::vector<T*> tmp;
+    if (max_frames) {
+      num_chunks = std::min(max_frames, num_chunks);
+    }
     for (int i = 0; i < num_chunks; ++i) {
       T* frame = reinterpret_cast<T*>( // NOLINT
       static_cast<char*>(fragment->get_data()) + (i * sizeof(T)));
@@ -56,21 +59,9 @@ decode_frame(daqdataformats::TriggerRecord& record)
 
 template<class T>
 std::map<int, std::vector<T*>>
-decode(dunedaq::daqdataformats::TriggerRecord& record) {
+decode(dunedaq::daqdataformats::TriggerRecord& record, int max_frames) {
+  return decode_frame<T>(record, max_frames);
 }
-
-template <>
-std::map<int, std::vector<detdataformats::wib::WIBFrame*>>
-decode(dunedaq::daqdataformats::TriggerRecord& record) {
-  return decode_frame<detdataformats::wib::WIBFrame>(record);
-}
-
-template <>
-std::map<int, std::vector<detdataformats::wib2::WIB2Frame*>>
-decode(dunedaq::daqdataformats::TriggerRecord& record) {
-  return decode_frame<detdataformats::wib2::WIB2Frame>(record);
-}
-
 
 } // namespace dqm
 } // namespace dunedaq

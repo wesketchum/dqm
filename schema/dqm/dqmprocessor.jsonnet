@@ -60,6 +60,7 @@ local dqmprocessor = {
         s.field("df_offset", self.time, doc="Number of seconds to offset so that when there are multiple DF apps the rate is maintained"),
         s.field("df_algs", self.string, doc="Bitfield where the bits are whether an algorith is turned on or off for TRs coming from DF"),
         s.field("df_num_frames", self.count, doc="Number of frames for the fragments coming from DF"),
+        s.field("max_num_frames", self.count, 0, doc="Maximum number of frames used in the algorithms for the fragments"),
         s.field("frontend_type", self.string, doc="Frontend to be used for DQM, takes the same values as in readout")
     ], doc="Generic DQM configuration")
 };

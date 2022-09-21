@@ -68,7 +68,7 @@ ChannelMapVD::fill(daqdataformats::TriggerRecord& record)
     return;
   }
 
-  auto wibframes = decode<detdataformats::wib::WIBFrame>(record);
+  auto wibframes = decode<detdataformats::wib::WIBFrame>(record, 0);
 
   // If we get no frames then return and since
   // the map is not filled it will run again soon
