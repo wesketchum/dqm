@@ -43,27 +43,26 @@ ChannelMapFiller::run(std::unique_ptr<daqdataformats::TriggerRecord> record,
                       DQMArgs& args)
 {
   set_is_running(true);
-  auto map = args.map;
 
   // Prevent running multiple times
-  if (map->is_filled()) {
+  if (args.map->is_filled()) {
     return std::move(record);
   }
 
   if (m_cmap_name == "HD") {
-    map.reset(new ChannelMapHD);
+    args.map.reset(new ChannelMapHD);
   }
   else if (m_cmap_name == "VD") {
-    map.reset(new ChannelMapVD);
+    args.map.reset(new ChannelMapVD);
   }
   else if (m_cmap_name == "PD2HD") {
-    map.reset(new ChannelMapPD2HD);
+    args.map.reset(new ChannelMapPD2HD);
   }
   else if (m_cmap_name == "HDCB") {
-    map.reset(new ChannelMapHDCB);
+    args.map.reset(new ChannelMapHDCB);
   }
 
-  map->fill(*record);
+  args.map->fill(*record);
   set_is_running(false);
   return std::move(record);
 }

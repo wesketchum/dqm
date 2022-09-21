@@ -15,7 +15,7 @@ namespace dunedaq::dqm {
 
 struct DQMArgs {
   std::shared_ptr<std::atomic<bool>> run_mark;
-  std::shared_ptr<ChannelMap> map;
+  std::shared_ptr<ChannelMap>& map;
   std::string frontend_type;
   std::string kafka_address;
 };
