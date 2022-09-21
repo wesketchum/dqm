@@ -47,15 +47,14 @@ public:
   run_(std::unique_ptr<daqdataformats::TriggerRecord> record,
        DQMArgs& args);
 
-  std::unique_ptr<daqdataformats::TriggerRecord>
-  run_tdeframe(std::unique_ptr<daqdataformats::TriggerRecord> record,
-                std::shared_ptr<ChannelMap>& map,
-                const std::string& kafka_address = "");
+  // std::unique_ptr<daqdataformats::TriggerRecord>
+  // run_tdeframe(std::unique_ptr<daqdataformats::TriggerRecord> record,
+  //               std::shared_ptr<ChannelMap>& map,
+  //               const std::string& kafka_address = "");
   void transmit(const std::string& kafka_address,
                 std::shared_ptr<ChannelMap>& map,
                 const std::string& topicname,
-                int run_num,
-                time_t timestamp);
+                int run_num);
 
   void clean();
   void fill(int ch, double value);
@@ -87,15 +86,15 @@ private:
   }
 }
 
-std::unique_ptr<daqdataformats::TriggerRecord>
- CounterModule::run_tdeframe(std::unique_ptr<daqdataformats::TriggerRecord> record,
-                             std::shared_ptr<ChannelMap>& map,
-                             const std::string& kafka_address)
-{
-  TLOG() << "Running run_tdeframe";
-  auto wibframes = decode<detdataformats::tde::TDE16Frame>(*record);
-  return std::move(record);
-}
+// std::unique_ptr<daqdataformats::TriggerRecord>
+//  CounterModule::run_tdeframe(std::unique_ptr<daqdataformats::TriggerRecord> record,
+//                              std::shared_ptr<ChannelMap>& map,
+//                              const std::string& kafka_address)
+// {
+//   TLOG() << "Running run_tdeframe";
+//   auto wibframes = decode<detdataformats::tde::TDE16Frame>(*record);
+//   return std::move(record);
+// }
 
 template <class T>
 std::unique_ptr<daqdataformats::TriggerRecord>
@@ -103,7 +102,6 @@ std::unique_ptr<daqdataformats::TriggerRecord>
                      DQMArgs& args)
 {
   auto map = args.map;
-  auto kafka_address = args.kafka_address;
 
   auto frames = decode<T>(*record);
   auto pipe = Pipeline<T>({"remove_empty", "check_empty", "make_same_size", "check_timestamp_aligned"});
@@ -159,11 +157,10 @@ std::unique_ptr<daqdataformats::TriggerRecord>
       }
     }
   }
-  transmit(kafka_address,
-              map,
-              "DQM",
-              record->get_header_ref().get_run_number(),
-              record->get_header_ref().get_trigger_timestamp());
+  transmit(args.kafka_address,
+           map,
+           args.kafka_topic,
+           record->get_header_ref().get_run_number());
   clean();
 
   return std::move(record);
@@ -203,8 +200,7 @@ void
  CounterModule::transmit(const std::string& kafka_address,
                     std::shared_ptr<ChannelMap>& cmap,
                     const std::string& topicname,
-                    int run_num,
-                    time_t timestamp)
+                    int run_num)
 {
   // Placeholders
   std::string dataname = m_name;

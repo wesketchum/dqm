@@ -73,6 +73,7 @@ DQMProcessor::do_configure(const nlohmann::json& args)
 {
   auto conf = args.get<dqmprocessor::Conf>();
   m_kafka_address = conf.kafka_address;
+  m_kafka_topic = conf.kafka_topic;
 
   m_mode = conf.mode;
   m_frontend_type = conf.frontend_type;
@@ -219,7 +220,6 @@ DQMProcessor::do_work()
 
   // Whether an algorithm is enabled or not depends on the value of the bitfield m_df_algs
   TLOG() << "m_df_algs = " << m_df_algs;
-  auto tmp = m_df_algs.end();
   auto dfmodule = std::make_shared<DFModule>(m_df_algs.find("raw") != std::string::npos,
                                              m_df_algs.find("rms") != std::string::npos,
                                              m_df_algs.find("std") != std::string::npos,
@@ -403,7 +403,7 @@ DQMProcessor::do_work()
     ++m_data_count;
     ++m_total_data_count;
 
-    DQMArgs args {m_run_marker, m_map, m_frontend_type, m_kafka_address};
+    DQMArgs args {m_run_marker, m_map, m_frontend_type, m_kafka_address, m_kafka_topic};
     auto memfunc = &AnalysisModule::run;
     auto current_thread =
       std::make_shared<std::thread>(memfunc, std::ref(*algo), std::move(element), std::ref(args));

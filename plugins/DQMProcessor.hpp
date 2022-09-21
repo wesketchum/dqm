@@ -94,6 +94,7 @@ private:
   std::atomic<daqdataformats::run_number_t> m_run_number;
 
   std::string m_kafka_address;
+  std::string m_kafka_topic;
   std::vector<int> m_link_idx;
 
   int m_clock_frequency;

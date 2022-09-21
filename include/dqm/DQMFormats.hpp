@@ -18,6 +18,7 @@ struct DQMArgs {
   std::shared_ptr<ChannelMap>& map;
   std::string frontend_type;
   std::string kafka_address;
+  std::string kafka_topic;
 };
 
 } // namespace dunedaq::dqm
