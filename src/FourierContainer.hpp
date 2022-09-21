@@ -21,10 +21,8 @@
 #include "daqdataformats/TriggerRecord.hpp"
 
 #include <cstdlib>
-#include <fstream>
 #include <map>
 #include <memory>
-#include <ostream>
 #include <string>
 #include <vector>
 
@@ -47,13 +45,11 @@ public:
   run(std::unique_ptr<daqdataformats::TriggerRecord> record,
       DQMArgs& args);
 
+  template <class T>
   std::unique_ptr<daqdataformats::TriggerRecord>
-  run_wibframe(std::unique_ptr<daqdataformats::TriggerRecord> record,
-               DQMArgs& args);
+  run_(std::unique_ptr<daqdataformats::TriggerRecord> record,
+       DQMArgs& args);
 
-  std::unique_ptr<daqdataformats::TriggerRecord>
-  run_wib2frame(std::unique_ptr<daqdataformats::TriggerRecord> record,
-                DQMArgs& args);
 
   void transmit(const std::string& kafka_address,
                 std::shared_ptr<ChannelMap> cmap,
@@ -98,110 +94,25 @@ FourierContainer::FourierContainer(std::string name, int size, std::vector<int>&
   }
 }
 
-
+template <class T>
 std::unique_ptr<daqdataformats::TriggerRecord>
-FourierContainer::run_wibframe(std::unique_ptr<daqdataformats::TriggerRecord> record,
-                               DQMArgs& args)
+FourierContainer::run_(std::unique_ptr<daqdataformats::TriggerRecord> record,
+                       DQMArgs& args)
 {
   auto map = args.map;
-  auto wibframes = decode<detdataformats::wib::WIBFrame>(*record);
+  auto frames = decode<T>(*record);
   // std::uint64_t timestamp = 0; // NOLINT(build/unsigned)
 
   // Remove empty fragments
-  for (auto& vec : wibframes)
+  for (auto& vec : frames)
     if (!vec.second.size())
-      wibframes.erase(vec.first);
+      frames.erase(vec.first);
 
 
-  // Check that all the wibframes vectors have the same size, if not, something
+  // Check that all the frames vectors have the same size, if not, something
   // bad has happened, for now don't do anything
-  auto size = wibframes.begin()->second.size();
-  // for (auto& vec : wibframes) {
-  //   if (vec.second.size() != size) {
-  //     ers::error(InvalidData(ERS_HERE, "the size of the vector of frames is different for each link"));
-  //     return std::move(record);
-  //   }
-  // }
-
-  // Normal mode, fourier transform for every channel
-  if (!m_global_mode) {
-    for (auto& [key, value] : wibframes) {
-      for (auto& fr : value) {
-        for (size_t ich = 0; ich < CHANNELS_PER_LINK; ++ich) {
-          fill(ich, key, fr->get_channel(ich));
-        }
-      }
-    }
-    for (size_t ich = 0; ich < m_size; ++ich) {
-      fouriervec[ich].compute_fourier_transform();
-    }
-    transmit(args.kafka_address,
-             map,
-             args.kafka_topic,
-             record->get_header_ref().get_run_number(),
-             record->get_header_ref().get_trigger_timestamp());
-  }
-
-  // Global mode means adding everything in planes and then all together
-  else {
-    // Initialize the vectors with zeroes, the last one can be done by summing
-    // the resulting transform
-    for (size_t i = 0; i < m_size - 1; ++i) {
-      fouriervec[i].m_data = std::vector<double> (m_npoints, 0);
-    }
-
-    auto channel_order = map->get_map();
-    for (auto& [plane, map] : channel_order) {
-      for (auto& [offch, pair] : map) {
-        int link = pair.first;
-        int ch = pair.second;
-        for (size_t iframe = 0; iframe < std::min(size, wibframes[link].size()); ++iframe) {
-            fouriervec[plane].m_data[iframe] += wibframes[link][iframe]->get_channel(ch);
-          }
-        }
-      }
-
-    for (size_t ich = 0; ich < m_size - 1; ++ich) {
-      if (!args.run_mark.get()) {
-        return std::move(record);
-      }
-      fouriervec[ich].compute_fourier_transform();
-    }
-    // The last one corresponds can be obtained as the sum of the ones for the planes
-    // since the fourier transform is linear
-    std::vector<double> transform(fouriervec[0].m_transform);
-    for (size_t i = 0; i < fouriervec[0].m_transform.size(); ++i) {
-      transform[i] += fouriervec[1].m_transform[i] + fouriervec[2].m_transform[i];
-    }
-    fouriervec[m_size-1].m_transform = transform;
-    transmit_global(args.kafka_address,
-                    map,
-                    args.kafka_topic,
-                    record->get_header_ref().get_run_number(),
-                    record->get_header_ref().get_trigger_timestamp());
-  }
-
-  return std::move(record);
-}
-
-std::unique_ptr<daqdataformats::TriggerRecord>
-FourierContainer::run_wib2frame(std::unique_ptr<daqdataformats::TriggerRecord> record,
-                                DQMArgs& args)
-{
-  auto map = args.map;
-  auto wibframes =  decode<detdataformats::wib2::WIB2Frame>(*record);
-  // std::uint64_t timestamp = 0; // NOLINT(build/unsigned)
-
-  // Remove empty fragments
-  for (auto& vec : wibframes)
-    if (!vec.second.size())
-      wibframes.erase(vec.first);
-
-
-  // Check that all the wibframes vectors have the same size, if not, something
-  // bad has happened, for now don't do anything
-  auto size = wibframes.begin()->second.size();
-  for (auto& vec : wibframes) {
+  auto size = frames.begin()->second.size();
+  for (auto& vec : frames) {
     if (vec.second.size() != size) {
       TLOG() << "Size for each fragment is different, the first fragment has size " << size << " but got size " << vec.second.size();
   //     ers::error(InvalidData(ERS_HERE, "the size of the vector of frames is different for each link"));
@@ -211,10 +122,10 @@ FourierContainer::run_wib2frame(std::unique_ptr<daqdataformats::TriggerRecord> r
 
   // Normal mode, fourier transform for every channel
   if (!m_global_mode) {
-    for (auto& [key, value] : wibframes) {
+    for (auto& [key, value] : frames) {
       for (auto& fr : value) {
         for (size_t ich = 0; ich < CHANNELS_PER_LINK; ++ich) {
-          fill(ich, key, fr->get_adc(ich));
+          fill(ich, key, get_adc<T>(fr, ich));
         }
       }
     }
@@ -241,8 +152,8 @@ FourierContainer::run_wib2frame(std::unique_ptr<daqdataformats::TriggerRecord> r
       for (auto& [offch, pair] : map) {
         int link = pair.first;
         int ch = pair.second;
-        for (size_t iframe = 0; iframe < std::min(size, wibframes[link].size()); ++iframe) {
-            fouriervec[plane].m_data[iframe] += wibframes[link][iframe]->get_adc(ch);
+        for (size_t iframe = 0; iframe < std::min(size, frames[link].size()); ++iframe) {
+          fouriervec[plane].m_data[iframe] += get_adc<T>(frames[link][iframe], ch);
           }
         }
       }
@@ -281,13 +192,13 @@ FourierContainer::run(std::unique_ptr<daqdataformats::TriggerRecord> record,
   auto kafka_address = args.kafka_address;
   if (frontend_type == "wib") {
     set_is_running(true);
-    auto ret = run_wibframe(std::move(record), args);
+    auto ret = run_<detdataformats::wib::WIBFrame>(std::move(record), args);
     set_is_running(false);
     return ret;
   }
   else if (frontend_type == "wib2") {
     set_is_running(true);
-    auto ret = run_wib2frame(std::move(record), args);
+    auto ret = run_<detdataformats::wib2::WIB2Frame>(std::move(record), args);
     set_is_running(false);
     return ret;
   }

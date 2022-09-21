@@ -25,6 +25,7 @@
 
 #include <cstdlib>
 #include <map>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -121,8 +122,6 @@ STDModule::run_(std::unique_ptr<daqdataformats::TriggerRecord> record,
       break;
     }
   }
-  uint64_t timestamp = 0; // NOLINT(build/unsigned)
-
   // Check that all the frames vectors have the same size, if not, something
   // bad has happened, for now don't do anything
   // auto size = frames.begin()->second.size();
@@ -148,9 +147,6 @@ STDModule::run_(std::unique_ptr<daqdataformats::TriggerRecord> record,
     // Fill for every link
     for (size_t ikey = 0; ikey < keys.size(); ++ikey) {
       auto fr = frames[keys[ikey]][ifr];
-
-      // Timestamps are too big for them to be displayed nicely, subtract the minimum timestamp
-      timestamp = get_timestamp<T>(fr) - min_timestamp;
 
       for (int ich = 0; ich < CHANNELS_PER_LINK; ++ich) {
         fill(ich, keys[ikey], get_adc<T>(fr, ich));
