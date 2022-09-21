@@ -95,9 +95,6 @@ DFModule::run(std::unique_ptr<daqdataformats::TriggerRecord> record,
 {
   set_is_running(true);
   auto run_mark = args.run_mark;
-  auto map = args.map;
-  auto frontend_type = args.frontend_type;
-  auto kafka_address = args.kafka_address;
 
   std::vector<std::shared_ptr<AnalysisModule>> list {m_raw, m_std, m_fourier_channel, m_fourier_plane};
   std::vector<bool> will_run {m_enable_raw, m_enable_std, m_enable_fourier_channel, m_enable_fourier_plane};
@@ -108,7 +105,6 @@ DFModule::run(std::unique_ptr<daqdataformats::TriggerRecord> record,
       set_is_running(false);
       return std::move(record);
     }
-    DQMArgs args {run_mark, map, frontend_type, kafka_address};
     record = list[i]->run(std::move(record), args);
   }
 

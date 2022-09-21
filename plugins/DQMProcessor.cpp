@@ -176,7 +176,7 @@ DQMProcessor::do_work()
   struct AnalysisInstance
   {
     std::shared_ptr<AnalysisModule> mod;
-    double between_time;
+    int between_time;
     int number_of_frames;
     std::shared_ptr<std::thread> running_thread;
     std::string name;
