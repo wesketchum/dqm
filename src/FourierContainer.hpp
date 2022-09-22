@@ -217,40 +217,70 @@ FourierContainer::transmit(const std::string& kafka_address,
                            int run_num,
                            time_t timestamp)
 {
-  // Placeholders
-  std::string dataname = m_name;
-  std::string metadata = "";
-  int subrun = 0;
-  int event = 0;
-  std::string partition = getenv("DUNEDAQ_PARTITION");
-  std::string app_name = getenv("DUNEDAQ_APPLICATION_NAME");
-  std::string datasource = partition + "_" + app_name;
 
-  auto freq = fouriervec[0].get_frequencies();
-  // One message is sent for every plane
-  auto channel_order = cmap->get_map();
-  for (auto& [plane, map] : channel_order) {
-    std::stringstream output;
-    output << datasource << ";" << dataname << ";" << run_num << ";" << subrun << ";" << event << ";" << timestamp
-           << ";" << metadata << ";" << partition << ";" << app_name << ";" << 0 << ";" << plane << ";";
-    for (auto& [offch, pair] : map) {
-      output << offch << " ";
-    }
-    output << "\n";
-    for (size_t i = 0; i < freq.size(); ++i) {
-      output << freq[i] << "\n";
-      for (auto& [offch, pair] : map) {
-        int link = pair.first;
-        int ch = pair.second;
-        output << fouriervec[get_local_index(ch, link)].get_transform_at(i) << " ";
-      }
-      output << "\n";
-    }
-    TLOG_DEBUG(5) << "Size of the message in bytes: " << output.str().size();
-    KafkaExport(kafka_address, output.str(), topicname);
-  }
+  // // Placeholders
+  // std::string dataname = m_name;
+  // std::string partition = getenv("DUNEDAQ_PARTITION");
+  // std::string app_name = getenv("DUNEDAQ_APPLICATION_NAME");
+  // std::string datasource = partition + "_" + app_name;
 
-  clean();
+  // // One message is sent for every plane
+  // auto channel_order = cmap->get_map();
+  // for (auto& [plane, map] : channel_order) {
+  //   std::stringstream output;
+  //   output << "{";
+  //   output << "\"source\": \"" << datasource << "\",";
+  //   output << "\"run_number\": \"" << run_num << "\",";
+  //   output << "\"partition\": \"" << partition << "\",";
+  //   output << "\"app_name\": \"" << app_name << "\",";
+  //   output << "\"plane\": \"" << plane << "\",";
+  //   output << "\"algorithm\": \"" << "std" << "\"";
+  //   output << "}\n\n\n";
+  //   std::vector<float> freqs = fouriervec[0].get_frequencies();
+  //   auto bytes = serialization::serialize(freqs, serialization::kMsgPack);
+  //   for (auto& b : bytes) {
+  //     output << b;
+  //   }
+  //   output << "\n\n\n";
+  //   std::vector<float> values;
+  //   for (auto& [offch, pair] : map) {
+  //     int link = pair.first;
+  //     int ch = pair.second;
+  //     values.push_back(histvec[get_local_index(ch, link)].std());
+  //   }
+  //   bytes = serialization::serialize(values, serialization::kMsgPack);
+  //   for (auto& b : bytes) {
+  //     output << b;
+  //   }
+  //   TLOG_DEBUG(5) << "Size of the message in bytes: " << output.str().size();
+  //   KafkaExport(kafka_address, output.str(), topicname);
+  // }
+
+  // auto freq = fouriervec[0].get_frequencies();
+  // // One message is sent for every plane
+  // auto channel_order = cmap->get_map();
+  // for (auto& [plane, map] : channel_order) {
+  //   std::stringstream output;
+  //   output << datasource << ";" << dataname << ";" << run_num << ";" << subrun << ";" << event << ";" << timestamp
+  //          << ";" << metadata << ";" << partition << ";" << app_name << ";" << 0 << ";" << plane << ";";
+  //   for (auto& [offch, pair] : map) {
+  //     output << offch << " ";
+  //   }
+  //   output << "\n";
+  //   for (size_t i = 0; i < freq.size(); ++i) {
+  //     output << freq[i] << "\n";
+  //     for (auto& [offch, pair] : map) {
+  //       int link = pair.first;
+  //       int ch = pair.second;
+  //       output << fouriervec[get_local_index(ch, link)].get_transform_at(i) << " ";
+  //     }
+  //     output << "\n";
+  //   }
+  //   TLOG_DEBUG(5) << "Size of the message in bytes: " << output.str().size();
+  //   KafkaExport(kafka_address, output.str(), topicname);
+  // }
+
+  // clean();
 }
 
 void
@@ -260,39 +290,38 @@ FourierContainer::transmit_global(const std::string& kafka_address,
                                   int run_num,
                                   time_t timestamp)
 {
+  // Placeholders
   std::string dataname = m_name;
-  std::string metadata = "";
-  int subrun = 0;
-  int event = 0;
   std::string partition = getenv("DUNEDAQ_PARTITION");
   std::string app_name = getenv("DUNEDAQ_APPLICATION_NAME");
   std::string datasource = partition + "_" + app_name;
 
-  auto freq = fouriervec[0].get_frequencies();
   // One message is sent for every plane
-  for (int plane = 0; plane < 4; plane++)
-  {
+  for (int plane = 0; plane < 4; plane++) {
     std::stringstream output;
-    output << datasource << ";" << dataname << ";" << run_num << ";" << subrun
-           << ";" << event << ";" << timestamp << ";" << metadata << ";"
-           << partition << ";" << app_name << ";" << 0 << ";" << plane << ";";
-    //output << "\n";
-    for (size_t i=0; i < freq.size(); ++i)
-    {
-      int integer_freq = (int) freq[i];
-      output << integer_freq << " ";
+    output << "{";
+    output << "\"source\": \"" << datasource << "\",";
+    output << "\"run_number\": \"" << run_num << "\",";
+    output << "\"partition\": \"" << partition << "\",";
+    output << "\"app_name\": \"" << app_name << "\",";
+    output << "\"plane\": \"" << plane << "\",";
+    output << "\"algorithm\": \"" << "fourier_plane" << "\"";
+    output << "}\n\n\n";
+    std::vector<double> freqs = fouriervec[plane].get_frequencies();
+    auto bytes = serialization::serialize(freqs, serialization::kMsgPack);
+    for (auto& b : bytes) {
+      output << b;
     }
-    output << "\n";
-    output << "Summed FFT\n";
-    for (size_t i = 0; i < freq.size(); ++i)
-    {
-      if (i >= fouriervec[plane].m_transform.size()) {
-        ers::error(ChannelMapError(ERS_HERE, "Plane " + std::to_string(plane) + " has not been found"));
-        break;
-      }
-      output << fouriervec[plane].get_transform_at(i) << " ";
+    output << "\n\n\n";
+    std::vector<double> values;
+    for (size_t i = 0; i < freqs.size(); ++i) {
+      values.push_back(fouriervec[plane].get_transform_at(i));
     }
-    output << "\n";
+    bytes = serialization::serialize(values, serialization::kMsgPack);
+    for (auto& b : bytes) {
+      output << b;
+    }
+    TLOG_DEBUG(5) << "Size of the message in bytes: " << output.str().size();
     KafkaExport(kafka_address, output.str(), topicname);
   }
 
