@@ -157,7 +157,7 @@ DQMProcessor::do_start(const nlohmann::json& args)
 
   }
 
-  m_run_marker = std::make_shared<std::atomic<bool>>(true);
+  m_dqm_args.run_mark = std::make_shared<std::atomic<bool>>(true);
 
   m_run_number.store(daqdataformats::run_number_t(args.at("run").get<daqdataformats::run_number_t>()));
 
@@ -167,7 +167,7 @@ DQMProcessor::do_start(const nlohmann::json& args)
 void
 DQMProcessor::do_drain_dataflow(const data_t&)
 {
-  m_run_marker->store(false);
+  m_dqm_args.run_mark->store(false);
   m_running_thread->join();
 
   if (m_mode == "readout") {
@@ -312,7 +312,7 @@ DQMProcessor::do_work()
                                                                                         nullptr,  "Channel map filler" };
 
   // Main loop, running forever
-  while (m_run_marker.get()) {
+  while (*m_dqm_args.run_mark) {
 
     auto task = map.begin();
     if (task == map.end()) {
@@ -324,10 +324,10 @@ DQMProcessor::do_work()
 
     // Sleep until the next time, done in steps so that one doesn't have to wait a lot
     // when stopping
-    while (m_run_marker.get() && next_time - std::chrono::system_clock::now() > std::chrono::duration<double>(m_sleep_time / 1000.)) {
+    while (*m_dqm_args.run_mark && next_time - std::chrono::system_clock::now() > std::chrono::duration<double>(m_sleep_time / 1000.)) {
       std::this_thread::sleep_for(std::chrono::milliseconds(m_sleep_time));
     }
-    if (!m_run_marker.get()) break;
+    if (!*m_dqm_args.run_mark) break;
     std::this_thread::sleep_until(next_time);
 
     // Save pointer to delete the thread later
@@ -347,7 +347,7 @@ DQMProcessor::do_work()
     }
 
     // We don't want to run if the run has stopped after sleeping for a while
-    if (!m_run_marker.get()) {
+    if (!*m_dqm_args.run_mark) {
       break;
     }
 
@@ -410,10 +410,10 @@ DQMProcessor::do_work()
       TLOG_DEBUG(10) << "Data popped from the queue";
     }
     else if (m_mode == "df") {
-      while (m_run_marker.get() && dftrs.get_num_elements() == 0) {
+      while (*m_dqm_args.run_mark && dftrs.get_num_elements() == 0) {
         std::this_thread::sleep_for(std::chrono::milliseconds(m_sleep_time_df));
       }
-      if (!m_run_marker.get()) {
+      if (!*m_dqm_args.run_mark) {
         break;
       }
       dftrs.pop(element, std::chrono::milliseconds(100));
