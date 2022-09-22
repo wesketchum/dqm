@@ -12,7 +12,7 @@
 #include "ChannelMap.hpp"
 #include "Constants.hpp"
 #include "Decoder.hpp"
-#include "dqm/DQMIssues.hpp"
+#include "dqm/Issues.hpp"
 
 #include "daqdataformats/TriggerRecord.hpp"
 #include "detdataformats/wib2/WIB2Frame.hpp"
@@ -59,7 +59,7 @@ ChannelMapHDCB::fill(daqdataformats::TriggerRecord& record)
     return;
   }
 
-  auto wibframes = decode<detdataformats::wib2::WIB2Frame>(record);
+  auto wibframes = decode<detdataformats::wib2::WIB2Frame>(record, 0);
 
   // If we get no frames then return and since
   // the map is not filled it will run again soon

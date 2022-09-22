@@ -1,12 +1,12 @@
 /**
- * @file DQMIssues.hpp DQM system related ERS issues
+ * @file Issues.hpp DQM system related ERS issues
  *
  * This is part of the DUNE DAQ , copyright 2020.
  * Licensing/copyright details are in the COPYING file that you should have
  * received with this code.
  */
-#ifndef DQM_INCLUDE_DQM_DQMISSUES_HPP_
-#define DQM_INCLUDE_DQM_DQMISSUES_HPP_
+#ifndef DQM_INCLUDE_DQM_ISSUES_HPP_
+#define DQM_INCLUDE_DQM_ISSUES_HPP_
 
 #include "dfmessages/Types.hpp"
 
@@ -38,6 +38,15 @@ ERS_DECLARE_ISSUE(dqm, CouldNotCreateFourierPlan, "Fourier plan was not created 
 
 ERS_DECLARE_ISSUE(dqm, FrontEndNotSupported, "Frontend is not supported: ", ((std::string)frontend_type))
 
+ERS_DECLARE_ISSUE(dqm, EmptyFragments, "Empty fragments received", ((std::string)fragment_info))
+
+ERS_DECLARE_ISSUE(dqm, EmptyData, "Data is empty after removing empty fragments", ((std::string)empty))
+
+ERS_DECLARE_ISSUE(dqm, TimestampsNotAligned, "Timestamps are not aligned, DQM will align them", ((std::string)empty))
+
+ERS_DECLARE_ISSUE(dqm, InvalidInput, "Invalid input: ", ((std::string)why))
+
+
 } // namespace dunedaq
 
-#endif // DQM_INCLUDE_DQM_DQMISSUES_HPP_
+#endif // DQM_INCLUDE_DQM_ISSUES_HPP_

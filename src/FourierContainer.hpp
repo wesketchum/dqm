@@ -9,21 +9,20 @@
 #define DQM_SRC_FOURIERCONTAINER_HPP_
 
 // DQM
-#include "AnalysisModule.hpp"
+#include "dqm/AnalysisModule.hpp"
 #include "ChannelMap.hpp"
 #include "Constants.hpp"
 #include "Decoder.hpp"
 #include "Exporter.hpp"
-#include "dqm/Fourier.hpp"
-#include "dqm/DQMIssues.hpp"
+#include "dqm/algs/Fourier.hpp"
+#include "dqm/Issues.hpp"
+#include "dqm/DQMFormats.hpp"
 
 #include "daqdataformats/TriggerRecord.hpp"
 
 #include <cstdlib>
-#include <fstream>
 #include <map>
 #include <memory>
-#include <ostream>
 #include <string>
 #include <vector>
 
@@ -44,22 +43,13 @@ public:
 
   std::unique_ptr<daqdataformats::TriggerRecord>
   run(std::unique_ptr<daqdataformats::TriggerRecord> record,
-      std::atomic<bool>& run_mark,
-      std::shared_ptr<ChannelMap>& map,
-      std::string& frontend_type,
-      const std::string& kafka_address = "");
+      DQMArgs& args, DQMInfo& info);
 
+  template <class T>
   std::unique_ptr<daqdataformats::TriggerRecord>
-  run_wibframe(std::unique_ptr<daqdataformats::TriggerRecord> record,
-               std::atomic<bool>& run_mark,
-               std::shared_ptr<ChannelMap>& map,
-               const std::string& kafka_address = "");
+  run_(std::unique_ptr<daqdataformats::TriggerRecord> record,
+       DQMArgs& args, DQMInfo& info);
 
-  std::unique_ptr<daqdataformats::TriggerRecord>
-  run_wib2frame(std::unique_ptr<daqdataformats::TriggerRecord> record,
-                std::atomic<bool>& run_mark,
-                std::shared_ptr<ChannelMap>& map,
-                const std::string& kafka_address = "");
 
   void transmit(const std::string& kafka_address,
                 std::shared_ptr<ChannelMap> cmap,
@@ -104,108 +94,26 @@ FourierContainer::FourierContainer(std::string name, int size, std::vector<int>&
   }
 }
 
-
+template <class T>
 std::unique_ptr<daqdataformats::TriggerRecord>
-FourierContainer::run_wibframe(std::unique_ptr<daqdataformats::TriggerRecord> record,
-                               std::atomic<bool>& run_mark,
-                               std::shared_ptr<ChannelMap>& map,
-                               const std::string& kafka_address)
+FourierContainer::run_(std::unique_ptr<daqdataformats::TriggerRecord> record,
+                       DQMArgs& args, DQMInfo& info)
 {
-  auto wibframes = decode<detdataformats::wib::WIBFrame>(*record);
+  auto start = std::chrono::steady_clock::now();
+  auto map = args.map;
+  auto frames = decode<T>(*record, args.max_frames);
   // std::uint64_t timestamp = 0; // NOLINT(build/unsigned)
 
   // Remove empty fragments
-  for (auto& vec : wibframes)
+  for (auto& vec : frames)
     if (!vec.second.size())
-      wibframes.erase(vec.first);
+      frames.erase(vec.first);
 
 
-  // Check that all the wibframes vectors have the same size, if not, something
+  // Check that all the frames vectors have the same size, if not, something
   // bad has happened, for now don't do anything
-  auto size = wibframes.begin()->second.size();
-  // for (auto& vec : wibframes) {
-  //   if (vec.second.size() != size) {
-  //     ers::error(InvalidData(ERS_HERE, "the size of the vector of frames is different for each link"));
-  //     return std::move(record);
-  //   }
-  // }
-
-  // Normal mode, fourier transform for every channel
-  if (!m_global_mode) {
-    for (auto& [key, value] : wibframes) {
-      for (auto& fr : value) {
-        for (size_t ich = 0; ich < CHANNELS_PER_LINK; ++ich) {
-          fill(ich, key, fr->get_channel(ich));
-        }
-      }
-    }
-    for (size_t ich = 0; ich < m_size; ++ich) {
-      fouriervec[ich].compute_fourier_transform();
-    }
-    transmit(kafka_address,
-             map,
-             "testdunedqm",
-             record->get_header_ref().get_run_number(),
-             record->get_header_ref().get_trigger_timestamp());
-  }
-
-  // Global mode means adding everything in planes and then all together
-  else {
-    // Initialize the vectors with zeroes, the last one can be done by summing
-    // the resulting transform
-    for (size_t i = 0; i < m_size - 1; ++i) {
-      fouriervec[i].m_data = std::vector<double> (m_npoints, 0);
-    }
-
-    auto channel_order = map->get_map();
-    for (auto& [plane, map] : channel_order) {
-      for (auto& [offch, pair] : map) {
-        int link = pair.first;
-        int ch = pair.second;
-        for (size_t iframe = 0; iframe < std::min(size, wibframes[link].size()); ++iframe) {
-            fouriervec[plane].m_data[iframe] += wibframes[link][iframe]->get_channel(ch);
-          }
-        }
-      }
-
-    for (size_t ich = 0; ich < m_size - 1; ++ich) {
-      if (!run_mark) {
-        return std::move(record);
-      }
-      fouriervec[ich].compute_fourier_transform();
-    }
-    // The last one corresponds can be obtained as the sum of the ones for the planes
-    // since the fourier transform is linear
-    std::vector<double> transform(fouriervec[0].m_transform);
-    for (size_t i = 0; i < fouriervec[0].m_transform.size(); ++i) {
-      transform[i] += fouriervec[1].m_transform[i] + fouriervec[2].m_transform[i];
-    }
-    fouriervec[m_size-1].m_transform = transform;
-    transmit_global(kafka_address, map, "testdunedqm", record->get_header_ref().get_run_number(), record->get_header_ref().get_trigger_timestamp());
-  }
-
-  return std::move(record);
-}
-
-std::unique_ptr<daqdataformats::TriggerRecord>
-FourierContainer::run_wib2frame(std::unique_ptr<daqdataformats::TriggerRecord> record,
-                                std::atomic<bool>& run_mark,
-                                std::shared_ptr<ChannelMap>& map,
-                                const std::string& kafka_address)
-{
-  auto wibframes =  decode<detdataformats::wib2::WIB2Frame>(*record);
-  // std::uint64_t timestamp = 0; // NOLINT(build/unsigned)
-
-  // Remove empty fragments
-  for (auto& vec : wibframes)
-    if (!vec.second.size())
-      wibframes.erase(vec.first);
-
-
-  // Check that all the wibframes vectors have the same size, if not, something
-  // bad has happened, for now don't do anything
-  auto size = wibframes.begin()->second.size();
-  for (auto& vec : wibframes) {
+  auto size = frames.begin()->second.size();
+  for (auto& vec : frames) {
     if (vec.second.size() != size) {
       TLOG() << "Size for each fragment is different, the first fragment has size " << size << " but got size " << vec.second.size();
   //     ers::error(InvalidData(ERS_HERE, "the size of the vector of frames is different for each link"));
@@ -215,21 +123,24 @@ FourierContainer::run_wib2frame(std::unique_ptr<daqdataformats::TriggerRecord> r
 
   // Normal mode, fourier transform for every channel
   if (!m_global_mode) {
-    for (auto& [key, value] : wibframes) {
+    for (auto& [key, value] : frames) {
       for (auto& fr : value) {
         for (size_t ich = 0; ich < CHANNELS_PER_LINK; ++ich) {
-          fill(ich, key, fr->get_adc(ich));
+          fill(ich, key, get_adc<T>(fr, ich));
         }
       }
     }
     for (size_t ich = 0; ich < m_size; ++ich) {
       fouriervec[ich].compute_fourier_transform();
     }
-    transmit(kafka_address,
+    transmit(args.kafka_address,
              map,
-             "testdunedqm",
+             args.kafka_topic,
              record->get_header_ref().get_run_number(),
              record->get_header_ref().get_trigger_timestamp());
+    auto stop = std::chrono::steady_clock::now();
+    info.info["fourier_channel_times_run"].store(info.info["fourier_channel_times_run"].load() + 1);
+    info.info["fourier_channel_time_taken"].store(std::chrono::duration_cast<std::chrono::milliseconds>(stop-start).count());
   }
 
   // Global mode means adding everything in planes and then all together
@@ -245,14 +156,14 @@ FourierContainer::run_wib2frame(std::unique_ptr<daqdataformats::TriggerRecord> r
       for (auto& [offch, pair] : map) {
         int link = pair.first;
         int ch = pair.second;
-        for (size_t iframe = 0; iframe < std::min(size, wibframes[link].size()); ++iframe) {
-            fouriervec[plane].m_data[iframe] += wibframes[link][iframe]->get_adc(ch);
+        for (size_t iframe = 0; iframe < std::min(size, frames[link].size()); ++iframe) {
+          fouriervec[plane].m_data[iframe] += get_adc<T>(frames[link][iframe], ch);
           }
         }
       }
 
     for (size_t ich = 0; ich < m_size - 1; ++ich) {
-      if (!run_mark) {
+      if (!args.run_mark.get()) {
         return std::move(record);
       }
       fouriervec[ich].compute_fourier_transform();
@@ -264,7 +175,14 @@ FourierContainer::run_wib2frame(std::unique_ptr<daqdataformats::TriggerRecord> r
       transform[i] += fouriervec[1].m_transform[i] + fouriervec[2].m_transform[i];
     }
     fouriervec[m_size-1].m_transform = transform;
-    transmit_global(kafka_address, map, "testdunedqm", record->get_header_ref().get_run_number(), record->get_header_ref().get_trigger_timestamp());
+    transmit_global(args.kafka_address,
+                    map,
+                    args.kafka_topic,
+                    record->get_header_ref().get_run_number(),
+                    record->get_header_ref().get_trigger_timestamp());
+    auto stop = std::chrono::steady_clock::now();
+    info.info["fourier_plane_time_taken"].store(std::chrono::duration_cast<std::chrono::milliseconds>(stop-start).count());
+    info.info["fourier_plane_times_run"].store(info.info["fourier_plane_times_run"].load() + 1);
   }
 
   return std::move(record);
@@ -273,22 +191,21 @@ FourierContainer::run_wib2frame(std::unique_ptr<daqdataformats::TriggerRecord> r
 
 std::unique_ptr<daqdataformats::TriggerRecord>
 FourierContainer::run(std::unique_ptr<daqdataformats::TriggerRecord> record,
-                      std::atomic<bool>& run_mark,
-                      std::shared_ptr<ChannelMap>& map,
-                      std::string& frontend_type,
-                      const std::string& kafka_address)
+                      DQMArgs& args, DQMInfo& info)
 {
+  auto frontend_type = args.frontend_type;
+  auto run_mark = args.run_mark;
+  auto map = args.map;
+  auto kafka_address = args.kafka_address;
   if (frontend_type == "wib") {
     set_is_running(true);
-    auto ret = run_wibframe(std::move(record), run_mark, map, kafka_address);
+    auto ret = run_<detdataformats::wib::WIBFrame>(std::move(record), args, info);
     set_is_running(false);
-    return ret;
   }
   else if (frontend_type == "wib2") {
     set_is_running(true);
-    auto ret = run_wib2frame(std::move(record), run_mark, map, kafka_address);
+    auto ret = run_<detdataformats::wib2::WIB2Frame>(std::move(record), args, info);
     set_is_running(false);
-    return ret;
   }
   return record;
 }
@@ -300,40 +217,70 @@ FourierContainer::transmit(const std::string& kafka_address,
                            int run_num,
                            time_t timestamp)
 {
-  // Placeholders
-  std::string dataname = m_name;
-  std::string metadata = "";
-  int subrun = 0;
-  int event = 0;
-  std::string partition = getenv("DUNEDAQ_PARTITION");
-  std::string app_name = getenv("DUNEDAQ_APPLICATION_NAME");
-  std::string datasource = partition + "_" + app_name;
 
-  auto freq = fouriervec[0].get_frequencies();
-  // One message is sent for every plane
-  auto channel_order = cmap->get_map();
-  for (auto& [plane, map] : channel_order) {
-    std::stringstream output;
-    output << datasource << ";" << dataname << ";" << run_num << ";" << subrun << ";" << event << ";" << timestamp
-           << ";" << metadata << ";" << partition << ";" << app_name << ";" << 0 << ";" << plane << ";";
-    for (auto& [offch, pair] : map) {
-      output << offch << " ";
-    }
-    output << "\n";
-    for (size_t i = 0; i < freq.size(); ++i) {
-      output << freq[i] << "\n";
-      for (auto& [offch, pair] : map) {
-        int link = pair.first;
-        int ch = pair.second;
-        output << fouriervec[get_local_index(ch, link)].get_transform_at(i) << " ";
-      }
-      output << "\n";
-    }
-    TLOG_DEBUG(5) << "Size of the message in bytes: " << output.str().size();
-    KafkaExport(kafka_address, output.str(), topicname);
-  }
+  // // Placeholders
+  // std::string dataname = m_name;
+  // std::string partition = getenv("DUNEDAQ_PARTITION");
+  // std::string app_name = getenv("DUNEDAQ_APPLICATION_NAME");
+  // std::string datasource = partition + "_" + app_name;
 
-  clean();
+  // // One message is sent for every plane
+  // auto channel_order = cmap->get_map();
+  // for (auto& [plane, map] : channel_order) {
+  //   std::stringstream output;
+  //   output << "{";
+  //   output << "\"source\": \"" << datasource << "\",";
+  //   output << "\"run_number\": \"" << run_num << "\",";
+  //   output << "\"partition\": \"" << partition << "\",";
+  //   output << "\"app_name\": \"" << app_name << "\",";
+  //   output << "\"plane\": \"" << plane << "\",";
+  //   output << "\"algorithm\": \"" << "std" << "\"";
+  //   output << "}\n\n\n";
+  //   std::vector<float> freqs = fouriervec[0].get_frequencies();
+  //   auto bytes = serialization::serialize(freqs, serialization::kMsgPack);
+  //   for (auto& b : bytes) {
+  //     output << b;
+  //   }
+  //   output << "\n\n\n";
+  //   std::vector<float> values;
+  //   for (auto& [offch, pair] : map) {
+  //     int link = pair.first;
+  //     int ch = pair.second;
+  //     values.push_back(histvec[get_local_index(ch, link)].std());
+  //   }
+  //   bytes = serialization::serialize(values, serialization::kMsgPack);
+  //   for (auto& b : bytes) {
+  //     output << b;
+  //   }
+  //   TLOG_DEBUG(5) << "Size of the message in bytes: " << output.str().size();
+  //   KafkaExport(kafka_address, output.str(), topicname);
+  // }
+
+  // auto freq = fouriervec[0].get_frequencies();
+  // // One message is sent for every plane
+  // auto channel_order = cmap->get_map();
+  // for (auto& [plane, map] : channel_order) {
+  //   std::stringstream output;
+  //   output << datasource << ";" << dataname << ";" << run_num << ";" << subrun << ";" << event << ";" << timestamp
+  //          << ";" << metadata << ";" << partition << ";" << app_name << ";" << 0 << ";" << plane << ";";
+  //   for (auto& [offch, pair] : map) {
+  //     output << offch << " ";
+  //   }
+  //   output << "\n";
+  //   for (size_t i = 0; i < freq.size(); ++i) {
+  //     output << freq[i] << "\n";
+  //     for (auto& [offch, pair] : map) {
+  //       int link = pair.first;
+  //       int ch = pair.second;
+  //       output << fouriervec[get_local_index(ch, link)].get_transform_at(i) << " ";
+  //     }
+  //     output << "\n";
+  //   }
+  //   TLOG_DEBUG(5) << "Size of the message in bytes: " << output.str().size();
+  //   KafkaExport(kafka_address, output.str(), topicname);
+  // }
+
+  // clean();
 }
 
 void
@@ -343,39 +290,38 @@ FourierContainer::transmit_global(const std::string& kafka_address,
                                   int run_num,
                                   time_t timestamp)
 {
+  // Placeholders
   std::string dataname = m_name;
-  std::string metadata = "";
-  int subrun = 0;
-  int event = 0;
   std::string partition = getenv("DUNEDAQ_PARTITION");
   std::string app_name = getenv("DUNEDAQ_APPLICATION_NAME");
   std::string datasource = partition + "_" + app_name;
 
-  auto freq = fouriervec[0].get_frequencies();
   // One message is sent for every plane
-  for (int plane = 0; plane < 4; plane++)
-  {
+  for (int plane = 0; plane < 4; plane++) {
     std::stringstream output;
-    output << datasource << ";" << dataname << ";" << run_num << ";" << subrun
-           << ";" << event << ";" << timestamp << ";" << metadata << ";"
-           << partition << ";" << app_name << ";" << 0 << ";" << plane << ";";
-    //output << "\n";
-    for (size_t i=0; i < freq.size(); ++i)
-    {
-      int integer_freq = (int) freq[i];
-      output << integer_freq << " ";
+    output << "{";
+    output << "\"source\": \"" << datasource << "\",";
+    output << "\"run_number\": \"" << run_num << "\",";
+    output << "\"partition\": \"" << partition << "\",";
+    output << "\"app_name\": \"" << app_name << "\",";
+    output << "\"plane\": \"" << plane << "\",";
+    output << "\"algorithm\": \"" << "fourier_plane" << "\"";
+    output << "}\n\n\n";
+    std::vector<double> freqs = fouriervec[plane].get_frequencies();
+    auto bytes = serialization::serialize(freqs, serialization::kMsgPack);
+    for (auto& b : bytes) {
+      output << b;
     }
-    output << "\n";
-    output << "Summed FFT\n";
-    for (size_t i = 0; i < freq.size(); ++i)
-    {
-      if (i >= fouriervec[plane].m_transform.size()) {
-        ers::error(ChannelMapError(ERS_HERE, "Plane " + std::to_string(plane) + " has not been found"));
-        break;
-      }
-      output << fouriervec[plane].get_transform_at(i) << " ";
+    output << "\n\n\n";
+    std::vector<double> values;
+    for (size_t i = 0; i < freqs.size(); ++i) {
+      values.push_back(fouriervec[plane].get_transform_at(i));
     }
-    output << "\n";
+    bytes = serialization::serialize(values, serialization::kMsgPack);
+    for (auto& b : bytes) {
+      output << b;
+    }
+    TLOG_DEBUG(5) << "Size of the message in bytes: " << output.str().size();
     KafkaExport(kafka_address, output.str(), topicname);
   }
 

@@ -21,17 +21,14 @@
 #include "daqdataformats/TriggerRecord.hpp"
 #include "dfmessages/TriggerDecision.hpp"
 #include "timinglibs/TimestampEstimator.hpp"
-#include <ipm/Receiver.hpp>
+#include "ipm/Receiver.hpp"
 
 #include "iomanager/FollyQueue.hpp"
 
 #include <atomic>
 #include <chrono>
-#include <memory>
 #include <string>
-#include <utility>
 #include <vector>
-#include <list>
 
 namespace dunedaq::dqm {
 
@@ -60,15 +57,15 @@ public:
   void dispatch_timesync(dfmessages::TimeSync& timesyncmsg);
   void dispatch_trigger_record(std::unique_ptr<daqdataformats::TriggerRecord>& tr);
 
-  void RequestMaker();
-  dfmessages::TriggerDecision CreateRequest(std::vector<dfmessages::SourceID>& m_links, int number_of_frames);
+  void do_work();
+  dfmessages::TriggerDecision create_readout_request(std::vector<dfmessages::SourceID>& m_sids, int number_of_frames);
 
   void dfrequest();
 
   void get_info(opmonlib::InfoCollector& ci, int /*level*/);
 
 private:
-  std::atomic<bool> m_run_marker;
+  std::shared_ptr<std::atomic<bool>> m_run_marker;
   std::shared_ptr<iomanager::ReceiverConcept<std::unique_ptr<daqdataformats::TriggerRecord>>> m_receiver;
   std::shared_ptr<iomanager::SenderConcept<dfmessages::TriggerDecision>> m_sender;
 
@@ -76,16 +73,16 @@ private:
   std::chrono::milliseconds m_source_timeout{ 1000 };
 
   // Configuration parameters
-  dqmprocessor::StandardDQM m_hist_conf;
-  dqmprocessor::StandardDQM m_mean_rms_conf;
-  dqmprocessor::StandardDQM m_fourier_conf;
-  dqmprocessor::StandardDQM m_fourier_sum_conf;
-  dqmprocessor::StandardDQM m_channel_mask_conf;
+  dqmprocessor::StandardDQM m_raw_conf;
+  dqmprocessor::StandardDQM m_std_conf;
+  dqmprocessor::StandardDQM m_rms_conf;
+  dqmprocessor::StandardDQM m_fourier_channel_conf;
+  dqmprocessor::StandardDQM m_fourier_plane_conf;
 
   // DF configuration parameters
   double m_df_seconds {0};
   double m_df_offset {0};
-  int m_df_algs {0};
+  std::string m_df_algs;
   int m_df_num_frames {0};
 
   std::string m_timesync_topic;
@@ -97,6 +94,7 @@ private:
   std::atomic<daqdataformats::run_number_t> m_run_number;
 
   std::string m_kafka_address;
+  std::string m_kafka_topic;
   std::vector<int> m_link_idx;
 
   int m_clock_frequency;
@@ -110,14 +108,16 @@ private:
   std::atomic<uint64_t> m_received_timesync_count{ 0 }; // NOLINT(build/unsigned)
 
   std::string m_channel_map;
-  std::shared_ptr<ChannelMap> m_map;
 
-  // std::list<std::unique_ptr<daqdataformats::TriggerRecord>> dftrs;
   iomanager::FollySPSCQueue<std::unique_ptr<daqdataformats::TriggerRecord>> dftrs{"FollyQueue", 100};
 
   std::string m_mode;
   std::string m_frontend_type;
   int m_readout_window_offset;
+
+  DQMArgs m_dqm_args;
+  DQMInfo m_dqm_info;
+  int m_max_frames;
 
   // Constants used in DQMProcessor.cpp
   static constexpr int m_channel_map_delay {2};                // How much time in s to wait until running the channel map

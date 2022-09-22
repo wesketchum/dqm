@@ -16,7 +16,7 @@ local dqmprocessor = {
 
     string : s.string("string", doc="A string"),
 
-    time : s.number("Time", "f4", doc="A time"),
+    time : s.number("Time", "i4", doc="A time"),
 
     count : s.number("Count", "i4",
                      doc="A count of not too many things"),
@@ -43,40 +43,25 @@ local dqmprocessor = {
     conf: s.record("Conf", [
         s.field("channel_map", self.string, doc='"HD" or "VD"'),
         s.field("mode", self.string, doc='readout or df',),
-        s.field("hist", self.standard_dqm,      # This one is for the raw event display
-                doc="Standard dqm"),
-        s.field("mean_rms", self.standard_dqm,  # This one is for the Mean and RMS
-                doc="Standard dqm"),
-        s.field("fourier", self.standard_dqm,   # This one is for fourier transforms
-                doc="Fourier"),
-        s.field("fourier_sum", self.standard_dqm, # This one is for summed fourier transforms
-                doc="Fourier sum"),
-        s.field("kafka_address", self.string,
-                doc="Address used for sending to the kafka broker"),
-        s.field("link_idx", self.index_list,
-                doc="Index of each link that is sending data"),
-        s.field("clock_frequency", self.big_count,
-                doc="Clock frequency in Hz"),
-        s.field("timesync_topic_name", self.netmgr_name,
-                doc="Topic to use for receiving TimeSync messages"),
-        s.field("df2dqm_connection_name", self.netmgr_name,
-                doc="Connection to use for receiving TRs from DF"),
-        s.field("dqm2df_connection_name", self.netmgr_name,
-                doc="Connection to use for sending TRMon messages to DF"),
-        s.field("readout_window_offset", self.big_count,
-                doc="Offset to use for the windows requested to readout"),
-        s.field("df_seconds", self.time,
-                doc="Number of seconds between requests to DF for TRs"),
-        s.field("df_offset", self.time,
-                doc="Number of seconds to offset so that when there are multiple DF apps the rate is maintained"),
-        s.field("df_algs", self.big_count,
-                doc="Bitfield where the bits are whether an algorith is turned on or off for TRs coming from DF"),
-        s.field("df_num_frames", self.count,
-                doc="Bitfield where the bits are whether an algorith is turned on or off for TRs coming from DF"),
-        s.field("frontend_type", self.string,
-                doc="Frontend to be used for DQM, takes the same values as in readout")
-
-
+        s.field("raw", self.standard_dqm, doc="Parameters for sending raw data"),
+        s.field("rms", self.standard_dqm, doc="Parameters for sending the RMS of the ADC distribution"),
+        s.field("std", self.standard_dqm, doc="Parameters for sending the STD of the ADC distribution"),
+        s.field("fourier_channel", self.standard_dqm, doc="Parameters for sending the fourier transform for each channel"),
+        s.field("fourier_plane", self.standard_dqm, doc="Parameters for sending the fourier transform for each plane"),
+        s.field("kafka_address", self.string, doc="Address used for sending messages to the kafka broker"),
+        s.field("kafka_topic", self.string, doc="Topic used for sending messages to the kafka broker"),
+        s.field("link_idx", self.index_list, doc="Index of each link that is sending data"),
+        s.field("clock_frequency", self.big_count, doc="Clock frequency in Hz"),
+        s.field("timesync_topic_name", self.netmgr_name, doc="Topic to use for receiving TimeSync messages"),
+        s.field("df2dqm_connection_name", self.netmgr_name, doc="Connection to use for receiving TRs from DF"),
+        s.field("dqm2df_connection_name", self.netmgr_name, doc="Connection to use for sending TRMon messages to DF"),
+        s.field("readout_window_offset", self.big_count, doc="Offset to use for the windows requested to readout"),
+        s.field("df_seconds", self.time, doc="Number of seconds between requests to DF for TRs"),
+        s.field("df_offset", self.time, doc="Number of seconds to offset so that when there are multiple DF apps the rate is maintained"),
+        s.field("df_algs", self.string, doc="Bitfield where the bits are whether an algorith is turned on or off for TRs coming from DF"),
+        s.field("df_num_frames", self.count, doc="Number of frames for the fragments coming from DF"),
+        s.field("max_num_frames", self.count, 0, doc="Maximum number of frames used in the algorithms for the fragments"),
+        s.field("frontend_type", self.string, doc="Frontend to be used for DQM, takes the same values as in readout")
     ], doc="Generic DQM configuration")
 };
 

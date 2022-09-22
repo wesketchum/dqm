@@ -11,7 +11,7 @@
 // DQM
 #include "Constants.hpp"
 #include "Decoder.hpp"
-#include "dqm/DQMIssues.hpp"
+#include "dqm/Issues.hpp"
 
 #include "daqdataformats/TriggerRecord.hpp"
 #include "detchannelmaps/TPCChannelMap.hpp"
@@ -68,7 +68,7 @@ ChannelMapVD::fill(daqdataformats::TriggerRecord& record)
     return;
   }
 
-  auto wibframes = decode<detdataformats::wib::WIBFrame>(record);
+  auto wibframes = decode<detdataformats::wib::WIBFrame>(record, 0);
 
   // If we get no frames then return and since
   // the map is not filled it will run again soon

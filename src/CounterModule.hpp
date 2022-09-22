@@ -1,12 +1,13 @@
+
 /**
- * @file HistContainer.hpp Implementation of a container of Hist objects
+ * @file CounterModule.hpp Implementation of a container of Hist objects
  *
  * This is part of the DUNE DAQ , copyright 2020.
  * Licensing/copyright details are in the COPYING file that you should have
  * received with this code.
  */
-#ifndef DQM_SRC_HISTCONTAINER_HPP_
-#define DQM_SRC_HISTCONTAINER_HPP_
+#ifndef DQM_SRC_CounterModule_HPP_
+#define DQM_SRC_CounterModule_HPP_
 
 // DQM
 #include "dqm/AnalysisModule.hpp"
@@ -15,12 +16,12 @@
 #include "Decoder.hpp"
 #include "Exporter.hpp"
 #include "dqm/Issues.hpp"
-#include "dqm/algs/Hist.hpp"
+#include "dqm/algs/Counter.hpp"
 #include "dqm/FormatUtils.hpp"
 #include "dqm/Pipeline.hpp"
-#include "DQMFormats.hpp"
 
 #include "daqdataformats/TriggerRecord.hpp"
+#include "detdataformats/tde/TDE16Frame.hpp"
 
 #include <cstdlib>
 #include <map>
@@ -29,36 +30,32 @@
 
 namespace dunedaq::dqm {
 
-class HistContainer : public AnalysisModule
+class CounterModule : public AnalysisModule
 {
 
 public:
-  HistContainer(std::string name, int nhist, int steps, double low, double high);
-  HistContainer(std::string name,
-                int nhist,
-                std::vector<int>& link_idx,
-                int steps,
-                double low,
-                double high);
+   CounterModule(std::string name,
+            int nchannels,
+            std::vector<int>& link_idx);
+
+  std::unique_ptr<daqdataformats::TriggerRecord>
+  run(std::unique_ptr<daqdataformats::TriggerRecord> record,
+      DQMArgs& args, DQMInfo& info);
 
   template <class T>
   std::unique_ptr<daqdataformats::TriggerRecord>
   run_(std::unique_ptr<daqdataformats::TriggerRecord> record,
        DQMArgs& args, DQMInfo& info);
 
-  std::unique_ptr<daqdataformats::TriggerRecord>
-  run(std::unique_ptr<daqdataformats::TriggerRecord> record,
-      DQMArgs& args, DQMInfo& info);
-
-  std::unique_ptr<daqdataformats::TriggerRecord>
-  run_wibframe(std::unique_ptr<daqdataformats::TriggerRecord> record,
-               std::shared_ptr<ChannelMap>& map,
-               const std::string& kafka_address = "");
+  // std::unique_ptr<daqdataformats::TriggerRecord>
+  // run_tdeframe(std::unique_ptr<daqdataformats::TriggerRecord> record,
+  //               std::shared_ptr<ChannelMap>& map,
+  //               const std::string& kafka_address = "");
   void transmit(const std::string& kafka_address,
                 std::shared_ptr<ChannelMap>& map,
                 const std::string& topicname,
-                int run_num,
-                time_t timestamp);
+                int run_num);
+
   void clean();
   void fill(int ch, double value);
   void fill(int ch, int link, double value);
@@ -66,30 +63,21 @@ public:
 
 private:
   std::string m_name;
-  std::vector<Hist> histvec;
+  std::vector<Counter> histvec;
   int m_size;
   std::map<int, int> m_index;
 };
 
-HistContainer::HistContainer(std::string name, int nhist, int steps, double low, double high)
-  : m_name(name)
-  , m_size(nhist)
-{
-  for (int i = 0; i < m_size; ++i)
-    histvec.emplace_back(Hist(steps, low, high));
-}
 
-HistContainer::HistContainer(std::string name,
-                             int nhist,
-                             std::vector<int>& link_idx,
-                             int steps,
-                             double low,
-                             double high)
+ CounterModule:: CounterModule(std::string name,
+                             int nchannels,
+                             std::vector<int>& link_idx
+                     )
   : m_name(name)
-  , m_size(nhist)
+  , m_size(nchannels)
 {
   for (int i = 0; i < m_size; ++i) {
-    histvec.emplace_back(Hist(steps, low, high));
+    histvec.emplace_back(Counter());
   }
   int channels = 0;
   for (size_t i = 0; i < link_idx.size(); ++i) {
@@ -98,13 +86,25 @@ HistContainer::HistContainer(std::string name,
   }
 }
 
+// std::unique_ptr<daqdataformats::TriggerRecord>
+//  CounterModule::run_tdeframe(std::unique_ptr<daqdataformats::TriggerRecord> record,
+//                              std::shared_ptr<ChannelMap>& map,
+//                              const std::string& kafka_address)
+// {
+//   TLOG() << "Running run_tdeframe";
+//   auto wibframes = decode<detdataformats::tde::TDE16Frame>(*record);
+//   return std::move(record);
+// }
+
 template <class T>
 std::unique_ptr<daqdataformats::TriggerRecord>
-HistContainer::run_(std::unique_ptr<daqdataformats::TriggerRecord> record,
-                    DQMArgs& args, DQMInfo& info
+ CounterModule::run_(std::unique_ptr<daqdataformats::TriggerRecord> record,
+                     DQMArgs& args, DQMInfo& info)
 {
-  auto frames = decode<T>(*record);
-  Pipeline<T>({"remove_empty", "check_empty", "make_same_size", "check_timestamp_aligned"});
+  auto map = args.map;
+
+  auto frames = decode<T>(*record, args.max_frames);
+  auto pipe = Pipeline<T>({"remove_empty", "check_empty", "make_same_size", "check_timestamp_aligned"});
   pipe(frames);
 
   // Get all the keys
@@ -121,8 +121,6 @@ HistContainer::run_(std::unique_ptr<daqdataformats::TriggerRecord> record,
       break;
     }
   }
-  uint64_t timestamp = 0; // NOLINT(build/unsigned)
-
   // Check that all the frames vectors have the same size, if not, something
   // bad has happened, for now don't do anything
   // auto size = frames.begin()->second.size();
@@ -149,32 +147,56 @@ HistContainer::run_(std::unique_ptr<daqdataformats::TriggerRecord> record,
     for (size_t ikey = 0; ikey < keys.size(); ++ikey) {
       auto fr = frames[keys[ikey]][ifr];
 
-      // Timestamps are too big for them to be displayed nicely, subtract the minimum timestamp
-      timestamp = get_timestamp<T>(fr) - min_timestamp;
-
       for (int ich = 0; ich < CHANNELS_PER_LINK; ++ich) {
         fill(ich, keys[ikey], get_adc<T>(fr, ich));
       }
     }
-    // After we are done with all the links, if needed save the info for later
   }
-  transmit(kafka_address,
+  transmit(args.kafka_address,
            map,
-           "DQM",
-           record->get_header_ref().get_run_number(),
-           record->get_header_ref().get_trigger_timestamp());
+           args.kafka_topic,
+           record->get_header_ref().get_run_number());
   clean();
 
   return std::move(record);
+
 }
 
 
+
+std::unique_ptr<daqdataformats::TriggerRecord>
+ CounterModule::run(std::unique_ptr<daqdataformats::TriggerRecord> record,
+                    DQMArgs& args, DQMInfo& info)
+{
+  auto start = std::chrono::steady_clock::now();
+  auto frontend_type = args.frontend_type;
+  if (frontend_type == "wib") {
+    set_is_running(true);
+    auto ret = run_<detdataformats::wib::WIBFrame>(std::move(record), args, info);
+    set_is_running(false);
+  }
+  else if (frontend_type == "wib2") {
+    set_is_running(true);
+    auto ret = run_<detdataformats::wib2::WIB2Frame>(std::move(record), args, info);
+    set_is_running(false);
+  }
+  auto stop = std::chrono::steady_clock::now();
+  // else if (frontend_type == "tde") {
+  //   set_is_running(true);
+  //   auto ret = run_<detdataformats::wib::WIBFrame>(std::move(record), map, kafka_address);
+  //   set_is_running(false);
+  //   return ret;
+  // }
+  info.info["raw_time_taken"].store(std::chrono::duration_cast<std::chrono::milliseconds>(stop-start).count());
+  info.info["raw_times_run"].store(info.info["raw_times_run"].load() + 1);
+  return record;
+}
+
 void
-HistContainer::transmit(const std::string& kafka_address,
-                        std::shared_ptr<ChannelMap>& cmap,
-                        const std::string& topicname,
-                        int run_num,
-                        time_t timestamp)
+ CounterModule::transmit(const std::string& kafka_address,
+                    std::shared_ptr<ChannelMap>& cmap,
+                    const std::string& topicname,
+                    int run_num)
 {
   // Placeholders
   std::string dataname = m_name;
@@ -192,7 +214,7 @@ HistContainer::transmit(const std::string& kafka_address,
     output << "\"partition\": \"" << partition << "\",";
     output << "\"app_name\": \"" << app_name << "\",";
     output << "\"plane\": \"" << plane << "\",";
-    output << "\"algorithm\": \"" << "std" << "\"";
+    output << "\"algorithm\": \"" << "raw" << "\"";
     output << "}\n\n\n";
     std::vector<int> channels;
     for (auto& [offch, pair] : map) {
@@ -203,11 +225,11 @@ HistContainer::transmit(const std::string& kafka_address,
       output << b;
     }
     output << "\n\n\n";
-    std::vector<float> values;
+    std::vector<int> values;
     for (auto& [offch, pair] : map) {
       int link = pair.first;
       int ch = pair.second;
-      for (const auto& entry : histvec[get_local_index(ch, link)]) {
+      for (const auto& entry : histvec[get_local_index(ch, link)].count) {
         values.push_back(entry);
       }
     }
@@ -218,48 +240,10 @@ HistContainer::transmit(const std::string& kafka_address,
     TLOG_DEBUG(5) << "Size of the message in bytes: " << output.str().size();
     KafkaExport(kafka_address, output.str(), topicname);
   }
-
-  for (auto& [key, value] : channel_order) {
-    std::stringstream output;
-    output << datasource << ";" << dataname << ";" << run_num << ";" << subrun << ";" << event << ";" << timestamp
-           << ";" << metadata << ";" << partition << ";" << app_name << ";" << 0 << ";" << key << ";";
-    for (auto& [offch, ch] : value) {
-      output << offch << " ";
-    }
-    output << "\n";
-    output << m_to_send[key];
-    TLOG_DEBUG(5) << "Size of the message in bytes: " << output.str().size();
-    KafkaExport(kafka_address, output.str(), topicname);
-  }
-}
-
-std::unique_ptr<daqdataformats::TriggerRecord>
-HistContainer::run(std::unique_ptr<daqdataformats::TriggerRecord> record,
-                   DQMArgs& args, DQMInfo& info
-{
-  if (frontend_type == "wib") {
-    set_is_running(true);
-    auto ret = run_<detdataformats::wib::WIBFrame>(std::move(record), args, info);
-    set_is_running(false);
-    return ret;
-  }
-  else if (frontend_type == "wib2") {
-    set_is_running(true);
-    auto ret = run_<detdataformats::wib2::WIB2Frame>(std::move(record), args, info);
-    set_is_running(false);
-    return ret;
-  }
-  // else if (frontend_type == "tde") {
-  //   set_is_running(true);
-  //   auto ret = run_<detdataformats::wib::WIBFrame>(std::move(record), map, kafka_address);
-  //   set_is_running(false);
-  //   return ret;
-  // }
-  return record;
 }
 
 void
-HistContainer::clean()
+ CounterModule::clean()
 {
   for (int ich = 0; ich < m_size; ++ich) {
     histvec[ich].clean();
@@ -267,23 +251,23 @@ HistContainer::clean()
 }
 
 void
-HistContainer::fill(int ch, double value)
+ CounterModule::fill(int ch, double value)
 {
   histvec[ch].fill(value);
 }
 
 void
-HistContainer::fill(int ch, int link, double value)
+ CounterModule::fill(int ch, int link, double value)
 {
   histvec[ch + m_index[link]].fill(value);
 }
 
 int
-HistContainer::get_local_index(int ch, int link)
+ CounterModule::get_local_index(int ch, int link)
 {
   return ch + m_index[link];
 }
 
 } // namespace dunedaq::dqm
 
-#endif // DQM_SRC_HISTCONTAINER_HPP_
+#endif // DQM_SRC_CounterModule_HPP_

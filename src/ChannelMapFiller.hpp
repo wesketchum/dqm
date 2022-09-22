@@ -9,13 +9,14 @@
 #define DQM_SRC_CHANNELMAPFILLER_HPP_
 
 // DQM
-#include "AnalysisModule.hpp"
+#include "dqm/AnalysisModule.hpp"
 // #include "ChannelMap.hpp"
 #include "ChannelMap.hpp"
 #include "ChannelMapHD.hpp"
 #include "ChannelMapPD2HD.hpp"
 #include "ChannelMapVD.hpp"
 #include "ChannelMapHDCB.hpp"
+#include "dqm/DQMFormats.hpp"
 
 #include "daqdataformats/TriggerRecord.hpp"
 
@@ -34,40 +35,34 @@ public:
 
   std::unique_ptr<daqdataformats::TriggerRecord>
   run(std::unique_ptr<daqdataformats::TriggerRecord> record,
-      std::atomic<bool>& run_mark,
-      std::shared_ptr<ChannelMap>& map,
-      std::string& frontend_type,
-      const std::string& kafka_address);
+      DQMArgs& args, DQMInfo& info);
 };
 
 std::unique_ptr<daqdataformats::TriggerRecord>
 ChannelMapFiller::run(std::unique_ptr<daqdataformats::TriggerRecord> record,
-                      std::atomic<bool>&,
-                      std::shared_ptr<ChannelMap>& map,
-                      std::string&,
-                      const std::string&)
+                      DQMArgs& args, DQMInfo& info)
 {
   set_is_running(true);
 
   // Prevent running multiple times
-  if (map->is_filled()) {
+  if (args.map->is_filled()) {
     return std::move(record);
   }
 
   if (m_cmap_name == "HD") {
-    map.reset(new ChannelMapHD);
+    args.map.reset(new ChannelMapHD);
   }
   else if (m_cmap_name == "VD") {
-    map.reset(new ChannelMapVD);
+    args.map.reset(new ChannelMapVD);
   }
   else if (m_cmap_name == "PD2HD") {
-    map.reset(new ChannelMapPD2HD);
+    args.map.reset(new ChannelMapPD2HD);
   }
   else if (m_cmap_name == "HDCB") {
-    map.reset(new ChannelMapHDCB);
+    args.map.reset(new ChannelMapHDCB);
   }
 
-  map->fill(*record);
+  args.map->fill(*record);
   set_is_running(false);
   return std::move(record);
 }

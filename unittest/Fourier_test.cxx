@@ -13,7 +13,7 @@
 
 #include "boost/test/unit_test.hpp"
 
-#include "dqm/Fourier.hpp"
+#include "dqm/algs/Fourier.hpp"
 
 #include <complex>
 #include <fstream>
