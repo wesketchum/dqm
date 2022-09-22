@@ -12,7 +12,7 @@
 #include "dqm/dqmprocessor/Nljs.hpp"
 #include "dqm/dqmprocessor/Structs.hpp"
 #include "dqm/dqmprocessorinfo/InfoNljs.hpp"
-#include "dqm/DQMLogging.hpp"
+// #include "dqm/DQMLogging.hpp"
 
 #include "ChannelMapEmpty.hpp"
 #include "ChannelMapFiller.hpp"
