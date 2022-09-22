@@ -65,6 +65,21 @@ DQMProcessor::get_info(opmonlib::InfoCollector& ci, int /*level*/)
   fcr.data_deliveries = m_data_count.exchange(0);
   fcr.total_data_deliveries = m_total_data_count.load();
 
+  fcr.raw_times_run = m_dqm_info.info["raw_times_run"].exchange(0);
+  fcr.raw_time_taken = m_dqm_info.info["raw_time_taken"];
+
+  fcr.std_times_run = m_dqm_info.info["std_times_run"].exchange(0);
+  fcr.std_time_taken = m_dqm_info.info["std_time_taken"];
+
+  fcr.rms_times_run = m_dqm_info.info["rms_times_run"].exchange(0);
+  fcr.rms_time_taken = m_dqm_info.info["rms_time_taken"];
+
+  fcr.fourier_channel_times_run = m_dqm_info.info["fourier_channel_times_run"].exchange(0);
+  fcr.fourier_channel_time_taken = m_dqm_info.info["fourier_channel_time_taken"];
+
+  fcr.fourier_plane_times_run = m_dqm_info.info["fourier_plane_times_run"].exchange(0);
+  fcr.fourier_plane_time_taken = m_dqm_info.info["fourier_plane_time_taken"];
+
   ci.add(fcr);
 }
 
@@ -409,7 +424,7 @@ DQMProcessor::do_work()
 
     auto memfunc = &AnalysisModule::run;
     auto current_thread =
-      std::make_shared<std::thread>(memfunc, std::ref(*algo), std::move(element), std::ref(m_dqm_args));
+      std::make_shared<std::thread>(memfunc, std::ref(*algo), std::move(element), std::ref(m_dqm_args), std::ref(m_dqm_info));
     element.reset(nullptr);
 
     // Add a new entry for the current instance

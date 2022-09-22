@@ -43,12 +43,12 @@ public:
 
   std::unique_ptr<daqdataformats::TriggerRecord>
   run(std::unique_ptr<daqdataformats::TriggerRecord> record,
-      DQMArgs& args);
+      DQMArgs& args, DQMInfo& info);
 
   template <class T>
   std::unique_ptr<daqdataformats::TriggerRecord>
   run_(std::unique_ptr<daqdataformats::TriggerRecord> record,
-       DQMArgs& args);
+       DQMArgs& args, DQMInfo& info);
 
 
   void transmit(const std::string& kafka_address,
@@ -97,8 +97,9 @@ FourierContainer::FourierContainer(std::string name, int size, std::vector<int>&
 template <class T>
 std::unique_ptr<daqdataformats::TriggerRecord>
 FourierContainer::run_(std::unique_ptr<daqdataformats::TriggerRecord> record,
-                       DQMArgs& args)
+                       DQMArgs& args, DQMInfo& info)
 {
+  auto start = std::chrono::steady_clock::now();
   auto map = args.map;
   auto frames = decode<T>(*record, args.max_frames);
   // std::uint64_t timestamp = 0; // NOLINT(build/unsigned)
@@ -137,6 +138,9 @@ FourierContainer::run_(std::unique_ptr<daqdataformats::TriggerRecord> record,
              args.kafka_topic,
              record->get_header_ref().get_run_number(),
              record->get_header_ref().get_trigger_timestamp());
+    auto stop = std::chrono::steady_clock::now();
+    info.info["fourier_channel_times_run"].store(info.info["fourier_channel_times_run"].load() + 1);
+    info.info["fourier_channel_time_taken"].store(std::chrono::duration_cast<std::chrono::milliseconds>(stop-start).count());
   }
 
   // Global mode means adding everything in planes and then all together
@@ -176,6 +180,9 @@ FourierContainer::run_(std::unique_ptr<daqdataformats::TriggerRecord> record,
                     args.kafka_topic,
                     record->get_header_ref().get_run_number(),
                     record->get_header_ref().get_trigger_timestamp());
+    auto stop = std::chrono::steady_clock::now();
+    info.info["fourier_plane_time_taken"].store(std::chrono::duration_cast<std::chrono::milliseconds>(stop-start).count());
+    info.info["fourier_plane_times_run"].store(info.info["fourier_plane_times_run"].load() + 1);
   }
 
   return std::move(record);
@@ -184,7 +191,7 @@ FourierContainer::run_(std::unique_ptr<daqdataformats::TriggerRecord> record,
 
 std::unique_ptr<daqdataformats::TriggerRecord>
 FourierContainer::run(std::unique_ptr<daqdataformats::TriggerRecord> record,
-                      DQMArgs& args)
+                      DQMArgs& args, DQMInfo& info)
 {
   auto frontend_type = args.frontend_type;
   auto run_mark = args.run_mark;
@@ -192,15 +199,13 @@ FourierContainer::run(std::unique_ptr<daqdataformats::TriggerRecord> record,
   auto kafka_address = args.kafka_address;
   if (frontend_type == "wib") {
     set_is_running(true);
-    auto ret = run_<detdataformats::wib::WIBFrame>(std::move(record), args);
+    auto ret = run_<detdataformats::wib::WIBFrame>(std::move(record), args, info);
     set_is_running(false);
-    return ret;
   }
   else if (frontend_type == "wib2") {
     set_is_running(true);
-    auto ret = run_<detdataformats::wib2::WIB2Frame>(std::move(record), args);
+    auto ret = run_<detdataformats::wib2::WIB2Frame>(std::move(record), args, info);
     set_is_running(false);
-    return ret;
   }
   return record;
 }

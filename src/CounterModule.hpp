@@ -40,12 +40,12 @@ public:
 
   std::unique_ptr<daqdataformats::TriggerRecord>
   run(std::unique_ptr<daqdataformats::TriggerRecord> record,
-      DQMArgs& args);
+      DQMArgs& args, DQMInfo& info);
 
   template <class T>
   std::unique_ptr<daqdataformats::TriggerRecord>
   run_(std::unique_ptr<daqdataformats::TriggerRecord> record,
-       DQMArgs& args);
+       DQMArgs& args, DQMInfo& info);
 
   // std::unique_ptr<daqdataformats::TriggerRecord>
   // run_tdeframe(std::unique_ptr<daqdataformats::TriggerRecord> record,
@@ -99,7 +99,7 @@ private:
 template <class T>
 std::unique_ptr<daqdataformats::TriggerRecord>
  CounterModule::run_(std::unique_ptr<daqdataformats::TriggerRecord> record,
-                     DQMArgs& args)
+                     DQMArgs& args, DQMInfo& info)
 {
   auto map = args.map;
 
@@ -166,28 +166,29 @@ std::unique_ptr<daqdataformats::TriggerRecord>
 
 std::unique_ptr<daqdataformats::TriggerRecord>
  CounterModule::run(std::unique_ptr<daqdataformats::TriggerRecord> record,
-                    DQMArgs& args)
+                    DQMArgs& args, DQMInfo& info)
 {
+  auto start = std::chrono::steady_clock::now();
   auto frontend_type = args.frontend_type;
-
   if (frontend_type == "wib") {
     set_is_running(true);
-    auto ret = run_<detdataformats::wib::WIBFrame>(std::move(record), args);
+    auto ret = run_<detdataformats::wib::WIBFrame>(std::move(record), args, info);
     set_is_running(false);
-    return ret;
   }
   else if (frontend_type == "wib2") {
     set_is_running(true);
-    auto ret = run_<detdataformats::wib2::WIB2Frame>(std::move(record), args);
+    auto ret = run_<detdataformats::wib2::WIB2Frame>(std::move(record), args, info);
     set_is_running(false);
-    return ret;
   }
+  auto stop = std::chrono::steady_clock::now();
   // else if (frontend_type == "tde") {
   //   set_is_running(true);
   //   auto ret = run_<detdataformats::wib::WIBFrame>(std::move(record), map, kafka_address);
   //   set_is_running(false);
   //   return ret;
   // }
+  info.info["raw_time_taken"].store(std::chrono::duration_cast<std::chrono::milliseconds>(stop-start).count());
+  info.info["raw_times_run"].store(info.info["raw_times_run"].load() + 1);
   return record;
 }
 

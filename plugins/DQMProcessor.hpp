@@ -116,6 +116,7 @@ private:
   int m_readout_window_offset;
 
   DQMArgs m_dqm_args;
+  DQMInfo m_dqm_info;
   int m_max_frames;
 
   // Constants used in DQMProcessor.cpp

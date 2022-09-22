@@ -44,11 +44,11 @@ public:
   template <class T>
   std::unique_ptr<daqdataformats::TriggerRecord>
   run_(std::unique_ptr<daqdataformats::TriggerRecord> record,
-       DQMArgs& args);
+       DQMArgs& args, DQMInfo& info);
 
   std::unique_ptr<daqdataformats::TriggerRecord>
   run(std::unique_ptr<daqdataformats::TriggerRecord> record,
-      DQMArgs& args);
+      DQMArgs& args, DQMInfo& info);
 
   std::unique_ptr<daqdataformats::TriggerRecord>
   run_wibframe(std::unique_ptr<daqdataformats::TriggerRecord> record,
@@ -101,7 +101,7 @@ HistContainer::HistContainer(std::string name,
 template <class T>
 std::unique_ptr<daqdataformats::TriggerRecord>
 HistContainer::run_(std::unique_ptr<daqdataformats::TriggerRecord> record,
-                    DQMArgs& args)
+                    DQMArgs& args, DQMInfo& info
 {
   auto frames = decode<T>(*record);
   Pipeline<T>({"remove_empty", "check_empty", "make_same_size", "check_timestamp_aligned"});
@@ -235,17 +235,17 @@ HistContainer::transmit(const std::string& kafka_address,
 
 std::unique_ptr<daqdataformats::TriggerRecord>
 HistContainer::run(std::unique_ptr<daqdataformats::TriggerRecord> record,
-                   DQMArgs& args)
+                   DQMArgs& args, DQMInfo& info
 {
   if (frontend_type == "wib") {
     set_is_running(true);
-    auto ret = run_<detdataformats::wib::WIBFrame>(std::move(record), args);
+    auto ret = run_<detdataformats::wib::WIBFrame>(std::move(record), args, info);
     set_is_running(false);
     return ret;
   }
   else if (frontend_type == "wib2") {
     set_is_running(true);
-    auto ret = run_<detdataformats::wib2::WIB2Frame>(std::move(record), args);
+    auto ret = run_<detdataformats::wib2::WIB2Frame>(std::move(record), args, info);
     set_is_running(false);
     return ret;
   }

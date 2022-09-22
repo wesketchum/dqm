@@ -9,7 +9,8 @@
 #define DQM_INCLUDE_DQM_DQM_FORMATS_HPP_
 
 #include <memory>
-#include <atomic>
+#include <map>
+#include <string>
 
 namespace dunedaq::dqm {
 
@@ -20,6 +21,10 @@ struct DQMArgs {
   std::string kafka_address;
   std::string kafka_topic;
   int max_frames;
+};
+
+struct DQMInfo {
+  std::map<std::string, std::atomic<float>> info;
 };
 
 } // namespace dunedaq::dqm

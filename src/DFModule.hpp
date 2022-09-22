@@ -36,7 +36,7 @@ public:
   int m_clock_frequency;
   std::unique_ptr<daqdataformats::TriggerRecord>
   run(std::unique_ptr<daqdataformats::TriggerRecord> record,
-      DQMArgs& args);
+      DQMArgs& args, DQMInfo& info);
 
 private:
 
@@ -91,7 +91,7 @@ DFModule::DFModule(bool enable_raw, bool enable_rms, bool enable_std, bool enabl
 
 std::unique_ptr<daqdataformats::TriggerRecord>
 DFModule::run(std::unique_ptr<daqdataformats::TriggerRecord> record,
-              DQMArgs& args)
+              DQMArgs& args, DQMInfo& info)
 {
   set_is_running(true);
   auto run_mark = args.run_mark;
@@ -105,7 +105,7 @@ DFModule::run(std::unique_ptr<daqdataformats::TriggerRecord> record,
       set_is_running(false);
       return std::move(record);
     }
-    record = list[i]->run(std::move(record), args);
+    record = list[i]->run(std::move(record), args, info);
   }
 
   set_is_running(false);

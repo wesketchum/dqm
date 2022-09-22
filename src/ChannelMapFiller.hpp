@@ -35,12 +35,12 @@ public:
 
   std::unique_ptr<daqdataformats::TriggerRecord>
   run(std::unique_ptr<daqdataformats::TriggerRecord> record,
-      DQMArgs& args);
+      DQMArgs& args, DQMInfo& info);
 };
 
 std::unique_ptr<daqdataformats::TriggerRecord>
 ChannelMapFiller::run(std::unique_ptr<daqdataformats::TriggerRecord> record,
-                      DQMArgs& args)
+                      DQMArgs& args, DQMInfo& info)
 {
   set_is_running(true);
 
