@@ -215,9 +215,7 @@ DQMProcessor::do_work()
 
   // Raw event display
   auto raw = std::make_shared<CounterModule>(
-        "raw_display", CHANNELS_PER_LINK * m_link_idx.size(), m_link_idx);
-  // auto hist = std::make_shared<HistContainer>(
-  //     "raw_display", CHANNELS_PER_LINK * m_link_idx.size(), m_link_idx, 100, 0, 17000, false);
+        "raw", CHANNELS_PER_LINK * m_link_idx.size(), m_link_idx);
   // STD
   auto std = std::make_shared<STDModule>("std", CHANNELS_PER_LINK * m_link_idx.size(), m_link_idx);
   // RMS

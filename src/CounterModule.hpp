@@ -214,7 +214,7 @@ void
     output << "\"partition\": \"" << partition << "\",";
     output << "\"app_name\": \"" << app_name << "\",";
     output << "\"plane\": \"" << plane << "\",";
-    output << "\"algorithm\": \"" << "std" << "\"";
+    output << "\"algorithm\": \"" << "raw" << "\"";
     output << "}\n\n\n";
     std::vector<int> channels;
     for (auto& [offch, pair] : map) {
@@ -225,7 +225,7 @@ void
       output << b;
     }
     output << "\n\n\n";
-    std::vector<float> values;
+    std::vector<int> values;
     for (auto& [offch, pair] : map) {
       int link = pair.first;
       int ch = pair.second;
