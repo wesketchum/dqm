@@ -8,8 +8,10 @@
 #ifndef DQM_SRC_PIPELINE_HPP_
 #define DQM_SRC_PIPELINE_HPP_
 
+#include "DQMLogging.hpp"
 #include "ers/Issue.hpp"
 #include "dqm/Issues.hpp"
+#include "dqm/DQMLogging.hpp"
 
 #include <cstddef>
 #include <map>
@@ -20,10 +22,13 @@
 namespace dunedaq {
 namespace dqm {
 
+using logging::TLVL_WORK_STEPS;
+
 template<class T>
 int
 remove_empty(std::map<int, std::vector<T*>>& map)
 {
+  TLOG(TLVL_WORK_STEPS) << "Removing empty fragments";
   bool empty_fragments = false;
   for (auto& [key, val] : map)
     if (not val.size()) {
@@ -40,6 +45,7 @@ template<class T>
 int
 check_empty(std::map<int, std::vector<T*>>& map)
 {
+  TLOG(TLVL_WORK_STEPS) << "Checking if the data is empty";
   if (not map.size()) {
     ers::error(EmptyData(ERS_HERE, ""));
     return false;
@@ -51,6 +57,7 @@ template<class T>
 int
 make_same_size(std::map<int, std::vector<T*>>& map)
 {
+  TLOG(TLVL_WORK_STEPS) << "Making the fragments have the same size";
   std::vector<size_t> sizes;
   std::map<size_t, int> occurrences;
   for (auto& [key, val] : map) {
@@ -69,6 +76,7 @@ template<class T>
 int
 check_timestamps_aligned(std::map<int, std::vector<T*>>& map)
 {
+  TLOG(TLVL_WORK_STEPS) << "Checking that the timestamps are aligned";
   return true;
 }
 

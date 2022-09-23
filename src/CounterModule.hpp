@@ -19,6 +19,7 @@
 #include "dqm/algs/Counter.hpp"
 #include "dqm/FormatUtils.hpp"
 #include "dqm/Pipeline.hpp"
+#include "dqm/DQMLogging.hpp"
 
 #include "daqdataformats/TriggerRecord.hpp"
 #include "detdataformats/tde/TDE16Frame.hpp"
@@ -29,6 +30,8 @@
 #include <vector>
 
 namespace dunedaq::dqm {
+
+using logging::TLVL_WORK_STEPS;
 
 class CounterModule : public AnalysisModule
 {
@@ -139,6 +142,7 @@ std::unique_ptr<daqdataformats::TriggerRecord>
  CounterModule::run(std::unique_ptr<daqdataformats::TriggerRecord> record,
                     DQMArgs& args, DQMInfo& info)
 {
+  TLOG(TLVL_WORK_STEPS) << "Running Raw with frontend_type = " << args.frontend_type;
   auto start = std::chrono::steady_clock::now();
   auto frontend_type = args.frontend_type;
   if (frontend_type == "wib") {
