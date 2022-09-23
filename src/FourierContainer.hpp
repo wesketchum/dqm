@@ -59,8 +59,7 @@ public:
   void transmit_global(const std::string &kafka_address,
                        std::shared_ptr<ChannelMap> cmap,
                        const std::string& topicname,
-                       int run_num,
-                       time_t timestamp);
+                       int run_num);
   void clean();
   void fill(int ch, double value);
   void fill(int ch, int link, double value);
@@ -287,8 +286,7 @@ void
 FourierContainer::transmit_global(const std::string& kafka_address,
                                   std::shared_ptr<ChannelMap>,
                                   const std::string& topicname,
-                                  int run_num,
-                                  time_t timestamp)
+                                  int run_num)
 {
   // Placeholders
   std::string dataname = m_name;

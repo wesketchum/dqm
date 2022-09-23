@@ -115,15 +115,6 @@ STDModule::run_(std::unique_ptr<daqdataformats::TriggerRecord> record,
     keys.push_back(key);
   }
 
-  uint64_t min_timestamp = 0; // NOLINT(build/unsigned)
-  // We run over all links until we find one that has a non-empty vector of frames
-  for (auto& key : keys) {
-    if (!frames[key].empty()) {
-      min_timestamp = get_timestamp<T>(frames[key].front());
-      break;
-    }
-  }
-
   for (size_t ifr = 0; ifr < frames[keys[0]].size(); ++ifr) {
     // Fill for every link
     for (size_t ikey = 0; ikey < keys.size(); ++ikey) {
