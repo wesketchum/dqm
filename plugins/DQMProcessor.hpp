@@ -13,6 +13,7 @@
 #define DQM_PLUGINS_DQMPROCESSOR_HPP_
 
 #include "ChannelMap.hpp"
+#include "dqm/DQMFormats.hpp"
 
 #include "appfwk/DAQModule.hpp"
 #include "iomanager/IOManager.hpp"

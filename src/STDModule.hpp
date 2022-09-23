@@ -166,8 +166,8 @@ STDModule::run(std::unique_ptr<daqdataformats::TriggerRecord> record,
   //   set_is_running(false);
   //   return ret;
   // }
-  info.info["std_time_taken"].store(std::chrono::duration_cast<std::chrono::milliseconds>(stop-start).count());
-  info.info["std_times_run"].store(info.info["std_times_run"].load() + 1);
+  info.std_time_taken.store(std::chrono::duration_cast<std::chrono::milliseconds>(stop-start).count());
+  info.std_times_run++;
   return record;
 }
 

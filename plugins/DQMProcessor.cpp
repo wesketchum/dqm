@@ -65,20 +65,23 @@ DQMProcessor::get_info(opmonlib::InfoCollector& ci, int /*level*/)
   fcr.data_deliveries = m_data_count.exchange(0);
   fcr.total_data_deliveries = m_total_data_count.load();
 
-  fcr.raw_times_run = m_dqm_info.info["raw_times_run"].exchange(0);
-  fcr.raw_time_taken = m_dqm_info.info["raw_time_taken"];
+  fcr.raw_times_run = m_dqm_info.raw_times_run.exchange(0);
+  fcr.raw_time_taken = m_dqm_info.raw_time_taken.load();
 
-  fcr.std_times_run = m_dqm_info.info["std_times_run"].exchange(0);
-  fcr.std_time_taken = m_dqm_info.info["std_time_taken"];
+  fcr.std_times_run = m_dqm_info.std_times_run.exchange(0);
+  fcr.std_time_taken = m_dqm_info.std_time_taken.load();
 
-  fcr.rms_times_run = m_dqm_info.info["rms_times_run"].exchange(0);
-  fcr.rms_time_taken = m_dqm_info.info["rms_time_taken"];
+  fcr.rms_times_run = m_dqm_info.rms_times_run.exchange(0);
+  fcr.rms_time_taken = m_dqm_info.rms_time_taken.load();
 
-  fcr.fourier_channel_times_run = m_dqm_info.info["fourier_channel_times_run"].exchange(0);
-  fcr.fourier_channel_time_taken = m_dqm_info.info["fourier_channel_time_taken"];
+  fcr.fourier_channel_times_run = m_dqm_info.fourier_channel_times_run.exchange(0);
+  fcr.fourier_channel_time_taken = m_dqm_info.fourier_channel_time_taken.load();
 
-  fcr.fourier_plane_times_run = m_dqm_info.info["fourier_plane_times_run"].exchange(0);
-  fcr.fourier_plane_time_taken = m_dqm_info.info["fourier_plane_time_taken"];
+  fcr.fourier_plane_times_run = m_dqm_info.fourier_plane_times_run.exchange(0);
+  fcr.fourier_plane_time_taken = m_dqm_info.fourier_plane_time_taken.load();
+
+  fcr.channel_map_total_channels = m_dqm_info.channel_map_total_channels.load();
+  fcr.channel_map_total_planes = m_dqm_info.channel_map_total_planes.load();
 
   ci.add(fcr);
 }

@@ -8,6 +8,8 @@
 #ifndef DQM_INCLUDE_DQM_DQM_FORMATS_HPP_
 #define DQM_INCLUDE_DQM_DQM_FORMATS_HPP_
 
+#include "ChannelMap.hpp"
+
 #include <memory>
 #include <map>
 #include <string>
@@ -24,7 +26,20 @@ struct DQMArgs {
 };
 
 struct DQMInfo {
-  std::map<std::string, std::atomic<float>> info;
+  std::atomic<int> channel_map_total_channels,
+                   channel_map_total_planes,
+                   raw_times_run,
+                   std_times_run,
+                   rms_times_run,
+                   fourier_channel_times_run,
+                   fourier_plane_times_run;
+
+  std::atomic<float> raw_time_taken,
+                     std_time_taken,
+                     rms_time_taken,
+                     fourier_channel_time_taken,
+                     fourier_plane_time_taken;
+
 };
 
 } // namespace dunedaq::dqm

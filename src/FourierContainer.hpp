@@ -141,8 +141,8 @@ FourierContainer::run_(std::unique_ptr<daqdataformats::TriggerRecord> record,
              record->get_header_ref().get_run_number(),
              record->get_header_ref().get_trigger_timestamp());
     auto stop = std::chrono::steady_clock::now();
-    info.info["fourier_channel_times_run"].store(info.info["fourier_channel_times_run"].load() + 1);
-    info.info["fourier_channel_time_taken"].store(std::chrono::duration_cast<std::chrono::milliseconds>(stop-start).count());
+    info.fourier_channel_time_taken.store(std::chrono::duration_cast<std::chrono::milliseconds>(stop-start).count());
+    info.fourier_channel_times_run++;
   }
 
   // Global mode means adding everything in planes and then all together
@@ -182,8 +182,8 @@ FourierContainer::run_(std::unique_ptr<daqdataformats::TriggerRecord> record,
                     args.kafka_topic,
                     record->get_header_ref().get_run_number());
     auto stop = std::chrono::steady_clock::now();
-    info.info["fourier_plane_time_taken"].store(std::chrono::duration_cast<std::chrono::milliseconds>(stop-start).count());
-    info.info["fourier_plane_times_run"].store(info.info["fourier_plane_times_run"].load() + 1);
+    info.fourier_plane_time_taken.store(std::chrono::duration_cast<std::chrono::milliseconds>(stop-start).count());
+    info.fourier_plane_times_run++;
   }
 
   return std::move(record);
