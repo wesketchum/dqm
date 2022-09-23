@@ -14,7 +14,7 @@
 #include "dqm/dqmprocessorinfo/InfoNljs.hpp"
 // #include "dqm/DQMLogging.hpp"
 
-#include "ChannelMapEmpty.hpp"
+#include "ChannelMap.hpp"
 #include "ChannelMapFiller.hpp"
 #include "DFModule.hpp"
 #include "DQMProcessor.hpp"
@@ -118,7 +118,7 @@ DQMProcessor::do_configure(const nlohmann::json& args)
   // The channel map pointer is set to the empty channel map that is not filled
   // and allows the first check to pass for it to be filled with the actual
   // channel map
-  m_dqm_args = DQMArgs{m_run_marker, std::shared_ptr<ChannelMap>(new ChannelMapEmpty),
+  m_dqm_args = DQMArgs{m_run_marker, std::shared_ptr<ChannelMap>(new ChannelMap),
                        m_frontend_type, m_kafka_address,
                        m_kafka_topic, m_max_frames};
 
