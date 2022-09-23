@@ -17,6 +17,7 @@
 #include "dqm/algs/Fourier.hpp"
 #include "dqm/Issues.hpp"
 #include "dqm/DQMFormats.hpp"
+#include "dqm/DQMLogging.hpp"
 
 #include "daqdataformats/TriggerRecord.hpp"
 
@@ -27,6 +28,8 @@
 #include <vector>
 
 namespace dunedaq::dqm {
+
+using logging::TLVL_WORK_STEPS;
 
 class FourierContainer : public AnalysisModule
 {
@@ -59,8 +62,7 @@ public:
   void transmit_global(const std::string &kafka_address,
                        std::shared_ptr<ChannelMap> cmap,
                        const std::string& topicname,
-                       int run_num,
-                       time_t timestamp);
+                       int run_num);
   void clean();
   void fill(int ch, double value);
   void fill(int ch, int link, double value);
@@ -139,8 +141,8 @@ FourierContainer::run_(std::unique_ptr<daqdataformats::TriggerRecord> record,
              record->get_header_ref().get_run_number(),
              record->get_header_ref().get_trigger_timestamp());
     auto stop = std::chrono::steady_clock::now();
-    info.info["fourier_channel_times_run"].store(info.info["fourier_channel_times_run"].load() + 1);
-    info.info["fourier_channel_time_taken"].store(std::chrono::duration_cast<std::chrono::milliseconds>(stop-start).count());
+    info.fourier_channel_time_taken.store(std::chrono::duration_cast<std::chrono::milliseconds>(stop-start).count());
+    info.fourier_channel_times_run++;
   }
 
   // Global mode means adding everything in planes and then all together
@@ -178,11 +180,10 @@ FourierContainer::run_(std::unique_ptr<daqdataformats::TriggerRecord> record,
     transmit_global(args.kafka_address,
                     map,
                     args.kafka_topic,
-                    record->get_header_ref().get_run_number(),
-                    record->get_header_ref().get_trigger_timestamp());
+                    record->get_header_ref().get_run_number());
     auto stop = std::chrono::steady_clock::now();
-    info.info["fourier_plane_time_taken"].store(std::chrono::duration_cast<std::chrono::milliseconds>(stop-start).count());
-    info.info["fourier_plane_times_run"].store(info.info["fourier_plane_times_run"].load() + 1);
+    info.fourier_plane_time_taken.store(std::chrono::duration_cast<std::chrono::milliseconds>(stop-start).count());
+    info.fourier_plane_times_run++;
   }
 
   return std::move(record);
@@ -193,6 +194,7 @@ std::unique_ptr<daqdataformats::TriggerRecord>
 FourierContainer::run(std::unique_ptr<daqdataformats::TriggerRecord> record,
                       DQMArgs& args, DQMInfo& info)
 {
+  TLOG(TLVL_WORK_STEPS) << "Running Fourier Transform with frontend_type = " << args.frontend_type;
   auto frontend_type = args.frontend_type;
   auto run_mark = args.run_mark;
   auto map = args.map;
@@ -287,8 +289,7 @@ void
 FourierContainer::transmit_global(const std::string& kafka_address,
                                   std::shared_ptr<ChannelMap>,
                                   const std::string& topicname,
-                                  int run_num,
-                                  time_t timestamp)
+                                  int run_num)
 {
   // Placeholders
   std::string dataname = m_name;

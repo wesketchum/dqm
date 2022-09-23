@@ -19,6 +19,7 @@
 #include "dqm/FormatUtils.hpp"
 #include "dqm/Pipeline.hpp"
 #include "dqm/DQMFormats.hpp"
+#include "dqm/DQMLogging.hpp"
 
 #include "daqdataformats/TriggerRecord.hpp"
 #include "detdataformats/tde/TDE16Frame.hpp"
@@ -30,6 +31,8 @@
 #include <chrono>
 
 namespace dunedaq::dqm {
+
+using logging::TLVL_WORK_STEPS;
 
 class RMSModule : public AnalysisModule
 {
@@ -114,36 +117,6 @@ RMSModule::run_(std::unique_ptr<daqdataformats::TriggerRecord> record,
     keys.push_back(key);
   }
 
-  uint64_t min_timestamp = 0; // NOLINT(build/unsigned)
-  // We run over all links until we find one that has a non-empty vector of frames
-  for (auto& key : keys) {
-    if (!frames[key].empty()) {
-      min_timestamp = get_timestamp<T>(frames[key].front());
-      break;
-    }
-  }
-
-  // Check that all the frames vectors have the same size, if not, something
-  // bad has happened, for now don't do anything
-  // auto size = frames.begin()->second.size();
-  // for (auto& vec : frames) {
-  //   if (vec.second.size() != size) {
-  //     ers::error(InvalidData(ERS_HERE, "the size of the vector of frames is different for each link"));
-  //     set_is_running(false);
-  //     return std::move(record);
-  //   }
-  // }
-
-
-  // Main loop
-  // If only the mean and rms are to be sent all frames are processed
-  // and at the end the result is transmitted
-  // If it's in the raw display mode then the result is saved for
-  // every frame and sent at the end
-
-  // Fill for every frame, outer loop so it is done frame by frame
-  // This is needed for sending frame by frame
-  // The order does not matter for the mean and RMS
   for (size_t ifr = 0; ifr < frames[keys[0]].size(); ++ifr) {
     // Fill for every link
     for (size_t ikey = 0; ikey < keys.size(); ++ikey) {
@@ -170,6 +143,7 @@ std::unique_ptr<daqdataformats::TriggerRecord>
 RMSModule::run(std::unique_ptr<daqdataformats::TriggerRecord> record,
                DQMArgs& args, DQMInfo& info)
 {
+  TLOG(TLVL_WORK_STEPS) << "Running RMS with frontend_type = " << args.frontend_type;
   auto start = std::chrono::steady_clock::now();
   auto frontend_type = args.frontend_type;
   if (frontend_type == "wib") {
@@ -189,8 +163,8 @@ RMSModule::run(std::unique_ptr<daqdataformats::TriggerRecord> record,
   //   set_is_running(false);
   //   return ret;
   // }
-  info.info["rms_time_taken"].store(std::chrono::duration_cast<std::chrono::milliseconds>(stop-start).count());
-  info.info["rms_times_run"].store(info.info["rms_times_run"].load() + 1);
+  info.rms_time_taken.store(std::chrono::duration_cast<std::chrono::milliseconds>(stop-start).count());
+  info.rms_times_run++;
   return record;
 }
 

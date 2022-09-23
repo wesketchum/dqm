@@ -30,7 +30,8 @@ local info = {
        s.field("fourier_plane_times_run",       self.uint8, 0, doc="Time taken to run the fourier transform for each plane"), 
        s.field("fourier_plane_time_taken",      self.uint8, 0, doc="Number of times the fourier transform for each plane has run"), 
 
-
+       s.field("channel_map_total_channels",    self.uint8, 0, doc="Time taken to run the fourier transform for each plane"), 
+       s.field("channel_map_total_planes",      self.uint8, 0, doc="Number of times the fourier transform for each plane has run"), 
 
    ], doc="DQM information")
 };
