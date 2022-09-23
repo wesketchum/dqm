@@ -10,15 +10,12 @@
 
 // DQM
 #include "dqm/AnalysisModule.hpp"
-// #include "ChannelMap.hpp"
 #include "ChannelMap.hpp"
-#include "ChannelMapHD.hpp"
-#include "ChannelMapPD2HD.hpp"
-#include "ChannelMapVD.hpp"
-#include "ChannelMapHDCB.hpp"
 #include "dqm/DQMFormats.hpp"
 
 #include "daqdataformats/TriggerRecord.hpp"
+#include "detdataformats/wib/WIBFrame.hpp"
+#include "detdataformats/wib2/WIB2Frame.hpp"
 
 #include <memory>
 #include <string>
@@ -49,20 +46,21 @@ ChannelMapFiller::run(std::unique_ptr<daqdataformats::TriggerRecord> record,
     return std::move(record);
   }
 
-  if (m_cmap_name == "HD") {
-    args.map.reset(new ChannelMapHD);
-  }
-  else if (m_cmap_name == "VD") {
-    args.map.reset(new ChannelMapVD);
-  }
-  else if (m_cmap_name == "PD2HD") {
-    args.map.reset(new ChannelMapPD2HD);
-  }
-  else if (m_cmap_name == "HDCB") {
-    args.map.reset(new ChannelMapHDCB);
-  }
+  std::map<std::string, std::string> map_names {
+  {"HD", "ProtoDUNESP1ChannelMap"},
+  {"VD", "VDColdboxChannelMap"},
+  {"PD2HD", "PD2HDChannelMap"},
+  {"HDCB", "HDColdboxChannelMap"}
+  };
 
-  args.map->fill(*record);
+  args.map.reset(new ChannelMap(map_names[m_cmap_name]));
+
+  if (args.frontend_type == "wib") {
+    args.map->fill<detdataformats::wib::WIBFrame>(*record);
+  }
+  else if (args.frontend_type == "wib2") {
+    args.map->fill<detdataformats::wib2::WIB2Frame>(*record);
+  }
   set_is_running(false);
   return std::move(record);
 }
