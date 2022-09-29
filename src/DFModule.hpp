@@ -103,13 +103,13 @@ DFModule::run(std::unique_ptr<daqdataformats::TriggerRecord> record,
     if (!will_run[i]) continue;
     if (!run_mark) {
       set_is_running(false);
-      return std::move(record);
+      return record;
     }
     record = list[i]->run(std::move(record), args, info);
   }
 
   set_is_running(false);
-  return std::move(record);
+  return record;
 }
 
 
