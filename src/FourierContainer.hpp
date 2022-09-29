@@ -109,7 +109,7 @@ FourierContainer::run_(std::unique_ptr<daqdataformats::TriggerRecord> record,
   // std::uint64_t timestamp = 0; // NOLINT(build/unsigned)
 
   for (auto& [key, val] : frames) {
-    TLOG() << "key = " << key << " and val = " << val;
+    TLOG() << "key = " << key << " and val = " << val.size();
   }
 
   // Normal mode, fourier transform for every channel
