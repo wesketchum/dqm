@@ -112,6 +112,8 @@ FourierContainer::run_(std::unique_ptr<daqdataformats::TriggerRecord> record,
     TLOG() << "key = " << key << " and val = " << val.size();
   }
 
+  auto size = frames.begin()->second.size();
+
   // Normal mode, fourier transform for every channel
   if (!m_global_mode) {
     for (auto& [key, value] : frames) {
