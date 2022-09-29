@@ -26,9 +26,9 @@ namespace dqm {
 
 template<class T>
 std::map<int, std::vector<T*>>
-decode_frame(daqdataformats::TriggerRecord& record, int max_frames)
+decode_frame(std::shared_ptr<daqdataformats::TriggerRecord> record, int max_frames)
 {
-  std::vector<std::unique_ptr<daqdataformats::Fragment>>& fragments = record.get_fragments_ref();
+  std::vector<std::unique_ptr<daqdataformats::Fragment>>& fragments = record->get_fragments_ref();
 
   std::map<int, std::vector<T*>> frames;
 
@@ -61,7 +61,7 @@ decode_frame(daqdataformats::TriggerRecord& record, int max_frames)
 
 template<class T>
 std::map<int, std::vector<T*>>
-decode(dunedaq::daqdataformats::TriggerRecord& record, int max_frames) {
+decode(std::shared_ptr<dunedaq::daqdataformats::TriggerRecord> record, int max_frames) {
   return decode_frame<T>(record, max_frames);
 }
 
