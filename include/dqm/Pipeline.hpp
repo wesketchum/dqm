@@ -74,7 +74,7 @@ make_same_size(std::map<int, std::vector<T*>>& map)
 
 template<class T>
 int
-check_timestamps_aligned(std::map<int, std::vector<T*>>& map)
+check_timestamps_aligned(std::map<int, std::vector<T*>>&)
 {
   TLOG(TLVL_WORK_STEPS) << "Checking that the timestamps are aligned";
   return true;

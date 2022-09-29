@@ -54,11 +54,11 @@ public:
        DQMArgs& args, DQMInfo& info);
 
 
-  void transmit(const std::string& kafka_address,
-                std::shared_ptr<ChannelMap> cmap,
-                const std::string& topicname,
-                int run_num,
-                time_t timestamp);
+  // void transmit(const std::string& kafka_address,
+  //               std::shared_ptr<ChannelMap> cmap,
+  //               const std::string& topicname,
+  //               int run_num,
+  //               time_t timestamp);
   void transmit_global(const std::string &kafka_address,
                        std::shared_ptr<ChannelMap> cmap,
                        const std::string& topicname,
@@ -135,11 +135,11 @@ FourierContainer::run_(std::unique_ptr<daqdataformats::TriggerRecord> record,
     for (size_t ich = 0; ich < m_size; ++ich) {
       fouriervec[ich].compute_fourier_transform();
     }
-    transmit(args.kafka_address,
-             map,
-             args.kafka_topic,
-             record->get_header_ref().get_run_number(),
-             record->get_header_ref().get_trigger_timestamp());
+    // transmit(args.kafka_address,
+    //          map,
+    //          args.kafka_topic,
+    //          record->get_header_ref().get_run_number(),
+    //          record->get_header_ref().get_trigger_timestamp());
     auto stop = std::chrono::steady_clock::now();
     info.fourier_channel_time_taken.store(std::chrono::duration_cast<std::chrono::milliseconds>(stop-start).count());
     info.fourier_channel_times_run++;
@@ -166,7 +166,7 @@ FourierContainer::run_(std::unique_ptr<daqdataformats::TriggerRecord> record,
 
     for (size_t ich = 0; ich < m_size - 1; ++ich) {
       if (!args.run_mark.get()) {
-        return std::move(record);
+        return record;
       }
       fouriervec[ich].compute_fourier_transform();
     }
@@ -186,7 +186,7 @@ FourierContainer::run_(std::unique_ptr<daqdataformats::TriggerRecord> record,
     info.fourier_plane_times_run++;
   }
 
-  return std::move(record);
+  return record;
 }
 
 
@@ -199,26 +199,27 @@ FourierContainer::run(std::unique_ptr<daqdataformats::TriggerRecord> record,
   auto run_mark = args.run_mark;
   auto map = args.map;
   auto kafka_address = args.kafka_address;
+  std::unique_ptr<daqdataformats::TriggerRecord> ret;
   if (frontend_type == "wib") {
     set_is_running(true);
-    auto ret = run_<detdataformats::wib::WIBFrame>(std::move(record), args, info);
+    ret = run_<detdataformats::wib::WIBFrame>(std::move(record), args, info);
     set_is_running(false);
   }
   else if (frontend_type == "wib2") {
     set_is_running(true);
-    auto ret = run_<detdataformats::wib2::WIB2Frame>(std::move(record), args, info);
+    ret = run_<detdataformats::wib2::WIB2Frame>(std::move(record), args, info);
     set_is_running(false);
   }
-  return record;
+  return ret;
 }
 
-void
-FourierContainer::transmit(const std::string& kafka_address,
-                           std::shared_ptr<ChannelMap> cmap,
-                           const std::string& topicname,
-                           int run_num,
-                           time_t timestamp)
-{
+// void
+// FourierContainer::transmit(const std::string& kafka_address,
+//                            std::shared_ptr<ChannelMap> cmap,
+//                            const std::string& topicname,
+//                            int run_num,
+//                            time_t timestamp)
+// {
 
   // // Placeholders
   // std::string dataname = m_name;
@@ -283,7 +284,7 @@ FourierContainer::transmit(const std::string& kafka_address,
   // }
 
   // clean();
-}
+// }
 
 void
 FourierContainer::transmit_global(const std::string& kafka_address,
