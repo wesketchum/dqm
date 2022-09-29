@@ -103,9 +103,14 @@ FourierContainer::run_(std::unique_ptr<daqdataformats::TriggerRecord> record,
 {
   auto start = std::chrono::steady_clock::now();
   auto map = args.map;
+  TLOG() << "Going to decode";
+  TLOG() << "with args.max_frames = " << args.max_frames;
   auto frames = decode<T>(*record, args.max_frames);
+  TLOG() << "Going to decode done";
   auto pipe = Pipeline<T>({"remove_empty", "check_empty", "make_same_size", "check_timestamp_aligned"});
+  TLOG() << "Going to run the preprocessing pipeline";
   pipe(frames);
+  TLOG() << "Pipeline done";
   // std::uint64_t timestamp = 0; // NOLINT(build/unsigned)
 
   for (auto& [key, val] : frames) {

@@ -42,6 +42,8 @@ decode_frame(daqdataformats::TriggerRecord& record, int max_frames)
     auto element_id = id.id;
     int num_chunks =
       (fragment->get_size() - sizeof(daqdataformats::FragmentHeader)) / sizeof(T);
+    TLOG() << "size is " << fragment->get_size();
+    TLOG() << "num_chunks = " << num_chunks;
     std::vector<T*> tmp;
     if (max_frames) {
       num_chunks = std::min(max_frames, num_chunks);
