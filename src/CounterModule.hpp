@@ -109,6 +109,9 @@ std::unique_ptr<daqdataformats::TriggerRecord>
   auto frames = decode<T>(*record, args.max_frames);
   auto pipe = Pipeline<T>({"remove_empty", "check_empty", "make_same_size", "check_timestamp_aligned"});
   pipe(frames);
+  if (frames.size() == 0) {
+    return record;
+  }
 
   // Get all the keys
   std::vector<int> keys;

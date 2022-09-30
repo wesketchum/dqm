@@ -111,6 +111,9 @@ STDModule::run_(std::unique_ptr<daqdataformats::TriggerRecord> record,
   auto frames = decode<T>(*record, args.max_frames);
   auto pipe = Pipeline<T>({"remove_empty", "check_empty", "make_same_size", "check_timestamp_aligned"});
   pipe(frames);
+  if (frames.size() == 0) {
+    return record;
+  }
 
   // Get all the keys
   std::vector<int> keys;
@@ -215,7 +218,7 @@ STDModule::transmit(const std::string& kafka_address,
     for (auto& b : bytes) {
       output << b;
     }
-    TLOG_DEBUG(5) << "Size of the message in bytes: " << output.str().size();
+    TLOG(TLVL_WORK_STEPS) << "Sending message to kafka with size " << output.str().size();
     KafkaExport(kafka_address, output.str(), topicname);
   }
 }

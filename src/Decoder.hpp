@@ -33,7 +33,8 @@ decode_frame(daqdataformats::TriggerRecord& record, int max_frames)
   std::map<int, std::vector<T*>> frames;
 
   for (auto& fragment : fragments) {
-    if (fragment->get_fragment_type() != daqdataformats::FragmentType::kWIB and
+    if (fragment->get_fragment_type() != daqdataformats::FragmentType::kProtoWIB &&
+        fragment->get_fragment_type() != daqdataformats::FragmentType::kWIB &&
         fragment->get_fragment_type() != daqdataformats::FragmentType::kTDE_AMC) {
       continue;
     }
@@ -42,7 +43,8 @@ decode_frame(daqdataformats::TriggerRecord& record, int max_frames)
     int num_chunks =
       (fragment->get_size() - sizeof(daqdataformats::FragmentHeader)) / sizeof(T);
     std::vector<T*> tmp;
-    if (max_frames >= 0) {
+    // Don't put a limit if max_frames = 0
+    if (max_frames > 0) {
       num_chunks = std::min(max_frames, num_chunks);
     }
     for (int i = 0; i < num_chunks; ++i) {
