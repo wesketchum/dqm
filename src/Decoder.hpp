@@ -33,7 +33,8 @@ decode_frame(daqdataformats::TriggerRecord& record, int max_frames)
   std::map<int, std::vector<T*>> frames;
 
   for (auto& fragment : fragments) {
-    if (fragment->get_fragment_type() != daqdataformats::FragmentType::kWIB and
+    if (fragment->get_fragment_type() != daqdataformats::FragmentType::kProtoWIB &&
+        fragment->get_fragment_type() != daqdataformats::FragmentType::kWIB &&
         fragment->get_fragment_type() != daqdataformats::FragmentType::kTDE_AMC) {
       continue;
     }
