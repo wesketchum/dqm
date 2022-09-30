@@ -210,7 +210,7 @@ STDModule::transmit(const std::string& kafka_address,
     for (auto& b : bytes) {
       output << b;
     }
-    TLOG_DEBUG(5) << "Size of the message in bytes: " << output.str().size();
+    TLOG(TLVL_WORK_STEPS) << "Sending message to kafka with size " << output.str().size();
     KafkaExport(kafka_address, output.str(), topicname);
   }
 }
