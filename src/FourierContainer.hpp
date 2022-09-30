@@ -52,11 +52,11 @@ public:
        DQMArgs& args, DQMInfo& info);
 
 
-  void transmit(const std::string& kafka_address,
-                std::shared_ptr<ChannelMap> cmap,
-                const std::string& topicname,
-                int run_num,
-                time_t timestamp);
+  // void transmit(const std::string& kafka_address,
+  //               std::shared_ptr<ChannelMap> cmap,
+  //               const std::string& topicname,
+  //               int run_num,
+  //               time_t timestamp);
   void transmit_global(const std::string &kafka_address,
                        std::shared_ptr<ChannelMap> cmap,
                        const std::string& topicname,
@@ -129,11 +129,11 @@ FourierContainer::run_(std::shared_ptr<daqdataformats::TriggerRecord> record,
     for (size_t ich = 0; ich < m_size; ++ich) {
       fouriervec[ich].compute_fourier_transform();
     }
-    transmit(args.kafka_address,
-             map,
-             args.kafka_topic,
-             record->get_header_ref().get_run_number(),
-             record->get_header_ref().get_trigger_timestamp());
+    // transmit(args.kafka_address,
+    //          map,
+    //          args.kafka_topic,
+    //          record->get_header_ref().get_run_number(),
+    //          record->get_header_ref().get_trigger_timestamp());
     auto stop = std::chrono::steady_clock::now();
     info.fourier_channel_time_taken.store(std::chrono::duration_cast<std::chrono::milliseconds>(stop-start).count());
     info.fourier_channel_times_run++;
@@ -204,13 +204,13 @@ FourierContainer::run(std::shared_ptr<daqdataformats::TriggerRecord> record,
   }
 }
 
-void
-FourierContainer::transmit(const std::string& /*kafka_address*/,
-                           std::shared_ptr<ChannelMap> /*cmap*/,
-                           const std::string& /*topicname*/,
-                           int /*run_num*/,
-                           time_t /*timestamp*/)
-{
+// void
+// FourierContainer::transmit(const std::string& kafka_address,
+//                            std::shared_ptr<ChannelMap> cmap,
+//                            const std::string& topicname,
+//                            int run_num,
+//                            time_t timestamp)
+// {
 
   // // Placeholders
   // std::string dataname = m_name;
@@ -275,7 +275,7 @@ FourierContainer::transmit(const std::string& /*kafka_address*/,
   // }
 
   // clean();
-}
+// }
 
 void
 FourierContainer::transmit_global(const std::string& kafka_address,

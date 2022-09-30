@@ -81,7 +81,7 @@ private:
   dqmprocessor::StandardDQM m_fourier_plane_conf;
 
   // DF configuration parameters
-  double m_df_seconds {0};
+  int m_df_seconds {0};
   double m_df_offset {0};
   std::string m_df_algs;
   int m_df_num_frames {0};

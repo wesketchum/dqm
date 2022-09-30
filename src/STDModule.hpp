@@ -151,7 +151,7 @@ STDModule::run(std::shared_ptr<daqdataformats::TriggerRecord> record,
   }
   else if (frontend_type == "wib2") {
     set_is_running(true);
-     run_<detdataformats::wib2::WIB2Frame>(std::move(record), args, info);
+    run_<detdataformats::wib2::WIB2Frame>(std::move(record), args, info);
     set_is_running(false);
   }
   auto stop = std::chrono::steady_clock::now();

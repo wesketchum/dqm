@@ -33,9 +33,8 @@ decode_frame(std::shared_ptr<daqdataformats::TriggerRecord> record, int max_fram
   std::map<int, std::vector<T*>> frames;
 
   for (auto& fragment : fragments) {
-    if (fragment->get_fragment_type() == daqdataformats::FragmentType::kSW_TriggerPrimitive ||
-        fragment->get_fragment_type() == daqdataformats::FragmentType::kTriggerActivity ||
-        fragment->get_fragment_type() == daqdataformats::FragmentType::kTriggerCandidate) {
+    if (fragment->get_fragment_type() != daqdataformats::FragmentType::kWIB and
+        fragment->get_fragment_type() != daqdataformats::FragmentType::kTDE_AMC) {
       continue;
     }
     auto id = fragment->get_element_id();
@@ -45,7 +44,7 @@ decode_frame(std::shared_ptr<daqdataformats::TriggerRecord> record, int max_fram
     TLOG() << "size is " << fragment->get_size();
     TLOG() << "num_chunks = " << num_chunks;
     std::vector<T*> tmp;
-    if (max_frames) {
+    if (max_frames >= 0) {
       num_chunks = std::min(max_frames, num_chunks);
     }
     for (int i = 0; i < num_chunks; ++i) {
