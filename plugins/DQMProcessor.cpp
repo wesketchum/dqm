@@ -43,6 +43,7 @@ namespace dunedaq {
 namespace dqm {
 
 using logging::TLVL_WORK_STEPS;
+using logging::TLVL_DATA_SENT_OR_RECEIVED;
 
 DQMProcessor::DQMProcessor(const std::string& name)
   : DAQModule(name)
@@ -345,6 +346,19 @@ DQMProcessor::do_work()
       TLOG_DEBUG(5) << "Channel map already filled, removing entry and starting again";
       continue;
     }
+    else if (analysis_instance.mod != chfiller && !m_dqm_args.map->is_filled()) {
+      map[std::chrono::system_clock::now() +
+          // We wait 10% of the time between runs of the algorithm
+          std::chrono::milliseconds(static_cast<int>(analysis_instance.between_time * 100.0))] = {
+        algo,
+        analysis_instance.between_time,
+        analysis_instance.number_of_frames,
+        previous_thread,
+        analysis_instance.name
+      };
+      map.erase(task);
+      continue;
+    }
 
     // We don't want to run if the run has stopped after sleeping for a while
     if (!*m_dqm_args.run_mark) {
@@ -407,7 +421,7 @@ DQMProcessor::do_work()
         TLOG() << "DQM: Unable to pop from the data queue";
         continue;
       }
-      TLOG_DEBUG(10) << "Data popped from the queue";
+      TLOG_DEBUG(TLVL_DATA_SENT_OR_RECEIVED) << "Data received from readout";
     }
     else if (m_mode == "df") {
       while (*m_dqm_args.run_mark && dftrs.get_num_elements() == 0) {
@@ -417,6 +431,7 @@ DQMProcessor::do_work()
         break;
       }
       dftrs.pop(element, std::chrono::milliseconds(100));
+      TLOG_DEBUG(TLVL_DATA_SENT_OR_RECEIVED) << "Data received from DF";
     }
 
     ++m_data_count;
