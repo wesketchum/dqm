@@ -82,12 +82,17 @@ ChannelMap::fill(daqdataformats::TriggerRecord& record)
       auto tmp = std::make_tuple(crate, slot, fiber);
       if (frame_numbers.find(tmp) == frame_numbers.end()) {
         frame_numbers.insert(tmp);
-      } else {
+      }
+      else {
         continue;
       }
       for (int ich = 0; ich < 256; ++ich) {
         auto channel = m_chmap_service->get_offline_channel_from_crate_slot_fiber_chan(crate, slot, fiber, ich);
         auto plane = m_chmap_service->get_plane_from_offline_channel(channel);
+        if (plane > 3) {
+          ers::error(BadCrateSlotFiber(ERS_HERE, crate, slot, fiber));
+          continue;
+        }
         m_map[plane][channel] = { key, ich };
       }
     }
@@ -96,7 +101,9 @@ ChannelMap::fill(daqdataformats::TriggerRecord& record)
                  << m_map[2].size();
 
   TLOG_DEBUG(5) << "Channel Map for the HD created";
-  m_is_filled = true;
+  if (m_map[0].size() + m_map[1].size() + m_map[2].size() > 0) {
+    m_is_filled = true;
+  }
 }
 
 bool
