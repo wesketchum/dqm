@@ -12,7 +12,7 @@
 #include "dqm/dqmprocessor/Nljs.hpp"
 #include "dqm/dqmprocessor/Structs.hpp"
 #include "dqm/dqmprocessorinfo/InfoNljs.hpp"
-// #include "dqm/DQMLogging.hpp"
+#include "dqm/DQMLogging.hpp"
 
 #include "ChannelMap.hpp"
 #include "ChannelMapFiller.hpp"
@@ -41,6 +41,8 @@
 
 namespace dunedaq {
 namespace dqm {
+
+using logging::TLVL_WORK_STEPS;
 
 DQMProcessor::DQMProcessor(const std::string& name)
   : DAQModule(name)
@@ -125,10 +127,7 @@ DQMProcessor::do_configure(const nlohmann::json& args)
                        m_frontend_type, m_kafka_address,
                        m_kafka_topic, m_max_frames};
 
-  if (m_mode == "df") {
-      // networkmanager::NetworkManager::get().start_listening(m_df2dqm_connection);
-  }
-  else if (m_mode == "readout") {
+  if (m_mode == "readout") {
     dunedaq::iomanager::ConnectionRef cref;
     cref.uid = "trigger_record_q_dqm";
     m_receiver = get_iom_receiver<std::unique_ptr<daqdataformats::TriggerRecord>>(cref);
@@ -338,7 +337,7 @@ DQMProcessor::do_work()
     // and keep running
     if (analysis_instance.mod == chfiller && m_dqm_args.map->is_filled()) {
       // If the channel map filling has not finished yet
-      // we wait until the it has finished and the thread is joined
+      // we wait until the it has finished and then thread is joined
       if (analysis_instance.running_thread != nullptr && analysis_instance.running_thread->joinable()) {
         analysis_instance.running_thread->join();
       }
@@ -385,7 +384,7 @@ DQMProcessor::do_work()
     // Now it's the time to do something
     dfmessages::TriggerDecision request;
     if (m_mode == "readout") {
-      request = create_readout_request(m_sids, analysis_instance.number_of_frames);
+      request = create_readout_request(m_sids, analysis_instance.number_of_frames, m_dqm_args.frontend_type);
       try {
         m_sender->send(std::move(request), m_sink_timeout);
       } catch (iomanager::TimeoutExpired&) {
@@ -462,7 +461,7 @@ DQMProcessor::do_work()
 } // NOLINT Function length
 
 dfmessages::TriggerDecision
-DQMProcessor::create_readout_request(std::vector<dfmessages::SourceID>& m_sids, int number_of_frames)
+DQMProcessor::create_readout_request(std::vector<dfmessages::SourceID>& m_sids, int number_of_frames, std::string& frontend_type)
 {
   auto timestamp = m_time_est->get_timestamp_estimate();
   dfmessages::TriggerDecision decision;
@@ -475,7 +474,7 @@ DQMProcessor::create_readout_request(std::vector<dfmessages::SourceID>& m_sids, 
   decision.trigger_timestamp = timestamp;
   decision.readout_type = dfmessages::ReadoutType::kMonitoring;
 
-  int window_size = number_of_frames * TICKS_BETWEEN_TIMESTAMP;
+  int window_size = number_of_frames * get_ticks_between_timestamps(frontend_type);
 
   for (auto& sid : m_sids) {
     // TLOG() << "ONE LINK";

@@ -8,10 +8,22 @@
 #ifndef DQM_SRC_CONSTANTS_HPP_
 #define DQM_SRC_CONSTANTS_HPP_
 
+#include <string>
+
 namespace dunedaq::dqm {
 
 constexpr int CHANNELS_PER_LINK = 256;
-constexpr int TICKS_BETWEEN_TIMESTAMP = 25;
+
+int get_ticks_between_timestamps(std::string& frontend_type)
+{
+  if (frontend_type == "wib") {
+    return 25;
+  }
+  else if (frontend_type == "wib2") {
+    return 32;
+  }
+  return -1;
+}
 
 } // namespace dunedaq::dqm
 

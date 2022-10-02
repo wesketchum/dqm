@@ -59,7 +59,7 @@ public:
   void dispatch_trigger_record(std::unique_ptr<daqdataformats::TriggerRecord>& tr);
 
   void do_work();
-  dfmessages::TriggerDecision create_readout_request(std::vector<dfmessages::SourceID>& m_sids, int number_of_frames);
+  dfmessages::TriggerDecision create_readout_request(std::vector<dfmessages::SourceID>& m_sids, int number_of_frames, std::string& frontend_type);
 
   void dfrequest();
 
