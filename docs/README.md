@@ -37,8 +37,12 @@ For enabling the generation of dqm apps, one has to add `--enable-dqm` to the co
 
       "raw_params": ["time", "num_frames"]
 
-  Where `time` is the time between runs of the algorithm and `num_frames` is the
-  number of frames used (only for DQM-RU apps).
+  Where `time` is the time in seconds between runs of the algorithm and
+  `num_frames` is the number of frames used (only for DQM-RU apps). So if we
+  want to get updates for the raw data stream every minute and get 100 frames
+  then we would have
+
+      "raw_params": ["60", "100"]
 
 * STD: Standard deviation of the ADC distribution over a window of time. To modify use:
 
