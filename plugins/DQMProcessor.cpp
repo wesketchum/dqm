@@ -121,9 +121,6 @@ DQMProcessor::do_configure(const nlohmann::json& args)
 
   m_max_frames = conf.max_num_frames;
 
-  // The channel map pointer is set to the empty channel map that is not filled
-  // and allows the first check to pass for it to be filled with the actual
-  // channel map
   m_dqm_args = DQMArgs{m_run_marker, std::shared_ptr<ChannelMap>(new ChannelMap),
                        m_frontend_type, m_kafka_address,
                        m_kafka_topic, m_max_frames};
@@ -492,7 +489,6 @@ DQMProcessor::create_readout_request(std::vector<dfmessages::SourceID>& m_sids, 
   int window_size = number_of_frames * get_ticks_between_timestamps(frontend_type);
 
   for (auto& sid : m_sids) {
-    // TLOG() << "ONE LINK";
     daqdataformats::ComponentRequest request;
     request.component = sid;
     // Some offset is required to avoid having delayed requests in readout
@@ -531,8 +527,6 @@ DQMProcessor::dfrequest()
   trmon.trigger_type = 1;
   trmon.data_destination = m_df2dqm_connection;
 
-  // auto trmon_message = serialization::serialize(trmon, serialization::kMsgPack);
-  // networkmanager::NetworkManager::get().send_to(m_dqm2df_connection, ;
   get_iom_sender<dfmessages::TRMonRequest>(m_dqm2df_connection)->send(std::move(trmon), m_sink_timeout);
 }
 
