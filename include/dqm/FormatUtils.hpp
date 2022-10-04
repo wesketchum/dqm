@@ -14,67 +14,67 @@
 namespace dunedaq::dqm {
 
 template<class T>
-inline int get_crate(T* fr) {
+inline int get_crate(const T* fr) {
   return -1;
 }
 
 template <>
-inline int get_crate(detdataformats::wib::WIBFrame* fr) {
+inline int get_crate(const detdataformats::wib::WIBFrame* fr) {
   return fr->get_wib_header()->crate_no;
 }
 
 template <>
-inline int get_crate(detdataformats::wib2::WIB2Frame* fr) {
+inline int get_crate(const detdataformats::wib2::WIB2Frame* fr) {
   return fr->header.crate;
 }
 
 template<class T>
-inline int get_slot(T* fr) {
+inline int get_slot(const T* fr) {
   return -1;
 }
 
 template <>
-inline int get_slot(detdataformats::wib::WIBFrame* fr) {
+inline int get_slot(const detdataformats::wib::WIBFrame* fr) {
   return fr->get_wib_header()->slot_no;
 }
 
 template <>
-inline int get_slot(detdataformats::wib2::WIB2Frame* fr) {
+inline int get_slot(const detdataformats::wib2::WIB2Frame* fr) {
   return fr->header.slot;
 }
 
 template<class T>
-inline int get_fiber(T* fr) {
+inline int get_fiber(const T* fr) {
   return -1;
 }
 
 template <>
-inline int get_fiber(detdataformats::wib::WIBFrame* fr) {
+inline int get_fiber(const detdataformats::wib::WIBFrame* fr) {
   return fr->get_wib_header()->fiber_no;
 }
 
 template <>
-inline int get_fiber(detdataformats::wib2::WIB2Frame* fr) {
+inline int get_fiber(const detdataformats::wib2::WIB2Frame* fr) {
   return fr->header.link;
 }
 
 template <class T>
-inline uint64_t get_timestamp(T* fr) {
+inline uint64_t get_timestamp(const T* fr) {
   return fr->get_timestamp();
 }
 
 template <class T>
-inline uint16_t get_adc(T* fr, int ch) {
+inline uint16_t get_adc(const T* fr, const int ch) {
   return -1;
 }
 
 template <>
-inline uint16_t get_adc(detdataformats::wib::WIBFrame* fr, int ch) {
+inline uint16_t get_adc(const detdataformats::wib::WIBFrame* fr, const int ch) {
   return fr->get_channel(ch);
 }
 
 template <>
-inline uint16_t get_adc(detdataformats::wib2::WIB2Frame* fr, int ch) {
+inline uint16_t get_adc(const detdataformats::wib2::WIB2Frame* fr, const int ch) {
   return fr->get_adc(ch);
 }
 

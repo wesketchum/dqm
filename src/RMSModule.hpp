@@ -194,7 +194,7 @@ RMSModule::transmit(const std::string& kafka_address,
     output << "\"partition\": \"" << partition << "\",";
     output << "\"app_name\": \"" << app_name << "\",";
     output << "\"plane\": \"" << plane << "\",";
-    output << "\"algorithm\": \"" << "std" << "\"";
+    output << "\"algorithm\": \"" << "rms" << "\"";
     output << "}\n\n\n";
     std::vector<int> channels;
     for (auto& [offch, pair] : map) {

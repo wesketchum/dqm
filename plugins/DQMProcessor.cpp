@@ -12,7 +12,7 @@
 #include "dqm/dqmprocessor/Nljs.hpp"
 #include "dqm/dqmprocessor/Structs.hpp"
 #include "dqm/dqmprocessorinfo/InfoNljs.hpp"
-// #include "dqm/DQMLogging.hpp"
+#include "dqm/DQMLogging.hpp"
 
 #include "ChannelMap.hpp"
 #include "ChannelMapFiller.hpp"
@@ -41,6 +41,9 @@
 
 namespace dunedaq {
 namespace dqm {
+
+using logging::TLVL_WORK_STEPS;
+using logging::TLVL_DATA_SENT_OR_RECEIVED;
 
 DQMProcessor::DQMProcessor(const std::string& name)
   : DAQModule(name)
@@ -118,17 +121,11 @@ DQMProcessor::do_configure(const nlohmann::json& args)
 
   m_max_frames = conf.max_num_frames;
 
-  // The channel map pointer is set to the empty channel map that is not filled
-  // and allows the first check to pass for it to be filled with the actual
-  // channel map
   m_dqm_args = DQMArgs{m_run_marker, std::shared_ptr<ChannelMap>(new ChannelMap),
                        m_frontend_type, m_kafka_address,
                        m_kafka_topic, m_max_frames};
 
-  if (m_mode == "df") {
-      // networkmanager::NetworkManager::get().start_listening(m_df2dqm_connection);
-  }
-  else if (m_mode == "readout") {
+  if (m_mode == "readout") {
     dunedaq::iomanager::ConnectionRef cref;
     cref.uid = "trigger_record_q_dqm";
     m_receiver = get_iom_receiver<std::unique_ptr<daqdataformats::TriggerRecord>>(cref);
@@ -226,15 +223,15 @@ DQMProcessor::do_work()
   // Fourier transform
   // The Delta of time between frames is the inverse of the sampling frequency (clock frequency)
   // but because we are sampling every TICKS_BETWEEN_TIMESTAMP ticks we have to multiply by that
-  auto fourier = std::make_shared<FourierContainer>("fft_display",
+  auto fourier_channel = std::make_shared<FourierContainer>("fourier_channel",
                                                       CHANNELS_PER_LINK * m_link_idx.size(),
                                                       m_link_idx,
-                                                    1. / m_clock_frequency * (strcmp(m_frontend_type.c_str(), "wib") ? 32 : 25),
+                                                            1. / m_clock_frequency * ((m_frontend_type == "wib") ? 25 : 32),
                                                       m_fourier_channel_conf.num_frames);
-  auto fouriersum = std::make_shared<FourierContainer>("fft_sums_display",
+  auto fourier_plane = std::make_shared<FourierContainer>("fourier_plane",
                                                       4,
                                                       m_link_idx,
-                                                       1. / m_clock_frequency * (strcmp(m_frontend_type.c_str(), "wib") ? 32 : 25),
+                                                       1. / m_clock_frequency * ((m_frontend_type == "wib") ? 25 : 32),
                                                       m_fourier_plane_conf.num_frames,
                                                       true);
 
@@ -280,7 +277,7 @@ DQMProcessor::do_work()
     };
   if (m_fourier_channel_conf.how_often > 0)
     map[std::chrono::system_clock::now() + std::chrono::seconds(m_offset_from_channel_map)] = {
-      fourier,
+      fourier_channel,
       m_fourier_channel_conf.how_often,
       m_fourier_channel_conf.num_frames,
       nullptr,
@@ -289,7 +286,7 @@ DQMProcessor::do_work()
 
   if (m_fourier_plane_conf.how_often > 0)
     map[std::chrono::system_clock::now() + std::chrono::seconds(m_offset_from_channel_map)] = {
-      fouriersum,
+      fourier_plane,
       m_fourier_plane_conf.how_often,
       m_fourier_plane_conf.num_frames,
       nullptr,
@@ -338,12 +335,25 @@ DQMProcessor::do_work()
     // and keep running
     if (analysis_instance.mod == chfiller && m_dqm_args.map->is_filled()) {
       // If the channel map filling has not finished yet
-      // we wait until the it has finished and the thread is joined
+      // we wait until the it has finished and then thread is joined
       if (analysis_instance.running_thread != nullptr && analysis_instance.running_thread->joinable()) {
         analysis_instance.running_thread->join();
       }
       map.erase(task);
       TLOG_DEBUG(5) << "Channel map already filled, removing entry and starting again";
+      continue;
+    }
+    else if (analysis_instance.mod != chfiller && !m_dqm_args.map->is_filled()) {
+      map[std::chrono::system_clock::now() +
+          // We wait 10% of the time between runs of the algorithm
+          std::chrono::milliseconds(static_cast<int>(analysis_instance.between_time * 100.0))] = {
+        algo,
+        analysis_instance.between_time,
+        analysis_instance.number_of_frames,
+        previous_thread,
+        analysis_instance.name
+      };
+      map.erase(task);
       continue;
     }
 
@@ -385,7 +395,7 @@ DQMProcessor::do_work()
     // Now it's the time to do something
     dfmessages::TriggerDecision request;
     if (m_mode == "readout") {
-      request = create_readout_request(m_sids, analysis_instance.number_of_frames);
+      request = create_readout_request(m_sids, analysis_instance.number_of_frames, m_dqm_args.frontend_type);
       try {
         m_sender->send(std::move(request), m_sink_timeout);
       } catch (iomanager::TimeoutExpired&) {
@@ -408,7 +418,7 @@ DQMProcessor::do_work()
         TLOG() << "DQM: Unable to pop from the data queue";
         continue;
       }
-      TLOG_DEBUG(10) << "Data popped from the queue";
+      TLOG_DEBUG(TLVL_DATA_SENT_OR_RECEIVED) << "Data received from readout";
     }
     else if (m_mode == "df") {
       while (*m_dqm_args.run_mark && dftrs.get_num_elements() == 0) {
@@ -418,6 +428,7 @@ DQMProcessor::do_work()
         break;
       }
       dftrs.pop(element, std::chrono::milliseconds(100));
+      TLOG_DEBUG(TLVL_DATA_SENT_OR_RECEIVED) << "Data received from DF";
     }
 
     ++m_data_count;
@@ -462,7 +473,7 @@ DQMProcessor::do_work()
 } // NOLINT Function length
 
 dfmessages::TriggerDecision
-DQMProcessor::create_readout_request(std::vector<dfmessages::SourceID>& m_sids, int number_of_frames)
+DQMProcessor::create_readout_request(std::vector<dfmessages::SourceID>& m_sids, int number_of_frames, std::string& frontend_type)
 {
   auto timestamp = m_time_est->get_timestamp_estimate();
   dfmessages::TriggerDecision decision;
@@ -475,10 +486,9 @@ DQMProcessor::create_readout_request(std::vector<dfmessages::SourceID>& m_sids, 
   decision.trigger_timestamp = timestamp;
   decision.readout_type = dfmessages::ReadoutType::kMonitoring;
 
-  int window_size = number_of_frames * TICKS_BETWEEN_TIMESTAMP;
+  int window_size = number_of_frames * get_ticks_between_timestamps(frontend_type);
 
   for (auto& sid : m_sids) {
-    // TLOG() << "ONE LINK";
     daqdataformats::ComponentRequest request;
     request.component = sid;
     // Some offset is required to avoid having delayed requests in readout
@@ -517,8 +527,6 @@ DQMProcessor::dfrequest()
   trmon.trigger_type = 1;
   trmon.data_destination = m_df2dqm_connection;
 
-  // auto trmon_message = serialization::serialize(trmon, serialization::kMsgPack);
-  // networkmanager::NetworkManager::get().send_to(m_dqm2df_connection, ;
   get_iom_sender<dfmessages::TRMonRequest>(m_dqm2df_connection)->send(std::move(trmon), m_sink_timeout);
 }
 
