@@ -223,15 +223,15 @@ DQMProcessor::do_work()
   // Fourier transform
   // The Delta of time between frames is the inverse of the sampling frequency (clock frequency)
   // but because we are sampling every TICKS_BETWEEN_TIMESTAMP ticks we have to multiply by that
-  auto fourier = std::make_shared<FourierContainer>("fft_display",
+  auto fourier_channel = std::make_shared<FourierContainer>("fourier_channel",
                                                       CHANNELS_PER_LINK * m_link_idx.size(),
                                                       m_link_idx,
-                                                    1. / m_clock_frequency * (strcmp(m_frontend_type.c_str(), "wib") ? 32 : 25),
+                                                            1. / m_clock_frequency * ((m_frontend_type == "wib") ? 25 : 32),
                                                       m_fourier_channel_conf.num_frames);
-  auto fouriersum = std::make_shared<FourierContainer>("fft_sums_display",
+  auto fourier_plane = std::make_shared<FourierContainer>("fourier_plane",
                                                       4,
                                                       m_link_idx,
-                                                       1. / m_clock_frequency * (strcmp(m_frontend_type.c_str(), "wib") ? 32 : 25),
+                                                       1. / m_clock_frequency * ((m_frontend_type == "wib") ? 25 : 32),
                                                       m_fourier_plane_conf.num_frames,
                                                       true);
 
@@ -277,7 +277,7 @@ DQMProcessor::do_work()
     };
   if (m_fourier_channel_conf.how_often > 0)
     map[std::chrono::system_clock::now() + std::chrono::seconds(m_offset_from_channel_map)] = {
-      fourier,
+      fourier_channel,
       m_fourier_channel_conf.how_often,
       m_fourier_channel_conf.num_frames,
       nullptr,
@@ -286,7 +286,7 @@ DQMProcessor::do_work()
 
   if (m_fourier_plane_conf.how_often > 0)
     map[std::chrono::system_clock::now() + std::chrono::seconds(m_offset_from_channel_map)] = {
-      fouriersum,
+      fourier_plane,
       m_fourier_plane_conf.how_often,
       m_fourier_plane_conf.num_frames,
       nullptr,
