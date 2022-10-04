@@ -1,5 +1,5 @@
 /**
- * @file Constants.hpp Define some constants used by the DQM
+ * @file Constants.hpp Define some constants used by DQM
  *
  * This is part of the DUNE DAQ , copyright 2020.
  * Licensing/copyright details are in the COPYING file that you should have
@@ -14,7 +14,8 @@ namespace dunedaq::dqm {
 
 constexpr int CHANNELS_PER_LINK = 256;
 
-int get_ticks_between_timestamps(std::string& frontend_type)
+int
+get_ticks_between_timestamps(const std::string& frontend_type)
 {
   if (frontend_type == "wib") {
     return 25;
