@@ -121,16 +121,14 @@ STDModule::run_(std::unique_ptr<daqdataformats::TriggerRecord> record,
     keys.push_back(key);
   }
 
-  for (size_t ifr = 0; ifr < frames[keys[0]].size(); ++ifr) {
-    // Fill for every link
-    for (size_t ikey = 0; ikey < keys.size(); ++ikey) {
-      auto fr = frames[keys[ikey]][ifr];
-
+  for (const auto& [key, vec] : frames) {
+    for (const auto& fr : vec) {
       for (int ich = 0; ich < CHANNELS_PER_LINK; ++ich) {
-        fill(ich, keys[ikey], get_adc<T>(fr, ich));
+        fill(ich, key, get_adc<T>(fr, ich));
       }
     }
   }
+
   transmit(args.kafka_address,
            map,
            args.kafka_topic,

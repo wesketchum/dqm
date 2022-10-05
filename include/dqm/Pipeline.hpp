@@ -31,7 +31,7 @@ remove_empty(std::map<int, std::vector<T*>>& map)
   TLOG(TLVL_WORK_STEPS) << "Removing empty fragments";
   bool empty_fragments = false;
   for (auto& [key, val] : map)
-    if (not val.size()) {
+    if (not val.size() || val.size() == sizeof(daqdataformats::FragmentHeader)) {
       empty_fragments = true;
       map.erase(key);
     }
