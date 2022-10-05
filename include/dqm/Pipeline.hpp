@@ -12,6 +12,7 @@
 #include "ers/Issue.hpp"
 #include "dqm/Issues.hpp"
 #include "dqm/DQMLogging.hpp"
+#include "dqm/DQMFormats.hpp"
 
 #include <cstddef>
 #include <map>
@@ -60,23 +61,36 @@ make_same_size(std::map<int, std::vector<T*>>& map)
   TLOG(TLVL_WORK_STEPS) << "Making the fragments have the same size";
   std::vector<size_t> sizes;
   std::map<size_t, int> occurrences;
-  for (auto& [key, val] : map) {
+  for (const auto& [key, val] : map) {
     occurrences[val.size()]++;
   }
   if (occurrences.size() == 1) {
     return true;
   }
-
-  ers::warning(TimestampsNotAligned(ERS_HERE, ""));
+  auto min_size = (*occurrences.begin()).first;
+  for (auto& [key, vec] : map) {
+    vec.resize(min_size);
+  }
 
   return true;
 }
 
 template<class T>
 int
-check_timestamps_aligned(std::map<int, std::vector<T*>>&)
+check_timestamps_aligned(std::map<int, std::vector<T*>>& map)
 {
   TLOG(TLVL_WORK_STEPS) << "Checking that the timestamps are aligned";
+  uint64_t timestamp = get_timestamp<T>((*map.begin()).second[0]);
+  bool different_timestamp = false;
+  for (const auto& [key, val] : map) {
+    if (get_timestamp<T>(*val.begin()) != timestamp) {
+      different_timestamp = true;
+      break;
+    }
+  }
+  if (different_timestamp) {
+    ers::warning(TimestampsNotAligned(ERS_HERE, ""));
+  }
   return true;
 }
 
@@ -91,7 +105,7 @@ class Pipeline
   m_available_functions { {"remove_empty", remove_empty<T>},
                           {"check_empty", check_empty<T>},
                           {"make_same_size", make_same_size<T>},
-                          {"check_timestamp_aligned", check_timestamps_aligned<T>},
+                          {"check_timestamps_aligned", check_timestamps_aligned<T>},
   };
 
 public:
@@ -114,18 +128,16 @@ public:
 
   }
 
-  void operator() (std::map<int, std::vector<T*>>& arg) {
+  bool operator() (std::map<int, std::vector<T*>>& arg) {
     for (size_t i = 0; i < m_functions.size(); ++i) {
       auto fun = m_functions[i];
       auto name = m_function_names[i];
       int ret = fun(arg);
-      if (not ret) {
-        TLOG() << "Unable to continue";
-        return;
-      }
-      else {
+      if (!ret) {
+        return false;
       }
     }
+    return true;
   }
 
 };
