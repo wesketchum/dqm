@@ -114,9 +114,6 @@ STDModule::run_(std::unique_ptr<daqdataformats::TriggerRecord> record,
   if (!valid_data) {
     return record;
   }
-  if (frames.size() == 0) {
-    return record;
-  }
 
   // Get all the keys
   std::vector<int> keys;

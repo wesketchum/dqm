@@ -104,23 +104,10 @@ FourierContainer::run_(std::unique_ptr<daqdataformats::TriggerRecord> record,
   auto start = std::chrono::steady_clock::now();
   auto map = args.map;
   auto frames = decode<T>(*record, args.max_frames);
-  // std::uint64_t timestamp = 0; // NOLINT(build/unsigned)
-
-  // Remove empty fragments
-  for (auto& vec : frames)
-    if (!vec.second.size())
-      frames.erase(vec.first);
-
-
-  // Check that all the frames vectors have the same size, if not, something
-  // bad has happened, for now don't do anything
-  auto size = frames.begin()->second.size();
-  for (auto& vec : frames) {
-    if (vec.second.size() != size) {
-      TLOG() << "Size for each fragment is different, the first fragment has size " << size << " but got size " << vec.second.size();
-  //     ers::error(InvalidData(ERS_HERE, "the size of the vector of frames is different for each link"));
-  //     return std::move(record);
-    }
+  auto pipe = Pipeline<T>({"remove_empty", "check_empty", "make_same_size", "check_timestamps_aligned"});
+  bool valid_data = pipe(frames);
+  if (!valid_data) {
+    return record;
   }
 
   // Normal mode, fourier transform for every channel
@@ -158,7 +145,7 @@ FourierContainer::run_(std::unique_ptr<daqdataformats::TriggerRecord> record,
       for (auto& [offch, pair] : map) {
         int link = pair.first;
         int ch = pair.second;
-        for (size_t iframe = 0; iframe < std::min(size, frames[link].size()); ++iframe) {
+        for (size_t iframe = 0; iframe < frames[link].size(); ++iframe) {
           fouriervec[plane].m_data[iframe] += get_adc<T>(frames[link][iframe], ch);
           }
         }
