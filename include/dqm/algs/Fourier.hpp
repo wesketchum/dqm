@@ -59,12 +59,15 @@ Fourier::Fourier(double inc, int npoints) // NOLINT(build/unsigned)
  */
 void
 Fourier::compute_fourier_transform() {
+
+  if (m_data.size() != (size_t)m_npoints) {
+    m_npoints = m_data.size();
+    ers::warning(ParameterChange(ERS_HERE, "input doesn't have the expected size for the Fourier transform, changing size to " + std::to_string(m_npoints)));
+  }
+
   if (m_transform.size() != (size_t)m_npoints)
     m_transform.resize(m_npoints);
-  if (m_data.size() != (size_t)m_npoints) {
-    ers::error(InvalidData(ERS_HERE, "input doesn't have the expected size for the Fourier transform"));
-    return;
-  }
+
   // A plan is created, executed and destroyed each time_t
   // Not the most efficient way but using the new-array interface
   // and creating a single plan that is passed around crashes for
