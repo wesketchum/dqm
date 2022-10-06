@@ -104,23 +104,10 @@ FourierContainer::run_(std::unique_ptr<daqdataformats::TriggerRecord> record,
   auto start = std::chrono::steady_clock::now();
   auto map = args.map;
   auto frames = decode<T>(*record, args.max_frames);
-  // std::uint64_t timestamp = 0; // NOLINT(build/unsigned)
-
-  // Remove empty fragments
-  for (auto& vec : frames)
-    if (!vec.second.size())
-      frames.erase(vec.first);
-
-
-  // Check that all the frames vectors have the same size, if not, something
-  // bad has happened, for now don't do anything
-  auto size = frames.begin()->second.size();
-  for (auto& vec : frames) {
-    if (vec.second.size() != size) {
-      TLOG() << "Size for each fragment is different, the first fragment has size " << size << " but got size " << vec.second.size();
-  //     ers::error(InvalidData(ERS_HERE, "the size of the vector of frames is different for each link"));
-  //     return std::move(record);
-    }
+  auto pipe = Pipeline<T>({"remove_empty", "check_empty", "make_same_size", "check_timestamps_aligned"});
+  bool valid_data = pipe(frames);
+  if (!valid_data) {
+    return record;
   }
 
   // Normal mode, fourier transform for every channel
@@ -150,15 +137,23 @@ FourierContainer::run_(std::unique_ptr<daqdataformats::TriggerRecord> record,
     // Initialize the vectors with zeroes, the last one can be done by summing
     // the resulting transform
     for (size_t i = 0; i < m_size - 1; ++i) {
-      fouriervec[i].m_data = std::vector<double> (m_npoints, 0);
+      fouriervec[i].m_data = std::vector<double> ((*frames.begin()).second.size(), 0);
     }
 
     auto channel_order = map->get_map();
-    for (auto& [plane, map] : channel_order) {
-      for (auto& [offch, pair] : map) {
+    for (const auto& [plane, map] : channel_order) {
+      if (plane > 3 ) {
+        ers::error(InvalidInput(ERS_HERE, "Plane " + std::to_string(plane) + " is not a valid plane"));
+        continue;
+      }
+      for (const auto& [offch, pair] : map) {
         int link = pair.first;
         int ch = pair.second;
-        for (size_t iframe = 0; iframe < std::min(size, frames[link].size()); ++iframe) {
+        if (frames.find(link) == frames.end()) {
+          ers::error(InvalidInput(ERS_HERE, "Link " + std::to_string(link) + " was not present in data"));
+          continue;
+        }
+        for (size_t iframe = 0; iframe < frames[link].size(); ++iframe) {
           fouriervec[plane].m_data[iframe] += get_adc<T>(frames[link][iframe], ch);
           }
         }
@@ -173,6 +168,7 @@ FourierContainer::run_(std::unique_ptr<daqdataformats::TriggerRecord> record,
     // The last one corresponds can be obtained as the sum of the ones for the planes
     // since the fourier transform is linear
     std::vector<double> transform(fouriervec[0].m_transform);
+    fouriervec[m_size-1].m_npoints = fouriervec[0].m_npoints;
     for (size_t i = 0; i < fouriervec[0].m_transform.size(); ++i) {
       transform[i] += fouriervec[1].m_transform[i] + fouriervec[2].m_transform[i];
     }

@@ -1,13 +1,13 @@
 
 /**
- * @file CounterModule.hpp Implementation of a container of Hist objects
+ * @file CounterModule.hpp Implementation of the module for the raw data stream
  *
  * This is part of the DUNE DAQ , copyright 2020.
  * Licensing/copyright details are in the COPYING file that you should have
  * received with this code.
  */
-#ifndef DQM_SRC_CounterModule_HPP_
-#define DQM_SRC_CounterModule_HPP_
+#ifndef DQM_SRC_COUNTERMODULE_HPP_
+#define DQM_SRC_COUNTERMODULE_HPP_
 
 // DQM
 #include "dqm/AnalysisModule.hpp"
@@ -107,9 +107,9 @@ std::unique_ptr<daqdataformats::TriggerRecord>
   auto map = args.map;
 
   auto frames = decode<T>(*record, args.max_frames);
-  auto pipe = Pipeline<T>({"remove_empty", "check_empty", "make_same_size", "check_timestamp_aligned"});
-  pipe(frames);
-  if (frames.size() == 0) {
+  auto pipe = Pipeline<T>({"remove_empty", "check_empty", "make_same_size", "check_timestamps_aligned"});
+  bool valid_data = pipe(frames);
+  if (!valid_data) {
     return record;
   }
 
@@ -119,16 +119,14 @@ std::unique_ptr<daqdataformats::TriggerRecord>
     keys.push_back(key);
   }
 
-  for (size_t ifr = 0; ifr < frames[keys[0]].size(); ++ifr) {
-    // Fill for every link
-    for (size_t ikey = 0; ikey < keys.size(); ++ikey) {
-      auto fr = frames[keys[ikey]][ifr];
-
+  for (const auto& [key, vec] : frames) {
+    for (const auto& fr : vec) {
       for (int ich = 0; ich < CHANNELS_PER_LINK; ++ich) {
-        fill(ich, keys[ikey], get_adc<T>(fr, ich));
+        fill(ich, key, get_adc<T>(fr, ich));
       }
     }
   }
+
   transmit(args.kafka_address,
            map,
            args.kafka_topic,
@@ -275,4 +273,4 @@ int
 
 } // namespace dunedaq::dqm
 
-#endif // DQM_SRC_CounterModule_HPP_
+#endif // DQM_SRC_COUNTERMODULE_HPP_

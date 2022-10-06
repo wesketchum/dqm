@@ -44,11 +44,13 @@ ERS_DECLARE_ISSUE(dqm, EmptyData, "Data is empty after removing empty fragments"
 
 ERS_DECLARE_ISSUE(dqm, TimestampsNotAligned, "Timestamps are not aligned, DQM will align them", ((std::string)empty))
 
-ERS_DECLARE_ISSUE(dqm, InvalidInput, "Invalid input: ", ((std::string)why))
+ERS_DECLARE_ISSUE(dqm, InvalidInput, "Invalid input: " << why, ((std::string)why))
 
 ERS_DECLARE_ISSUE(dqm, BadCrateSlotFiber,
                   "Bad crate, slot, fiber: (" << crate << ", " << slot << ", " << fiber << ")",
                   ((int)crate)((int)slot)((int)fiber))
+
+ERS_DECLARE_ISSUE(dqm, ParameterChange, "Parameters changed: " << why, ((std::string)why))
 
 
 } // namespace dunedaq
