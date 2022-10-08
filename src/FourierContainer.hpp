@@ -101,7 +101,7 @@ FourierContainer::run_(std::shared_ptr<daqdataformats::TriggerRecord> record,
 {
   auto start = std::chrono::steady_clock::now();
   auto map = args.map;
-  auto frames = decode<T>(*record, args.max_frames);
+  auto frames = decode<T>(record, args.max_frames);
   auto pipe = Pipeline<T>({"remove_empty", "check_empty", "make_same_size", "check_timestamps_aligned"});
   bool valid_data = pipe(frames);
   if (!valid_data) {

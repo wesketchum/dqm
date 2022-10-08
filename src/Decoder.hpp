@@ -28,7 +28,7 @@ using logging::TLVL_WORK_STEPS;
 template<class T>
 std::map<int, std::vector<T*>>
 decode(std::shared_ptr<daqdataformats::TriggerRecord> record, int max_frames) {
-  const std::vector<std::unique_ptr<daqdataformats::Fragment>>& fragments = record.get_fragments_ref();
+  const std::vector<std::unique_ptr<daqdataformats::Fragment>>& fragments = record->get_fragments_ref();
 
   std::map<int, std::vector<T*>> frames;
 
