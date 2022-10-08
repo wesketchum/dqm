@@ -34,21 +34,6 @@ public:
 
 };
 
-
-void
-Counter::fill(double const x)
-{
-  m_nentries++;
-  count.push_back(x);
-}
-
-void
-Counter::clean()
-{
-  m_nentries = 0;
-  count.clear();
-}
-
 } // namespace dunedaq
 } // namespace dqm
 

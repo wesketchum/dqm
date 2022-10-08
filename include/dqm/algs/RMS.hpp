@@ -5,8 +5,8 @@
  * Licensing/copyright details are in the COPYING file that you should have
  * received with this code.
  */
-#ifndef DQM_INCLUDE_DQM_RMS_HPP_
-#define DQM_INCLUDE_DQM_RMS_HPP_
+#ifndef DQM_INCLUDE_DQM_ALGS_RMS_HPP_
+#define DQM_INCLUDE_DQM_ALGS_RMS_HPP_
 
 #include <cmath>
 
@@ -35,31 +35,7 @@ public:
   double rms() const;
 };
 
-void
-RMS::fill(const double x)
-{
-  m_nentries++;
-  m_sum_sq += x * x;
-}
-
-void
-RMS::clean()
-{
-  m_sum_sq = 0;
-  m_nentries = 0;
-}
-
-double
-RMS::rms() const
-{
-  if (not m_nentries) {
-    return -1;
-  }
-  return sqrt(m_sum_sq / m_nentries);
-
-}
-
 } // namespace dqm
 } // namespace dunedaq
 
-#endif // DQM_INCLUDE_DQM_RMS_HPP_
+#endif // DQM_INCLUDE_DQM_ALGS_RMS_HPP_

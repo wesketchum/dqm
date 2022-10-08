@@ -201,7 +201,6 @@ ChannelStream<T>::transmit(const std::string& kafka_address,
   }
 }
 
-
 template <class T>
 void
 ChannelStream<T>::clean()
