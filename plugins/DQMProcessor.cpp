@@ -434,9 +434,10 @@ DQMProcessor::do_work()
     ++m_data_count;
     ++m_total_data_count;
 
+    std::shared_ptr<daqdataformats::TriggerRecord> record = std::move(element);
     auto memfunc = &AnalysisModule::run;
     auto current_thread =
-      std::make_shared<std::thread>(memfunc, std::ref(*algo), std::move(element), std::ref(m_dqm_args), std::ref(m_dqm_info));
+      std::make_shared<std::thread>(memfunc, std::ref(*algo), record, std::ref(m_dqm_args), std::ref(m_dqm_info));
     element.reset(nullptr);
 
     // Add a new entry for the current instance

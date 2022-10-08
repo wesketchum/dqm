@@ -41,13 +41,12 @@ public:
             int nchannels,
             std::vector<int>& link_idx);
 
-  std::unique_ptr<daqdataformats::TriggerRecord>
-  run(std::unique_ptr<daqdataformats::TriggerRecord> record,
-      DQMArgs& args, DQMInfo& info);
+  void
+  run(std::shared_ptr<daqdataformats::TriggerRecord> record,
+      DQMArgs& args, DQMInfo& info) override;
 
   template <class T>
-  std::unique_ptr<daqdataformats::TriggerRecord>
-  run_(std::unique_ptr<daqdataformats::TriggerRecord> record,
+  void run_(std::shared_ptr<daqdataformats::TriggerRecord> record,
        DQMArgs& args, DQMInfo& info);
 
   // std::unique_ptr<daqdataformats::TriggerRecord>
@@ -100,9 +99,9 @@ private:
 // }
 
 template <class T>
-std::unique_ptr<daqdataformats::TriggerRecord>
- CounterModule::run_(std::unique_ptr<daqdataformats::TriggerRecord> record,
-                     DQMArgs& args, DQMInfo&)
+void
+CounterModule::run_(std::shared_ptr<daqdataformats::TriggerRecord> record,
+                     DQMArgs& args, DQMInfo& info)
 {
   auto map = args.map;
 
@@ -110,7 +109,7 @@ std::unique_ptr<daqdataformats::TriggerRecord>
   auto pipe = Pipeline<T>({"remove_empty", "check_empty", "make_same_size", "check_timestamps_aligned"});
   bool valid_data = pipe(frames);
   if (!valid_data) {
-    return record;
+    return;
   }
 
   // Get all the keys
@@ -133,28 +132,25 @@ std::unique_ptr<daqdataformats::TriggerRecord>
            record->get_header_ref().get_run_number());
   clean();
 
-  return record;
-
 }
 
 
 
-std::unique_ptr<daqdataformats::TriggerRecord>
- CounterModule::run(std::unique_ptr<daqdataformats::TriggerRecord> record,
+void
+CounterModule::run(std::shared_ptr<daqdataformats::TriggerRecord> record,
                     DQMArgs& args, DQMInfo& info)
 {
   TLOG(TLVL_WORK_STEPS) << "Running Raw with frontend_type = " << args.frontend_type;
   auto start = std::chrono::steady_clock::now();
   auto frontend_type = args.frontend_type;
-  std::unique_ptr<daqdataformats::TriggerRecord> ret;
   if (frontend_type == "wib") {
     set_is_running(true);
-    ret = run_<detdataformats::wib::WIBFrame>(std::move(record), args, info);
+     run_<detdataformats::wib::WIBFrame>(record, args, info);
     set_is_running(false);
   }
   else if (frontend_type == "wib2") {
     set_is_running(true);
-    ret = run_<detdataformats::wib2::WIB2Frame>(std::move(record), args, info);
+    run_<detdataformats::wib2::WIB2Frame>(record, args, info);
     set_is_running(false);
   }
   auto stop = std::chrono::steady_clock::now();
@@ -166,7 +162,6 @@ std::unique_ptr<daqdataformats::TriggerRecord>
   // }
   info.raw_time_taken.store(std::chrono::duration_cast<std::chrono::milliseconds>(stop-start).count());
   info.raw_times_run++;
-  return ret;
 }
 
 void

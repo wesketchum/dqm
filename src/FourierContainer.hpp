@@ -44,13 +44,11 @@ public:
   FourierContainer(std::string name, int size, double inc, int npoints);
   FourierContainer(std::string name, int size, std::vector<int>& link_idx, double inc, int npoints, bool global_mode=false);
 
-  std::unique_ptr<daqdataformats::TriggerRecord>
-  run(std::unique_ptr<daqdataformats::TriggerRecord> record,
-      DQMArgs& args, DQMInfo& info);
+  void run(std::shared_ptr<daqdataformats::TriggerRecord> record,
+      DQMArgs& args, DQMInfo& info) override;
 
   template <class T>
-  std::unique_ptr<daqdataformats::TriggerRecord>
-  run_(std::unique_ptr<daqdataformats::TriggerRecord> record,
+  void run_(std::shared_ptr<daqdataformats::TriggerRecord> record,
        DQMArgs& args, DQMInfo& info);
 
 
@@ -97,8 +95,8 @@ FourierContainer::FourierContainer(std::string name, int size, std::vector<int>&
 }
 
 template <class T>
-std::unique_ptr<daqdataformats::TriggerRecord>
-FourierContainer::run_(std::unique_ptr<daqdataformats::TriggerRecord> record,
+void
+FourierContainer::run_(std::shared_ptr<daqdataformats::TriggerRecord> record,
                        DQMArgs& args, DQMInfo& info)
 {
   auto start = std::chrono::steady_clock::now();
@@ -107,8 +105,10 @@ FourierContainer::run_(std::unique_ptr<daqdataformats::TriggerRecord> record,
   auto pipe = Pipeline<T>({"remove_empty", "check_empty", "make_same_size", "check_timestamps_aligned"});
   bool valid_data = pipe(frames);
   if (!valid_data) {
-    return record;
+    return;
   }
+
+  auto size = frames.begin()->second.size();
 
   // Normal mode, fourier transform for every channel
   if (!m_global_mode) {
@@ -161,7 +161,7 @@ FourierContainer::run_(std::unique_ptr<daqdataformats::TriggerRecord> record,
 
     for (size_t ich = 0; ich < m_size - 1; ++ich) {
       if (!args.run_mark.get()) {
-        return record;
+        return;
       }
       fouriervec[ich].compute_fourier_transform();
     }
@@ -182,12 +182,11 @@ FourierContainer::run_(std::unique_ptr<daqdataformats::TriggerRecord> record,
     info.fourier_plane_times_run++;
   }
 
-  return record;
 }
 
 
-std::unique_ptr<daqdataformats::TriggerRecord>
-FourierContainer::run(std::unique_ptr<daqdataformats::TriggerRecord> record,
+void
+FourierContainer::run(std::shared_ptr<daqdataformats::TriggerRecord> record,
                       DQMArgs& args, DQMInfo& info)
 {
   TLOG(TLVL_WORK_STEPS) << "Running Fourier Transform with frontend_type = " << args.frontend_type;
@@ -195,18 +194,16 @@ FourierContainer::run(std::unique_ptr<daqdataformats::TriggerRecord> record,
   auto run_mark = args.run_mark;
   auto map = args.map;
   auto kafka_address = args.kafka_address;
-  std::unique_ptr<daqdataformats::TriggerRecord> ret;
   if (frontend_type == "wib") {
     set_is_running(true);
-    ret = run_<detdataformats::wib::WIBFrame>(std::move(record), args, info);
+    run_<detdataformats::wib::WIBFrame>(std::move(record), args, info);
     set_is_running(false);
   }
   else if (frontend_type == "wib2") {
     set_is_running(true);
-    ret = run_<detdataformats::wib2::WIB2Frame>(std::move(record), args, info);
+    run_<detdataformats::wib2::WIB2Frame>(std::move(record), args, info);
     set_is_running(false);
   }
-  return ret;
 }
 
 // void
