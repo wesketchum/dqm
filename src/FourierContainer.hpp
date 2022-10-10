@@ -54,11 +54,11 @@ public:
        DQMArgs& args, DQMInfo& info);
 
 
-  void transmit(const std::string& kafka_address,
-                std::shared_ptr<ChannelMap> cmap,
-                const std::string& topicname,
-                int run_num,
-                time_t timestamp);
+  // void transmit(const std::string& kafka_address,
+  //               std::shared_ptr<ChannelMap> cmap,
+  //               const std::string& topicname,
+  //               int run_num,
+  //               time_t timestamp);
   void transmit_global(const std::string &kafka_address,
                        std::shared_ptr<ChannelMap> cmap,
                        const std::string& topicname,
@@ -104,23 +104,10 @@ FourierContainer::run_(std::unique_ptr<daqdataformats::TriggerRecord> record,
   auto start = std::chrono::steady_clock::now();
   auto map = args.map;
   auto frames = decode<T>(*record, args.max_frames);
-  // std::uint64_t timestamp = 0; // NOLINT(build/unsigned)
-
-  // Remove empty fragments
-  for (auto& vec : frames)
-    if (!vec.second.size())
-      frames.erase(vec.first);
-
-
-  // Check that all the frames vectors have the same size, if not, something
-  // bad has happened, for now don't do anything
-  auto size = frames.begin()->second.size();
-  for (auto& vec : frames) {
-    if (vec.second.size() != size) {
-      TLOG() << "Size for each fragment is different, the first fragment has size " << size << " but got size " << vec.second.size();
-  //     ers::error(InvalidData(ERS_HERE, "the size of the vector of frames is different for each link"));
-  //     return std::move(record);
-    }
+  auto pipe = Pipeline<T>({"remove_empty", "check_empty", "make_same_size", "check_timestamps_aligned"});
+  bool valid_data = pipe(frames);
+  if (!valid_data) {
+    return record;
   }
 
   // Normal mode, fourier transform for every channel
@@ -135,11 +122,11 @@ FourierContainer::run_(std::unique_ptr<daqdataformats::TriggerRecord> record,
     for (size_t ich = 0; ich < m_size; ++ich) {
       fouriervec[ich].compute_fourier_transform();
     }
-    transmit(args.kafka_address,
-             map,
-             args.kafka_topic,
-             record->get_header_ref().get_run_number(),
-             record->get_header_ref().get_trigger_timestamp());
+    // transmit(args.kafka_address,
+    //          map,
+    //          args.kafka_topic,
+    //          record->get_header_ref().get_run_number(),
+    //          record->get_header_ref().get_trigger_timestamp());
     auto stop = std::chrono::steady_clock::now();
     info.fourier_channel_time_taken.store(std::chrono::duration_cast<std::chrono::milliseconds>(stop-start).count());
     info.fourier_channel_times_run++;
@@ -150,15 +137,23 @@ FourierContainer::run_(std::unique_ptr<daqdataformats::TriggerRecord> record,
     // Initialize the vectors with zeroes, the last one can be done by summing
     // the resulting transform
     for (size_t i = 0; i < m_size - 1; ++i) {
-      fouriervec[i].m_data = std::vector<double> (m_npoints, 0);
+      fouriervec[i].m_data = std::vector<double> ((*frames.begin()).second.size(), 0);
     }
 
     auto channel_order = map->get_map();
-    for (auto& [plane, map] : channel_order) {
-      for (auto& [offch, pair] : map) {
+    for (const auto& [plane, map] : channel_order) {
+      if (plane > 3 ) {
+        ers::error(InvalidInput(ERS_HERE, "Plane " + std::to_string(plane) + " is not a valid plane"));
+        continue;
+      }
+      for (const auto& [offch, pair] : map) {
         int link = pair.first;
         int ch = pair.second;
-        for (size_t iframe = 0; iframe < std::min(size, frames[link].size()); ++iframe) {
+        if (frames.find(link) == frames.end()) {
+          ers::error(InvalidInput(ERS_HERE, "Link " + std::to_string(link) + " was not present in data"));
+          continue;
+        }
+        for (size_t iframe = 0; iframe < frames[link].size(); ++iframe) {
           fouriervec[plane].m_data[iframe] += get_adc<T>(frames[link][iframe], ch);
           }
         }
@@ -166,13 +161,14 @@ FourierContainer::run_(std::unique_ptr<daqdataformats::TriggerRecord> record,
 
     for (size_t ich = 0; ich < m_size - 1; ++ich) {
       if (!args.run_mark.get()) {
-        return std::move(record);
+        return record;
       }
       fouriervec[ich].compute_fourier_transform();
     }
     // The last one corresponds can be obtained as the sum of the ones for the planes
     // since the fourier transform is linear
     std::vector<double> transform(fouriervec[0].m_transform);
+    fouriervec[m_size-1].m_npoints = fouriervec[0].m_npoints;
     for (size_t i = 0; i < fouriervec[0].m_transform.size(); ++i) {
       transform[i] += fouriervec[1].m_transform[i] + fouriervec[2].m_transform[i];
     }
@@ -186,7 +182,7 @@ FourierContainer::run_(std::unique_ptr<daqdataformats::TriggerRecord> record,
     info.fourier_plane_times_run++;
   }
 
-  return std::move(record);
+  return record;
 }
 
 
@@ -199,26 +195,27 @@ FourierContainer::run(std::unique_ptr<daqdataformats::TriggerRecord> record,
   auto run_mark = args.run_mark;
   auto map = args.map;
   auto kafka_address = args.kafka_address;
+  std::unique_ptr<daqdataformats::TriggerRecord> ret;
   if (frontend_type == "wib") {
     set_is_running(true);
-    auto ret = run_<detdataformats::wib::WIBFrame>(std::move(record), args, info);
+    ret = run_<detdataformats::wib::WIBFrame>(std::move(record), args, info);
     set_is_running(false);
   }
   else if (frontend_type == "wib2") {
     set_is_running(true);
-    auto ret = run_<detdataformats::wib2::WIB2Frame>(std::move(record), args, info);
+    ret = run_<detdataformats::wib2::WIB2Frame>(std::move(record), args, info);
     set_is_running(false);
   }
-  return record;
+  return ret;
 }
 
-void
-FourierContainer::transmit(const std::string& kafka_address,
-                           std::shared_ptr<ChannelMap> cmap,
-                           const std::string& topicname,
-                           int run_num,
-                           time_t timestamp)
-{
+// void
+// FourierContainer::transmit(const std::string& kafka_address,
+//                            std::shared_ptr<ChannelMap> cmap,
+//                            const std::string& topicname,
+//                            int run_num,
+//                            time_t timestamp)
+// {
 
   // // Placeholders
   // std::string dataname = m_name;
@@ -283,7 +280,7 @@ FourierContainer::transmit(const std::string& kafka_address,
   // }
 
   // clean();
-}
+// }
 
 void
 FourierContainer::transmit_global(const std::string& kafka_address,

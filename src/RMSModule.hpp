@@ -103,13 +103,16 @@ RMSModule::RMSModule(std::string name,
 template <class T>
 std::unique_ptr<daqdataformats::TriggerRecord>
 RMSModule::run_(std::unique_ptr<daqdataformats::TriggerRecord> record,
-                DQMArgs& args, DQMInfo& info)
+                DQMArgs& args, DQMInfo&)
 {
   auto map = args.map;
 
   auto frames = decode<T>(*record, args.max_frames);
-  auto pipe = Pipeline<T>({"remove_empty", "check_empty", "make_same_size", "check_timestamp_aligned"});
-  pipe(frames);
+  auto pipe = Pipeline<T>({"remove_empty", "check_empty", "check_timestamps_aligned"});
+  bool valid_data = pipe(frames);
+  if (!valid_data) {
+    return record;
+  }
 
   // Get all the keys
   std::vector<int> keys;
@@ -117,23 +120,21 @@ RMSModule::run_(std::unique_ptr<daqdataformats::TriggerRecord> record,
     keys.push_back(key);
   }
 
-  for (size_t ifr = 0; ifr < frames[keys[0]].size(); ++ifr) {
-    // Fill for every link
-    for (size_t ikey = 0; ikey < keys.size(); ++ikey) {
-      auto fr = frames[keys[ikey]][ifr];
-
+  for (const auto& [key, vec] : frames) {
+    for (const auto& fr : vec) {
       for (int ich = 0; ich < CHANNELS_PER_LINK; ++ich) {
-        fill(ich, keys[ikey], get_adc<T>(fr, ich));
+        fill(ich, key, get_adc<T>(fr, ich));
       }
     }
   }
+
   transmit(args.kafka_address,
            map,
            args.kafka_topic,
            record->get_header_ref().get_run_number());
   clean();
 
-  return std::move(record);
+  return record;
 
 }
 
@@ -146,14 +147,15 @@ RMSModule::run(std::unique_ptr<daqdataformats::TriggerRecord> record,
   TLOG(TLVL_WORK_STEPS) << "Running RMS with frontend_type = " << args.frontend_type;
   auto start = std::chrono::steady_clock::now();
   auto frontend_type = args.frontend_type;
+  std::unique_ptr<daqdataformats::TriggerRecord> ret;
   if (frontend_type == "wib") {
     set_is_running(true);
-    auto ret = run_<detdataformats::wib::WIBFrame>(std::move(record), args, info);
+    ret = run_<detdataformats::wib::WIBFrame>(std::move(record), args, info);
     set_is_running(false);
   }
   else if (frontend_type == "wib2") {
     set_is_running(true);
-    auto ret = run_<detdataformats::wib2::WIB2Frame>(std::move(record), args, info);
+    ret = run_<detdataformats::wib2::WIB2Frame>(std::move(record), args, info);
     set_is_running(false);
   }
   auto stop = std::chrono::steady_clock::now();
@@ -165,7 +167,7 @@ RMSModule::run(std::unique_ptr<daqdataformats::TriggerRecord> record,
   // }
   info.rms_time_taken.store(std::chrono::duration_cast<std::chrono::milliseconds>(stop-start).count());
   info.rms_times_run++;
-  return record;
+  return ret;
 }
 
 void
@@ -190,7 +192,7 @@ RMSModule::transmit(const std::string& kafka_address,
     output << "\"partition\": \"" << partition << "\",";
     output << "\"app_name\": \"" << app_name << "\",";
     output << "\"plane\": \"" << plane << "\",";
-    output << "\"algorithm\": \"" << "std" << "\"";
+    output << "\"algorithm\": \"" << "rms" << "\"";
     output << "}\n\n\n";
     std::vector<int> channels;
     for (auto& [offch, pair] : map) {

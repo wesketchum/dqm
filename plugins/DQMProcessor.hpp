@@ -59,7 +59,7 @@ public:
   void dispatch_trigger_record(std::unique_ptr<daqdataformats::TriggerRecord>& tr);
 
   void do_work();
-  dfmessages::TriggerDecision create_readout_request(std::vector<dfmessages::SourceID>& m_sids, int number_of_frames);
+  dfmessages::TriggerDecision create_readout_request(std::vector<dfmessages::SourceID>& m_sids, int number_of_frames, std::string& frontend_type);
 
   void dfrequest();
 
@@ -81,7 +81,7 @@ private:
   dqmprocessor::StandardDQM m_fourier_plane_conf;
 
   // DF configuration parameters
-  double m_df_seconds {0};
+  int m_df_seconds {0};
   double m_df_offset {0};
   std::string m_df_algs;
   int m_df_num_frames {0};

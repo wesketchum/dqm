@@ -37,13 +37,13 @@ public:
 
 std::unique_ptr<daqdataformats::TriggerRecord>
 ChannelMapFiller::run(std::unique_ptr<daqdataformats::TriggerRecord> record,
-                      DQMArgs& args, DQMInfo& info)
+                      DQMArgs& args, DQMInfo&)
 {
   set_is_running(true);
 
   // Prevent running multiple times
   if (args.map->is_filled()) {
-    return std::move(record);
+    return record;
   }
 
   std::map<std::string, std::string> map_names {
@@ -62,7 +62,7 @@ ChannelMapFiller::run(std::unique_ptr<daqdataformats::TriggerRecord> record,
     args.map->fill<detdataformats::wib2::WIB2Frame>(*record);
   }
   set_is_running(false);
-  return std::move(record);
+  return record;
 }
 
 ChannelMapFiller::ChannelMapFiller(std::string name, std::string cmap_name)

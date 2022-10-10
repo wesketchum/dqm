@@ -10,32 +10,41 @@
 
 #include "daqdataformats/Fragment.hpp"
 #include "daqdataformats/TriggerRecord.hpp"
-#include "detdataformats/wib/WIBFrame.hpp"
-#include "detdataformats/wib2/WIB2Frame.hpp"
 
 #include "ers/Issue.hpp"
 #include "dqm/Issues.hpp"
+#include "dqm/DQMLogging.hpp"
 
-#include <climits>
 #include <map>
 #include <memory>
 #include <vector>
+#include <string>
 
 namespace dunedaq {
 namespace dqm {
 
+using logging::TLVL_WORK_STEPS;
+
 template<class T>
 std::map<int, std::vector<T*>>
-decode_frame(daqdataformats::TriggerRecord& record, int max_frames)
-{
-  std::vector<std::unique_ptr<daqdataformats::Fragment>>& fragments = record.get_fragments_ref();
+decode(dunedaq::daqdataformats::TriggerRecord& record, int max_frames) {
+  const std::vector<std::unique_ptr<daqdataformats::Fragment>>& fragments = record.get_fragments_ref();
 
   std::map<int, std::vector<T*>> frames;
 
-  for (auto& fragment : fragments) {
-    if (fragment->get_fragment_type() == daqdataformats::FragmentType::kSW_TriggerPrimitive ||
-        fragment->get_fragment_type() == daqdataformats::FragmentType::kTriggerActivity ||
-        fragment->get_fragment_type() == daqdataformats::FragmentType::kTriggerCandidate) {
+  std::string types_str;
+  std::string sizes_str;
+  for (const auto& fragment : fragments) {
+    types_str += std::to_string(static_cast<uint32_t>(fragment->get_fragment_type())) + " ";
+    sizes_str += std::to_string(fragment->get_size()) + " ";
+  }
+  TLOG_DEBUG(TLVL_WORK_STEPS) << "Decoding TriggerRecord with " << fragments.size() << " fragments with types "
+                              << types_str << "and sizes " << sizes_str;
+
+  for (const auto& fragment : fragments) {
+    if (fragment->get_fragment_type() != daqdataformats::FragmentType::kProtoWIB &&
+        fragment->get_fragment_type() != daqdataformats::FragmentType::kWIB &&
+        fragment->get_fragment_type() != daqdataformats::FragmentType::kTDE_AMC) {
       continue;
     }
     auto id = fragment->get_element_id();
@@ -43,7 +52,8 @@ decode_frame(daqdataformats::TriggerRecord& record, int max_frames)
     int num_chunks =
       (fragment->get_size() - sizeof(daqdataformats::FragmentHeader)) / sizeof(T);
     std::vector<T*> tmp;
-    if (max_frames) {
+    // Don't put a limit if max_frames = 0
+    if (max_frames > 0) {
       num_chunks = std::min(max_frames, num_chunks);
     }
     for (int i = 0; i < num_chunks; ++i) {
@@ -55,12 +65,6 @@ decode_frame(daqdataformats::TriggerRecord& record, int max_frames)
   }
 
   return frames;
-}
-
-template<class T>
-std::map<int, std::vector<T*>>
-decode(dunedaq::daqdataformats::TriggerRecord& record, int max_frames) {
-  return decode_frame<T>(record, max_frames);
 }
 
 } // namespace dqm

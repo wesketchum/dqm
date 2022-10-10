@@ -1,13 +1,13 @@
 
 /**
- * @file CounterModule.hpp Implementation of a container of Hist objects
+ * @file CounterModule.hpp Implementation of the module for the raw data stream
  *
  * This is part of the DUNE DAQ , copyright 2020.
  * Licensing/copyright details are in the COPYING file that you should have
  * received with this code.
  */
-#ifndef DQM_SRC_CounterModule_HPP_
-#define DQM_SRC_CounterModule_HPP_
+#ifndef DQM_SRC_COUNTERMODULE_HPP_
+#define DQM_SRC_COUNTERMODULE_HPP_
 
 // DQM
 #include "dqm/AnalysisModule.hpp"
@@ -102,13 +102,16 @@ private:
 template <class T>
 std::unique_ptr<daqdataformats::TriggerRecord>
  CounterModule::run_(std::unique_ptr<daqdataformats::TriggerRecord> record,
-                     DQMArgs& args, DQMInfo& info)
+                     DQMArgs& args, DQMInfo&)
 {
   auto map = args.map;
 
   auto frames = decode<T>(*record, args.max_frames);
-  auto pipe = Pipeline<T>({"remove_empty", "check_empty", "make_same_size", "check_timestamp_aligned"});
-  pipe(frames);
+  auto pipe = Pipeline<T>({"remove_empty", "check_empty", "make_same_size", "check_timestamps_aligned"});
+  bool valid_data = pipe(frames);
+  if (!valid_data) {
+    return record;
+  }
 
   // Get all the keys
   std::vector<int> keys;
@@ -116,23 +119,21 @@ std::unique_ptr<daqdataformats::TriggerRecord>
     keys.push_back(key);
   }
 
-  for (size_t ifr = 0; ifr < frames[keys[0]].size(); ++ifr) {
-    // Fill for every link
-    for (size_t ikey = 0; ikey < keys.size(); ++ikey) {
-      auto fr = frames[keys[ikey]][ifr];
-
+  for (const auto& [key, vec] : frames) {
+    for (const auto& fr : vec) {
       for (int ich = 0; ich < CHANNELS_PER_LINK; ++ich) {
-        fill(ich, keys[ikey], get_adc<T>(fr, ich));
+        fill(ich, key, get_adc<T>(fr, ich));
       }
     }
   }
+
   transmit(args.kafka_address,
            map,
            args.kafka_topic,
            record->get_header_ref().get_run_number());
   clean();
 
-  return std::move(record);
+  return record;
 
 }
 
@@ -145,14 +146,15 @@ std::unique_ptr<daqdataformats::TriggerRecord>
   TLOG(TLVL_WORK_STEPS) << "Running Raw with frontend_type = " << args.frontend_type;
   auto start = std::chrono::steady_clock::now();
   auto frontend_type = args.frontend_type;
+  std::unique_ptr<daqdataformats::TriggerRecord> ret;
   if (frontend_type == "wib") {
     set_is_running(true);
-    auto ret = run_<detdataformats::wib::WIBFrame>(std::move(record), args, info);
+    ret = run_<detdataformats::wib::WIBFrame>(std::move(record), args, info);
     set_is_running(false);
   }
   else if (frontend_type == "wib2") {
     set_is_running(true);
-    auto ret = run_<detdataformats::wib2::WIB2Frame>(std::move(record), args, info);
+    ret = run_<detdataformats::wib2::WIB2Frame>(std::move(record), args, info);
     set_is_running(false);
   }
   auto stop = std::chrono::steady_clock::now();
@@ -164,7 +166,7 @@ std::unique_ptr<daqdataformats::TriggerRecord>
   // }
   info.raw_time_taken.store(std::chrono::duration_cast<std::chrono::milliseconds>(stop-start).count());
   info.raw_times_run++;
-  return record;
+  return ret;
 }
 
 void
@@ -212,8 +214,34 @@ void
     for (auto& b : bytes) {
       output << b;
     }
-    TLOG_DEBUG(5) << "Size of the message in bytes: " << output.str().size();
-    KafkaExport(kafka_address, output.str(), topicname);
+    TLOG_DEBUG(TLVL_WORK_STEPS) << "Size of the message in bytes: " << output.str().size();
+
+    // Split the message if it's too big
+    // Kafka doesn't let it go through when it's very close to the limit
+    int max_size = .99 * 1e6;
+    if ((int)output.str().size() > max_size) {
+      std::string str = output.str();
+      auto index = str.find("}\n\n\n");
+      std::string header = str.substr(0, index);
+      // Assume the number of parts is at most double digits, then the size of the new part of the header
+      // is at most 31 bytes
+      int parts = (str.size() - header.size() - 4) / (max_size - header.size() - 4 - 31) + ((str.size() - header.size() - 4) % (max_size - header.size() - 4 -31) > 0);
+      TLOG_DEBUG(TLVL_WORK_STEPS) << "Splitting message in " << parts << " parts";
+      if (parts > 99) {
+        return;
+      }
+      for (int i = 0; i < parts; ++i) {
+        std::string newheader = header;
+        newheader += ",\"part\":\"" + std::to_string(i+1) + "\",";
+        newheader += "\"total_parts\":\"" + std::to_string(parts) + "\"";
+        std::string body = str.substr(index + 4 + ((max_size - header.size() - 4 - 31) * i), max_size - header.size() - 4 - 31);
+        TLOG() << "body.size() = " << body.size();
+        KafkaExport(kafka_address, newheader + "}\n\n\n" + body, topicname);
+      }
+    }
+    else {
+        KafkaExport(kafka_address, output.str(), topicname);
+    }
   }
 }
 
@@ -245,4 +273,4 @@ int
 
 } // namespace dunedaq::dqm
 
-#endif // DQM_SRC_CounterModule_HPP_
+#endif // DQM_SRC_COUNTERMODULE_HPP_
