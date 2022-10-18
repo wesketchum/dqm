@@ -24,7 +24,7 @@
 #include "timinglibs/TimestampEstimator.hpp"
 #include "ipm/Receiver.hpp"
 
-#include "iomanager/FollyQueue.hpp"
+#include "iomanager/queue/FollyQueue.hpp"
 
 #include <atomic>
 #include <chrono>
