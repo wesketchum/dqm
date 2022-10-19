@@ -52,7 +52,6 @@ local dqmprocessor = {
         s.field("kafka_topic", self.string, doc="Topic used for sending messages to the kafka broker"),
         s.field("link_idx", self.index_list, doc="Index of each link that is sending data"),
         s.field("clock_frequency", self.big_count, doc="Clock frequency in Hz"),
-        s.field("timesync_topic_name", self.netmgr_name, doc="Topic to use for receiving TimeSync messages"),
         s.field("df2dqm_connection_name", self.netmgr_name, doc="Connection to use for receiving TRs from DF"),
         s.field("dqm2df_connection_name", self.netmgr_name, doc="Connection to use for sending TRMon messages to DF"),
         s.field("readout_window_offset", self.big_count, doc="Offset to use for the windows requested to readout"),

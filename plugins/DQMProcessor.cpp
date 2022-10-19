@@ -115,7 +115,6 @@ DQMProcessor::do_configure(const nlohmann::json& args)
   m_channel_map = conf.channel_map;
   m_readout_window_offset = conf.readout_window_offset;
 
-  m_timesync_topic = conf.timesync_topic_name;
   m_df2dqm_connection = conf.df2dqm_connection_name;
   m_dqm2df_connection = conf.dqm2df_connection_name;
 
@@ -140,8 +139,9 @@ DQMProcessor::do_start(const nlohmann::json& args)
 
     m_received_timesync_count.store(0);
 
+    // Subscribe to all TimeSync messages
     get_iomanager()->add_callback<dfmessages::TimeSync>(
-      m_timesync_topic, std::bind(&DQMProcessor::dispatch_timesync, this, std::placeholders::_1));
+      ".*", std::bind(&DQMProcessor::dispatch_timesync, this, std::placeholders::_1));
 
   }
 
@@ -166,7 +166,7 @@ DQMProcessor::do_drain_dataflow(const data_t&)
 
   if (m_mode == "readout") {
 
-    get_iomanager()->remove_callback<dfmessages::TimeSync>(m_timesync_topic);
+    get_iomanager()->remove_callback<dfmessages::TimeSync>(".*");
   }
   else if (m_mode == "df") {
     get_iomanager()->remove_callback<std::unique_ptr<daqdataformats::TriggerRecord>>(m_df2dqm_connection);
