@@ -38,7 +38,7 @@ daq_add_library(
   LINK_LIBRARIES ${DQM_DEPENDENCIES}
 )
 
-daq_add_plugin(DQMProcessor duneDAQModule LINK_LIBRARIES ${DQM_DEPENDENCIES})
+daq_add_plugin(DQMProcessor duneDAQModule LINK_LIBRARIES ${DQM_DEPENDENCIES} dqm)
 target_include_directories(dqm_DQMProcessor_duneDAQModule PUBLIC $ENV{FFTW_INC})
 
 # Unit tests

@@ -31,7 +31,7 @@
 
 namespace dunedaq::dqm {
 
-template<class T>
+template<class T, class I>
 class ChannelStream : public AnalysisModule
 {
 
@@ -39,7 +39,7 @@ public:
   ChannelStream(std::string name,
                 int nhist,
                 std::vector<int>& link_idx,
-                std::function<double(std::vector<T>&, int, int)> function);
+                std::function<std::vector<I>(std::vector<T>&, int, int)> function);
 
   void run(std::shared_ptr<daqdataformats::TriggerRecord> record,
       DQMArgs& args, DQMInfo& info) override;
@@ -54,7 +54,7 @@ public:
                 int run_num);
 
   void clean();
-  void fill(int ch, int link, double value);
+  void fill(int ch, int link, I value);
   int get_local_index(int ch, int link);
 
 private:
@@ -63,14 +63,14 @@ private:
   int m_size;
   std::map<int, int> m_index;
 
-  std::function<double(std::vector<T>&, int, int)> m_function;
+  std::function<std::vector<I>(std::vector<T>&, int, int)> m_function;
 };
 
-template <class T>
-ChannelStream<T>::ChannelStream(std::string name,
+template <class T, class I>
+ChannelStream<T, I>::ChannelStream(std::string name,
             int nchannels,
             std::vector<int>& link_idx,
-            std::function<double(std::vector<T>&, int, int)> function)
+            std::function<std::vector<I>(std::vector<T>&, int, int)> function)
   : m_name(name)
   , m_size(nchannels)
   , m_function(function)
@@ -85,9 +85,9 @@ ChannelStream<T>::ChannelStream(std::string name,
   }
 }
 
-template <class T>
+template <class T, class I>
 void
-ChannelStream<T>::run(std::shared_ptr<daqdataformats::TriggerRecord> record,
+ChannelStream<T, I>::run(std::shared_ptr<daqdataformats::TriggerRecord> record,
                    DQMArgs& args, DQMInfo& info)
 {
   TLOG(TLVL_WORK_STEPS) << "Running "<< m_name << " with frontend_type = " << args.frontend_type;
@@ -116,10 +116,10 @@ ChannelStream<T>::run(std::shared_ptr<daqdataformats::TriggerRecord> record,
   info.std_times_run++;
 }
 
-template <class T>
+template <class T, class I>
 template <class R>
 void
-ChannelStream<T>::run_(std::shared_ptr<daqdataformats::TriggerRecord> record,
+ChannelStream<T, I>::run_(std::shared_ptr<daqdataformats::TriggerRecord> record,
                 DQMArgs& args, DQMInfo& info)
 {
   auto map = args.map;
@@ -152,9 +152,9 @@ ChannelStream<T>::run_(std::shared_ptr<daqdataformats::TriggerRecord> record,
   clean();
 }
 
-template <class T>
+template <class T, class I>
 void
-ChannelStream<T>::transmit(const std::string& kafka_address,
+ChannelStream<T, I>::transmit(const std::string& kafka_address,
                     std::shared_ptr<ChannelMap>& cmap,
                     const std::string& topicname,
                     int run_num)
@@ -175,7 +175,7 @@ ChannelStream<T>::transmit(const std::string& kafka_address,
     output << "\"partition\": \"" << partition << "\",";
     output << "\"app_name\": \"" << app_name << "\",";
     output << "\"plane\": \"" << plane << "\",";
-    output << "\"algorithm\": \"" << "std" << "\"";
+    output << "\"algorithm\": \"" << m_name << "\"";
     output << "}\n\n\n";
     std::vector<int> channels;
     for (auto& [offch, pair] : map) {
@@ -186,11 +186,13 @@ ChannelStream<T>::transmit(const std::string& kafka_address,
       output << b;
     }
     output << "\n\n\n";
-    std::vector<float> values;
+    std::vector<I> values;
     for (auto& [offch, pair] : map) {
       int link = pair.first;
       int ch = pair.second;
-      values.push_back(m_function(histvec, ch, link));
+      for (const auto& entry : m_function(histvec, ch, link)) {
+        values.push_back(entry);
+      }
     }
     bytes = serialization::serialize(values, serialization::kMsgPack);
     for (auto& b : bytes) {
@@ -201,25 +203,25 @@ ChannelStream<T>::transmit(const std::string& kafka_address,
   }
 }
 
-template <class T>
+template <class T, class I>
 void
-ChannelStream<T>::clean()
+ChannelStream<T, I>::clean()
 {
   for (int ich = 0; ich < m_size; ++ich) {
     histvec[ich].clean();
   }
 }
 
-template <class T>
+template <class T, class I>
 void
-ChannelStream<T>::fill(int ch, int link, double value)
+ChannelStream<T, I>::fill(int ch, int link, I value)
 {
   histvec[ch + m_index[link]].fill(value);
 }
 
-template <class T>
+template <class T, class I>
 int
-ChannelStream<T>::get_local_index(int ch, int link)
+ChannelStream<T, I>::get_local_index(int ch, int link)
 {
   return ch + m_index[link];
 }

@@ -17,7 +17,7 @@
 
 namespace dunedaq::dqm {
 
-class RMSModule : public ChannelStream<RMS>
+class RMSModule : public ChannelStream<RMS, double>
 {
 
 public:
@@ -27,14 +27,13 @@ public:
 
 };
 
-
 RMSModule::RMSModule(std::string name,
                              int nchannels,
                              std::vector<int>& link_idx
                      )
   : ChannelStream(name, nchannels, link_idx,
-                  [this] (std::vector<RMS>& vec, int ch, int link) {
-                    return vec[get_local_index(ch, link)].rms();})
+                  [this] (std::vector<RMS>& vec, int ch, int link) -> std::vector<double> {
+                    return {vec[get_local_index(ch, link)].rms()};})
 {
 }
 
