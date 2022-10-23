@@ -198,8 +198,27 @@ ChannelStream<T, I>::transmit(const std::string& kafka_address,
     for (auto& b : bytes) {
       output << b;
     }
-    TLOG(TLVL_WORK_STEPS) << "Sending message to kafka with size " << output.str().size();
-    KafkaExport(kafka_address, output.str(), topicname);
+    // Split the message if it's too big
+    // Kafka doesn't let it go through when it's very close to the limit
+    int max_size = .99 * 1e6;
+    std::string str = output.str();
+    auto index = str.find("}\n\n\n");
+    std::string header = str.substr(0, index);
+    // Assume the number of parts is at most double digits, then the size of the new part of the header
+    // is at most 31 bytes
+    int parts = (str.size() - header.size() - 4) / (max_size - header.size() - 4 - 31) + ((str.size() - header.size() - 4) % (max_size - header.size() - 4 -31) > 0);
+    TLOG_DEBUG(TLVL_WORK_STEPS) << "Splitting message in " << parts << " parts";
+    if (parts > 99) {
+      return;
+    }
+    for (int i = 0; i < parts; ++i) {
+      std::string newheader = header;
+      newheader += ",\"part\":\"" + std::to_string(i+1) + "\",";
+      newheader += "\"total_parts\":\"" + std::to_string(parts) + "\"";
+      std::string body = str.substr(index + 4 + ((max_size - header.size() - 4 - 31) * i), max_size - header.size() - 4 - 31);
+      TLOG() << "body.size() = " << body.size();
+      KafkaExport(kafka_address, newheader + "}\n\n\n" + body, topicname);
+    }
   }
 }
 
