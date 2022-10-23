@@ -25,7 +25,7 @@ public:
   double m_inc_size;
   int m_npoints;
   std::vector<double> m_data;
-  std::vector<double> m_transform;
+  std::vector<std::complex<double>> m_transform;
 
   Fourier(double inc, int npoints);
 
@@ -34,8 +34,8 @@ public:
   std::vector<double> get_frequencies();
   void clean();
 
-  double get_transform_at(int index);
-  std::vector<double> get_transform();
+  std::complex<double> get_transform_at(int index);
+  std::vector<std::complex<double>> get_transform();
 };
 
 

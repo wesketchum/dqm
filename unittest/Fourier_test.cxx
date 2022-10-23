@@ -48,7 +48,7 @@ Fourier_test_case(double T, int N, std::string& inpy, std::string& outx, std::st
   for (int i = 0; i <= N / 2; ++i) {
     double absval;
     outys >> absval;
-    BOOST_TEST_REQUIRE(abs(absval - res[i]) < 1e-4);
+    BOOST_TEST_REQUIRE(abs(absval - abs(res[i])) < 1e-4);
     double freqval;
     outxs >> freqval;
     BOOST_TEST_REQUIRE(abs(freqval - freq[i]) < 1e-4);

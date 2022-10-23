@@ -155,9 +155,9 @@ FourierContainer::run_(std::shared_ptr<daqdataformats::TriggerRecord> record,
         }
         for (size_t iframe = 0; iframe < frames[link].size(); ++iframe) {
           fouriervec[plane].m_data[iframe] += get_adc<T>(frames[link][iframe], ch);
-          }
         }
       }
+    }
 
     for (size_t ich = 0; ich < m_size - 1; ++ich) {
       if (!args.run_mark.get()) {
@@ -167,7 +167,7 @@ FourierContainer::run_(std::shared_ptr<daqdataformats::TriggerRecord> record,
     }
     // The last one corresponds can be obtained as the sum of the ones for the planes
     // since the fourier transform is linear
-    std::vector<double> transform(fouriervec[0].m_transform);
+    std::vector<std::complex<double>> transform(fouriervec[0].m_transform);
     fouriervec[m_size-1].m_npoints = fouriervec[0].m_npoints;
     for (size_t i = 0; i < fouriervec[0].m_transform.size(); ++i) {
       transform[i] += fouriervec[1].m_transform[i] + fouriervec[2].m_transform[i];
@@ -308,9 +308,11 @@ FourierContainer::transmit_global(const std::string& kafka_address,
       output << b;
     }
     output << "\n\n\n";
+    auto tmp = fouriervec[plane].get_transform();
     std::vector<double> values;
-    for (size_t i = 0; i < freqs.size(); ++i) {
-      values.push_back(fouriervec[plane].get_transform_at(i));
+    values.reserve(tmp.size());
+    for (const auto& v : tmp) {
+      values.push_back(abs(v));
     }
     bytes = serialization::serialize(values, serialization::kMsgPack);
     for (auto& b : bytes) {

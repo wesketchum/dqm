@@ -27,7 +27,7 @@ Fourier::Fourier(double inc, int npoints) // NOLINT(build/unsigned)
   , m_npoints(npoints)
 {
   m_data.reserve(npoints);
-  m_transform = std::vector<double> (npoints);
+  m_transform = std::vector<std::complex<double>> (npoints);
 }
 
 
@@ -43,8 +43,10 @@ Fourier::compute_fourier_transform() {
     ers::warning(ParameterChange(ERS_HERE, "input doesn't have the expected size for the Fourier transform, changing size to " + std::to_string(m_npoints)));
   }
 
-  if (m_transform.size() != (size_t)m_npoints)
+  if (m_transform.size() != (size_t)m_npoints) {
     m_transform.resize(m_npoints);
+  }
+  std::vector<double> tmp(m_npoints);
 
   // A plan is created, executed and destroyed each time_t
   // Not the most efficient way but using the new-array interface
@@ -52,7 +54,7 @@ Fourier::compute_fourier_transform() {
   // an unknown reason. Anyway in the docs they say that creating a new plan
   // once another one has been created before for the same size is cheap
   // FFTW_MEASURE instead of FFTW_ESTIMATE doesn't change the output
-  fftw_plan plan = fftw_plan_r2r_1d(m_npoints, m_data.data(), m_transform.data(), FFTW_R2HC, FFTW_ESTIMATE );
+  fftw_plan plan = fftw_plan_r2r_1d(m_npoints, m_data.data(), tmp.data(), FFTW_R2HC, FFTW_ESTIMATE );
   if (plan == NULL) {
     ers::error(CouldNotCreateFourierPlan(ERS_HERE, ""));
     return;
@@ -61,20 +63,20 @@ Fourier::compute_fourier_transform() {
   fftw_destroy_plan(plan);
   // After the transform is computed half of the elements of the
   // output array are the real part and the other half are the
-  // complex part, this computes the absolute value of each value
+  // complex part
 
   // Caveats, i = 0 and i = m_npoints/2 are already real and i = 0 is already
   // positive so only i = m_npoints/2 has to be changed
   for (int i = 1; i < m_npoints / 2; ++i) {
-    m_transform[i] = sqrt(m_transform[i] * m_transform[i] +
-                          m_transform[m_npoints - i] * m_transform[m_npoints - i]);
+    m_transform[i] = {tmp[i], tmp[m_npoints - i]};
   }
-  m_transform[m_npoints / 2] = abs(m_transform[m_npoints / 2]);
+  m_transform[0] = {tmp[0], 0};
+  m_transform[m_npoints / 2] = {tmp[m_npoints / 2], 0};
   m_transform.resize(m_npoints / 2 + 1);
 }
 
 
-std::vector<double>
+std::vector<std::complex<double>>
 Fourier::get_transform() {
   return m_transform;
 }
@@ -84,7 +86,7 @@ Fourier::get_transform() {
  *
  *        Must be called after compute_fourier_transform
  */
-double
+std::complex<double>
 Fourier::get_transform_at(int index)
 {
   if (index < 0 || static_cast<size_t>(index) >= m_transform.size()) {
