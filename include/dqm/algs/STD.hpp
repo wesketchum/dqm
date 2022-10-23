@@ -1,5 +1,5 @@
 /**
- * @file STD.hpp Simple Standard Deviation implementation
+ * @file STD.hpp Declarations for a simple Standard Deviation implementation
  *
  * This is part of the DUNE DAQ , copyright 2020.
  * Licensing/copyright details are in the COPYING file that you should have
@@ -7,8 +7,6 @@
  */
 #ifndef DQM_INCLUDE_DQM_ALGS_STD_HPP_
 #define DQM_INCLUDE_DQM_ALGS_STD_HPP_
-
-#include <cmath>
 
 /**
  * Basic STD calculation implementation

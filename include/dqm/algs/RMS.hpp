@@ -1,5 +1,5 @@
 /**
- * @file RMS.hpp Simple RMS implementation
+ * @file RMS.hpp Declarations for a simple RMS implementation
  *
  * This is part of the DUNE DAQ , copyright 2020.
  * Licensing/copyright details are in the COPYING file that you should have
@@ -7,8 +7,6 @@
  */
 #ifndef DQM_INCLUDE_DQM_ALGS_RMS_HPP_
 #define DQM_INCLUDE_DQM_ALGS_RMS_HPP_
-
-#include <cmath>
 
 /**
  * Basic RMS calculation implementation

@@ -1,27 +1,21 @@
 /**
- * @file Fourier.hpp Fast fourier transforms using the fftw3 library
+ * @file Fourier.hpp Declarations for fast fourier transforms using the fftw3 library
  *
  * This is part of the DUNE DAQ, copyright 2020.
  * Licensing/copyright details are in the COPYING file that you should have
  * received with this code.
  */
-#ifndef DQM_INCLUDE_DQM_FOURIER_HPP_
-#define DQM_INCLUDE_DQM_FOURIER_HPP_
+#ifndef DQM_INCLUDE_DQM_ALGS_FOURIER_HPP_
+#define DQM_INCLUDE_DQM_ALGS_FOURIER_HPP_
 
-// dqm
-#include "dqm/AnalysisModule.hpp"
-#include "dqm/Issues.hpp"
 
-#include "daqdataformats/TriggerRecord.hpp"
-#include "logging/Logging.hpp"
-
-#include <complex>
-#include <string>
-#include <valarray>
 #include <vector>
-
+#include <complex>
 // #include <complex> has to be before this include
 #include <fftw3.h>
+
+#include "dqm/Issues.hpp"
+#include "logging/Logging.hpp"
 
 namespace dunedaq::dqm {
 
@@ -47,4 +41,4 @@ public:
 
 } // namespace dunedaq::dqm
 
-#endif // DQM_INCLUDE_DQM_FOURIER_HPP_
+#endif // DQM_INCLUDE_DQM_ALGS_FOURIER_HPP_

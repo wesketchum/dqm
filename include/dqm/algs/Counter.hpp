@@ -1,5 +1,5 @@
 /**
- * @file Counter.hpp Simple counter implementation
+ * @file Counter.hpp Simple counter declaration
  *
  * This is part of the DUNE DAQ , copyright 2020.
  * Licensing/copyright details are in the COPYING file that you should have
