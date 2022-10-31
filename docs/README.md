@@ -103,23 +103,23 @@ standard deviation, where the actual algorithm is implemented in the class
 `STD`:
 
     ```
-class STDModule : public ChannelStream<STD, double>    // Class of the algorithm and type of the result
-{
-public:
-  STDModule(std::string name,
-            int nchannels,
-            std::vector<int>& link_idx);
-};
-STDModule::STDModule(std::string name,
-                             int nchannels,
-                             std::vector<int>& link_idx
-                     )
-  : ChannelStream(name, nchannels, link_idx,
-                  [this] (std::vector<STD>& vec, int ch, int link) -> std::vector<double> {
-                    return {vec[get_local_index(ch, link)].std()};})
-{
-}
-```
+    class STDModule : public ChannelStream<STD, double>    // Class of the algorithm and type of the result
+    {
+    public:
+      STDModule(std::string name,
+                int nchannels,
+                std::vector<int>& link_idx);
+    };
+    STDModule::STDModule(std::string name,
+                                 int nchannels,
+                                 std::vector<int>& link_idx
+                         )
+      : ChannelStream(name, nchannels, link_idx,
+                      [this] (std::vector<STD>& vec, int ch, int link) -> std::vector<double> {
+                        return {vec[get_local_index(ch, link)].std()};})
+    {
+    }
+    ```
 
     where at the end we pass a lambda function with the function that is going to
 run for each channel. The `ChannelStream` class will format and send the
