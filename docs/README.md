@@ -12,9 +12,9 @@ instructions](https://dune-daq-sw.readthedocs.io/en/latest/packages/daq-buildtoo
 
 * Nanorc configuration
 
-For enabling the generation of dqm apps, one has to add `--enable-dqm` to the configuration generation, for example:
+    For enabling the generation of dqm apps, one has to add `--enable-dqm` to the configuration generation, for example:
 
-    daqconf_multiru_gen -c config.json --hardware-map-file HardwareMap.txt --enable-dqm conf_with_dqm
+        daqconf_multiru_gen -c config.json --hardware-map-file HardwareMap.txt --enable-dqm conf_with_dqm
 
 <!-- * Standalone configuration -->
 
@@ -35,32 +35,34 @@ For enabling the generation of dqm apps, one has to add `--enable-dqm` to the co
 
 * Raw display: unchanged raw data. To modify it in the configuration use
 
-      "raw_params": ["time", "num_frames"]
-
+    ```
+    "raw_params": ["time", "num_frames"]
+    ```
   Where `time` is the time in seconds between runs of the algorithm and
   `num_frames` is the number of frames used (only for DQM-RU apps). So if we
   want to get updates for the raw data stream every minute and get 100 frames
   then we would have
-
-      "raw_params": ["60", "100"]
-
+    ```
+    "raw_params": ["60", "100"]
+    ```
 * STD: Standard deviation of the ADC distribution over a window of time. To modify use:
-
-      "std_params": ["time", "num_frames"]
-
+    ```
+    "std_params": ["time", "num_frames"]
+    ```
 * RMS: RMS of the ADC distribution over a window of time, not to be confused
   with the standard deviation. To modify use:
-
-      "rms_params": ["time", "num_frames"]
+    ```
+    "rms_params": ["time", "num_frames"]
+    ```
 
 * Fourier transform: The fourier transform of ADC time series. Can be done for
   each channel or for each plane (by summing all the ADC time series and doing
   the fourier transform of the result). To modify use for each channel or for
   each plane respectively:
-
-      "fourier_channel_params": ["time", "num_frames"],
-      "fourier_plane_params": ["time", "num_frames"]
-
+    ```
+    "fourier_channel_params": ["time", "num_frames"],
+    "fourier_plane_params": ["time", "num_frames"]
+    ```
 
 ## Channel map
 DQM always runs with a channel map. At the beginning of the run it takes data to
@@ -80,10 +82,6 @@ they receive in `detchannelmaps` is the following:
 
 which means that the valid names in DQM are `HD`, `VD`, `PD2HD`, `HDCB`.
 
-<!-- To use the horizontal drift channel map (default) with nanorc
-use `--dqm-cmap HD`, --> <!-- to use the vertical drift channel map use
-`--dqm-cmap VD`. -->
-
 ## How to add an algorithm to DQM
 
 Algorithms in DQM are currently structured in two different parts: one is what
@@ -96,7 +94,7 @@ guarantee that it has some methods such as `run` that are then called.
 
 - Algorithm that does something for every channel:
 
-In this case there is a helper class `[ChannelStream](../src/ChannelStream.hpp)`
+    In this case there is a helper class [ChannelStream](../src/ChannelStream.hpp)
 that can be used to simplify the implementation. After implementing the
 algorithm itself, we provide the function that will run on every channel and the
 `ChannelStream` class will be in charge of running it for every channel and then
@@ -104,7 +102,7 @@ sending the messages to kafka. An example of this is the implementation of the
 standard deviation, where the actual algorithm is implemented in the class
 `STD`:
 
-```
+    ```
 class STDModule : public ChannelStream<STD, double>    // Class of the algorithm and type of the result
 {
 public:
@@ -112,7 +110,6 @@ public:
             int nchannels,
             std::vector<int>& link_idx);
 };
-
 STDModule::STDModule(std::string name,
                              int nchannels,
                              std::vector<int>& link_idx
@@ -124,7 +121,7 @@ STDModule::STDModule(std::string name,
 }
 ```
 
-where at the end we pass a lambda function with the function that is going to
+    where at the end we pass a lambda function with the function that is going to
 run for each channel. The `ChannelStream` class will format and send the
 messages to kafka in a way that is easy to parse.
 
@@ -144,10 +141,10 @@ Each algorithm is templated and it has to know what to do for each format, which
 means the frontend has to be added to each algorithm individidually or to the
 `ChannelStream` class if it's being used, which could mean modifying how it runs
 and or the messages that are being transmitted. This also includes
-`[ChannelMapFiller.hpp](../src/ChannelMapFiller.hpp)`, since it is being run as
+[ChannelMapFiller.hpp](../src/ChannelMapFiller.hpp), since it is being run as
 another algorithm. Note that algorithms use helper templated functions to get
 the ADCs or timestamps or other numbers that can be found in
-`[FormatUtils.hpp](../include/dqm/FormatUtils.hpp)`.
+[FormatUtils.hpp](../include/dqm/FormatUtils.hpp).
 
 If the decoding is different then a specialization of the template should be
 made for the `Decoder` class.
@@ -218,7 +215,7 @@ dbt-build.sh --unittest
 
 There are a few unit tests for the algorithms, ideally each algorithm should
 have a set of unit tests to make sure they are working correctly (which doesn't
-mean they will work correctly since the final setup is more complicated)
+mean they will work correctly since the final setup is more complicated).
 
 ### Creating files
 Another way of testing DQM is to create files with specific patterns to check
