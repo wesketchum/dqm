@@ -24,7 +24,6 @@ public:
   STDModule(std::string name,
             int nchannels,
             std::vector<int>& link_idx);
-
 };
 
 STDModule::STDModule(std::string name,
