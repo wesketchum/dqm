@@ -63,12 +63,94 @@ For enabling the generation of dqm apps, one has to add `--enable-dqm` to the co
 
 
 ## Channel map
-<!-- To use the horizontal drift channel map (default) with nanorc use `--dqm-cmap HD`, -->
-<!-- to use the vertical drift channel map use `--dqm-cmap VD`. -->
+DQM always runs with a channel map. At the beginning of the run it takes data to
+check which offline channels and planes it will have to map to and saves those
+for later.
+
+There is a set of valid channel map names for DQM (when generation the
+configuration for `nanorc`).
+The mapping between those values and the name that
+they receive in `detchannelmaps` is the following:
+```
+{"HD", "ProtoDUNESP1ChannelMap"},
+{"VD", "VDColdboxChannelMap"},
+{"PD2HD", "PD2HDChannelMap"},
+{"HDCB", "HDColdboxChannelMap"}
+```
+
+which means that the valid names in DQM are `HD`, `VD`, `PD2HD`, `HDCB`.
+
+<!-- To use the horizontal drift channel map (default) with nanorc
+use `--dqm-cmap HD`, --> <!-- to use the vertical drift channel map use
+`--dqm-cmap VD`. -->
 
 ## How to add an algorithm to DQM
 
-## How to add a frotend type to DQM
+Algorithms in DQM are currently structured in two different parts: one is what
+the algorithm does for a single unit (for example, a single channel or a single
+plane) that is going to be processed. The other part describes how to run on the
+data and the message that is going to be transmitted. An algorithm can be then
+implemented in a custom way or helpers can be used, depending on how the
+algorithm runs. It has to inherit from the `AnalysisModule` class, which will
+guarantee that it has some methods such as `run` that are then called.
+
+- Algorithm that does something for every channel:
+
+In this case there is a helper class `[ChannelStream](../src/ChannelStream.hpp)`
+that can be used to simplify the implementation. After implementing the
+algorithm itself, we provide the function that will run on every channel and the
+`ChannelStream` class will be in charge of running it for every channel and then
+sending the messages to kafka. An example of this is the implementation of the
+standard deviation, where the actual algorithm is implemented in the class
+`STD`:
+
+```
+class STDModule : public ChannelStream<STD, double>    // Class of the algorithm and type of the result
+{
+public:
+  STDModule(std::string name,
+            int nchannels,
+            std::vector<int>& link_idx);
+};
+
+STDModule::STDModule(std::string name,
+                             int nchannels,
+                             std::vector<int>& link_idx
+                     )
+  : ChannelStream(name, nchannels, link_idx,
+                  [this] (std::vector<STD>& vec, int ch, int link) -> std::vector<double> {
+                    return {vec[get_local_index(ch, link)].std()};})
+{
+}
+```
+
+where at the end we pass a lambda function with the function that is going to
+run for each channel. The `ChannelStream` class will format and send the
+messages to kafka in a way that is easy to parse.
+
+After the implementation of the algorithm has been added in DQM there are a few
+other places where something has to be added:
+- Configurations parameter to the schema (and also in `daqconf`)
+- Add the algorithm in the `DQMProcessor` class so it can be run
+- For the DQM-DF apps it also has to be added to the `DFModule` class
+
+After the algorithm has been added, proper parsing has to be done in
+[dqm-backend](https://github.com/DUNE-DAQ/dqm-backend) to display or further
+process the data.
+
+## How to add a frontend type to DQM
+
+Each algorithm is templated and it has to know what to do for each format, which
+means the frontend has to be added to each algorithm individidually or to the
+`ChannelStream` class if it's being used, which could mean modifying how it runs
+and or the messages that are being transmitted. This also includes
+`[ChannelMapFiller.hpp](../src/ChannelMapFiller.hpp)`, since it is being run as
+another algorithm. Note that algorithms use helper templated functions to get
+the ADCs or timestamps or other numbers that can be found in
+`[FormatUtils.hpp](../include/dqm/FormatUtils.hpp)`.
+
+If the decoding is different then a specialization of the template should be
+made for the `Decoder` class.
 
 ## DQM internals
 
@@ -125,3 +207,19 @@ the [dqm-backend](https://github.com/DUNE-DAQ/dqm-backend). When the messages
 are bigger than what kafka can take in a single message (which can be passed as
 a parameter to DQM), the messages are split in pieces and reconstructed in the
 backend.
+
+## Testing
+
+### Unit tests
+Unit tests can be run with
+```
+dbt-build.sh --unittest
+```
+
+There are a few unit tests for the algorithms, ideally each algorithm should
+have a set of unit tests to make sure they are working correctly (which doesn't
+mean they will work correctly since the final setup is more complicated)
+
+### Creating files
+Another way of testing DQM is to create files with specific patterns to check
+the plot and see what we expect.

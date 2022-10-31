@@ -27,8 +27,8 @@ using logging::TLVL_WORK_STEPS;
 
 template<class T>
 std::map<int, std::vector<T*>>
-decode(dunedaq::daqdataformats::TriggerRecord& record, int max_frames) {
-  const std::vector<std::unique_ptr<daqdataformats::Fragment>>& fragments = record.get_fragments_ref();
+decode(std::shared_ptr<daqdataformats::TriggerRecord> record, int max_frames) {
+  const std::vector<std::unique_ptr<daqdataformats::Fragment>>& fragments = record->get_fragments_ref();
 
   std::map<int, std::vector<T*>> frames;
 
@@ -51,6 +51,8 @@ decode(dunedaq::daqdataformats::TriggerRecord& record, int max_frames) {
     auto element_id = id.id;
     int num_chunks =
       (fragment->get_size() - sizeof(daqdataformats::FragmentHeader)) / sizeof(T);
+    TLOG() << "size is " << fragment->get_size();
+    TLOG() << "num_chunks = " << num_chunks;
     std::vector<T*> tmp;
     // Don't put a limit if max_frames = 0
     if (max_frames > 0) {

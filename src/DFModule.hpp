@@ -34,9 +34,8 @@ public:
 
   bool m_enable_raw, m_enable_rms, m_enable_std, m_enable_fourier_channel, m_enable_fourier_plane;
   int m_clock_frequency;
-  std::unique_ptr<daqdataformats::TriggerRecord>
-  run(std::unique_ptr<daqdataformats::TriggerRecord> record,
-      DQMArgs& args, DQMInfo& info);
+  void run(std::shared_ptr<daqdataformats::TriggerRecord> record,
+      DQMArgs& args, DQMInfo& info) override;
 
 private:
 
@@ -89,8 +88,8 @@ DFModule::DFModule(bool enable_raw, bool enable_rms, bool enable_std, bool enabl
   }
 }
 
-std::unique_ptr<daqdataformats::TriggerRecord>
-DFModule::run(std::unique_ptr<daqdataformats::TriggerRecord> record,
+void
+DFModule::run(std::shared_ptr<daqdataformats::TriggerRecord> record,
               DQMArgs& args, DQMInfo& info)
 {
   set_is_running(true);
@@ -102,14 +101,12 @@ DFModule::run(std::unique_ptr<daqdataformats::TriggerRecord> record,
   for(size_t i=0; i < list.size(); ++i) {
     if (!will_run[i]) continue;
     if (!run_mark) {
-      set_is_running(false);
-      return record;
+      break;
     }
-    record = list[i]->run(std::move(record), args, info);
+    list[i]->run(record, args, info);
   }
 
   set_is_running(false);
-  return record;
 }
 
 
