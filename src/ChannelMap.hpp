@@ -37,7 +37,7 @@ public:
   bool is_filled();
 
   template <class T>
-  void fill(daqdataformats::TriggerRecord& tr);
+  void fill(std::shared_ptr<daqdataformats::TriggerRecord> tr);
 
   std::map<int, std::map<int, std::pair<int, int>>> get_map();
 };
@@ -58,7 +58,7 @@ ChannelMap::get_map()
 
 template <class T>
 void
-ChannelMap::fill(daqdataformats::TriggerRecord& record)
+ChannelMap::fill(std::shared_ptr<daqdataformats::TriggerRecord> record)
 {
   if (is_filled()) {
     TLOG_DEBUG(5) << "ChannelMapHD already filled";

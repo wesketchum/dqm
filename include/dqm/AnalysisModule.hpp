@@ -25,7 +25,7 @@ public:
 
   bool get_is_running() const { return m_is_running; }
 
-  virtual std::unique_ptr<daqdataformats::TriggerRecord> run(std::unique_ptr<daqdataformats::TriggerRecord> record,
+  virtual void run(std::shared_ptr<daqdataformats::TriggerRecord> record,
                                                              DQMArgs& args,
                                                              DQMInfo& info
                                                              ) = 0;

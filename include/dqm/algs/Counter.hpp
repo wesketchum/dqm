@@ -1,5 +1,5 @@
 /**
- * @file Counter.hpp Simple counter implementation
+ * @file Counter.hpp Simple counter declaration
  *
  * This is part of the DUNE DAQ , copyright 2020.
  * Licensing/copyright details are in the COPYING file that you should have
@@ -33,21 +33,6 @@ public:
   void clean();
 
 };
-
-
-void
-Counter::fill(double const x)
-{
-  m_nentries++;
-  count.push_back(x);
-}
-
-void
-Counter::clean()
-{
-  m_nentries = 0;
-  count.clear();
-}
 
 } // namespace dunedaq
 } // namespace dqm

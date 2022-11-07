@@ -30,20 +30,20 @@ class ChannelMapFiller : public AnalysisModule
 public:
   ChannelMapFiller(std::string name, std::string cmap_name);
 
-  std::unique_ptr<daqdataformats::TriggerRecord>
-  run(std::unique_ptr<daqdataformats::TriggerRecord> record,
-      DQMArgs& args, DQMInfo& info);
+  void
+  run(std::shared_ptr<daqdataformats::TriggerRecord> record,
+      DQMArgs& args, DQMInfo& info) override;
 };
 
-std::unique_ptr<daqdataformats::TriggerRecord>
-ChannelMapFiller::run(std::unique_ptr<daqdataformats::TriggerRecord> record,
-                      DQMArgs& args, DQMInfo&)
+void
+ChannelMapFiller::run(std::shared_ptr<daqdataformats::TriggerRecord> record,
+                      DQMArgs& args, DQMInfo& /*info*/)
 {
   set_is_running(true);
 
   // Prevent running multiple times
   if (args.map->is_filled()) {
-    return record;
+    return;
   }
 
   std::map<std::string, std::string> map_names {
@@ -56,13 +56,12 @@ ChannelMapFiller::run(std::unique_ptr<daqdataformats::TriggerRecord> record,
   args.map.reset(new ChannelMap(map_names[m_cmap_name]));
 
   if (args.frontend_type == "wib") {
-    args.map->fill<detdataformats::wib::WIBFrame>(*record);
+    args.map->fill<detdataformats::wib::WIBFrame>(record);
   }
   else if (args.frontend_type == "wib2") {
-    args.map->fill<detdataformats::wib2::WIB2Frame>(*record);
+    args.map->fill<detdataformats::wib2::WIB2Frame>(record);
   }
   set_is_running(false);
-  return record;
 }
 
 ChannelMapFiller::ChannelMapFiller(std::string name, std::string cmap_name)

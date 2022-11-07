@@ -44,13 +44,11 @@ public:
   FourierContainer(std::string name, int size, double inc, int npoints);
   FourierContainer(std::string name, int size, std::vector<int>& link_idx, double inc, int npoints, bool global_mode=false);
 
-  std::unique_ptr<daqdataformats::TriggerRecord>
-  run(std::unique_ptr<daqdataformats::TriggerRecord> record,
-      DQMArgs& args, DQMInfo& info);
+  void run(std::shared_ptr<daqdataformats::TriggerRecord> record,
+      DQMArgs& args, DQMInfo& info) override;
 
   template <class T>
-  std::unique_ptr<daqdataformats::TriggerRecord>
-  run_(std::unique_ptr<daqdataformats::TriggerRecord> record,
+  void run_(std::shared_ptr<daqdataformats::TriggerRecord> record,
        DQMArgs& args, DQMInfo& info);
 
 
@@ -97,18 +95,20 @@ FourierContainer::FourierContainer(std::string name, int size, std::vector<int>&
 }
 
 template <class T>
-std::unique_ptr<daqdataformats::TriggerRecord>
-FourierContainer::run_(std::unique_ptr<daqdataformats::TriggerRecord> record,
+void
+FourierContainer::run_(std::shared_ptr<daqdataformats::TriggerRecord> record,
                        DQMArgs& args, DQMInfo& info)
 {
   auto start = std::chrono::steady_clock::now();
   auto map = args.map;
-  auto frames = decode<T>(*record, args.max_frames);
+  auto frames = decode<T>(record, args.max_frames);
   auto pipe = Pipeline<T>({"remove_empty", "check_empty", "make_same_size", "check_timestamps_aligned"});
   bool valid_data = pipe(frames);
   if (!valid_data) {
-    return record;
+    return;
   }
+
+  auto size = frames.begin()->second.size();
 
   // Normal mode, fourier transform for every channel
   if (!m_global_mode) {
@@ -155,19 +155,19 @@ FourierContainer::run_(std::unique_ptr<daqdataformats::TriggerRecord> record,
         }
         for (size_t iframe = 0; iframe < frames[link].size(); ++iframe) {
           fouriervec[plane].m_data[iframe] += get_adc<T>(frames[link][iframe], ch);
-          }
         }
       }
+    }
 
     for (size_t ich = 0; ich < m_size - 1; ++ich) {
       if (!args.run_mark.get()) {
-        return record;
+        return;
       }
       fouriervec[ich].compute_fourier_transform();
     }
     // The last one corresponds can be obtained as the sum of the ones for the planes
     // since the fourier transform is linear
-    std::vector<double> transform(fouriervec[0].m_transform);
+    std::vector<std::complex<double>> transform(fouriervec[0].m_transform);
     fouriervec[m_size-1].m_npoints = fouriervec[0].m_npoints;
     for (size_t i = 0; i < fouriervec[0].m_transform.size(); ++i) {
       transform[i] += fouriervec[1].m_transform[i] + fouriervec[2].m_transform[i];
@@ -182,12 +182,11 @@ FourierContainer::run_(std::unique_ptr<daqdataformats::TriggerRecord> record,
     info.fourier_plane_times_run++;
   }
 
-  return record;
 }
 
 
-std::unique_ptr<daqdataformats::TriggerRecord>
-FourierContainer::run(std::unique_ptr<daqdataformats::TriggerRecord> record,
+void
+FourierContainer::run(std::shared_ptr<daqdataformats::TriggerRecord> record,
                       DQMArgs& args, DQMInfo& info)
 {
   TLOG(TLVL_WORK_STEPS) << "Running Fourier Transform with frontend_type = " << args.frontend_type;
@@ -195,18 +194,16 @@ FourierContainer::run(std::unique_ptr<daqdataformats::TriggerRecord> record,
   auto run_mark = args.run_mark;
   auto map = args.map;
   auto kafka_address = args.kafka_address;
-  std::unique_ptr<daqdataformats::TriggerRecord> ret;
   if (frontend_type == "wib") {
     set_is_running(true);
-    ret = run_<detdataformats::wib::WIBFrame>(std::move(record), args, info);
+    run_<detdataformats::wib::WIBFrame>(std::move(record), args, info);
     set_is_running(false);
   }
   else if (frontend_type == "wib2") {
     set_is_running(true);
-    ret = run_<detdataformats::wib2::WIB2Frame>(std::move(record), args, info);
+    run_<detdataformats::wib2::WIB2Frame>(std::move(record), args, info);
     set_is_running(false);
   }
-  return ret;
 }
 
 // void
@@ -311,9 +308,11 @@ FourierContainer::transmit_global(const std::string& kafka_address,
       output << b;
     }
     output << "\n\n\n";
+    auto tmp = fouriervec[plane].get_transform();
     std::vector<double> values;
-    for (size_t i = 0; i < freqs.size(); ++i) {
-      values.push_back(fouriervec[plane].get_transform_at(i));
+    values.reserve(tmp.size());
+    for (const auto& v : tmp) {
+      values.push_back(abs(v));
     }
     bytes = serialization::serialize(values, serialization::kMsgPack);
     for (auto& b : bytes) {

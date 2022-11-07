@@ -5,8 +5,8 @@
  * Licensing/copyright details are in the COPYING file that you should have
  * received with this code.
  */
-#ifndef DQM_INCLUDE_DQM_HIST_ALGS_HPP_
-#define DQM_INCLUDE_DQM_HIST_ALGS_HPP_
+#ifndef DQM_INCLUDE_DQM_HIST_HPP_
+#define DQM_INCLUDE_DQM_HIST_HPP_
 
 // DQM
 #include <vector>
@@ -102,4 +102,4 @@ Hist::clean()
 
 } // namespace dunedaq::dqm
 
-#endif // DQM_INCLUDE_DQM_HIST_ALGS_HPP_
+#endif // DQM_INCLUDE_DQM_HIST_HPP_
