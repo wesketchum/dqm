@@ -8,21 +8,25 @@
  * received with this code.
  */
 // DQM includes
-#include "Constants.hpp"
+
+#include "DQMProcessor.hpp"
+
 #include "dqm/dqmprocessor/Nljs.hpp"
 #include "dqm/dqmprocessor/Structs.hpp"
 #include "dqm/dqmprocessorinfo/InfoNljs.hpp"
-#include "dqm/DQMLogging.hpp"
 
+// Channel map and other utilities
+#include "dqm/Constants.hpp"
+#include "dqm/DQMLogging.hpp"
 #include "ChannelMap.hpp"
 #include "ChannelMapFiller.hpp"
-#include "DFModule.hpp"
-#include "DQMProcessor.hpp"
-#include "FourierContainer.hpp"
-// #include "HistContainer.hpp"
-#include "CounterModule.hpp"
-#include "STDModule.hpp"
-#include "RMSModule.hpp"
+
+// Modules with the classes that contain the algorithms
+#include "dqm/modules/CounterModule.hpp"
+#include "dqm/modules/STDModule.hpp"
+#include "dqm/modules/RMSModule.hpp"
+#include "dqm/modules/DFModule.hpp"
+#include "dqm/modules/FourierContainer.hpp"
 
 // DUNE-DAQ includes
 #include "daqdataformats/ComponentRequest.hpp"

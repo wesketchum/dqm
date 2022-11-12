@@ -12,7 +12,7 @@
 #include "daqdataformats/TriggerRecord.hpp"
 #include "logging/Logging.hpp"
 
-#include "Decoder.hpp"
+#include "dqm/Decoder.hpp"
 #include "dqm/FormatUtils.hpp"
 
 #include <map>

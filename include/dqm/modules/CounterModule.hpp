@@ -12,9 +12,9 @@
 // DQM
 #include "dqm/AnalysisModule.hpp"
 #include "ChannelMap.hpp"
-#include "Constants.hpp"
-#include "Decoder.hpp"
-#include "Exporter.hpp"
+#include "dqm/Constants.hpp"
+#include "dqm/Decoder.hpp"
+#include "dqm/Exporter.hpp"
 #include "dqm/Issues.hpp"
 #include "dqm/algs/Counter.hpp"
 #include "dqm/FormatUtils.hpp"

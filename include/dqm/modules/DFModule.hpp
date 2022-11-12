@@ -11,7 +11,7 @@
 // DQM
 #include "dqm/AnalysisModule.hpp"
 #include "ChannelMap.hpp"
-#include "Constants.hpp"
+#include "dqm/Constants.hpp"
 #include "dqm/Issues.hpp"
 
 #include "RMSModule.hpp"
