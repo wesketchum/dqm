@@ -8,7 +8,7 @@
 #ifndef DQM_INCLUDE_DQM_DQM_FORMATS_HPP_
 #define DQM_INCLUDE_DQM_DQM_FORMATS_HPP_
 
-#include "ChannelMap.hpp"
+#include "dqm/ChannelMap.hpp"
 
 #include <memory>
 #include <map>

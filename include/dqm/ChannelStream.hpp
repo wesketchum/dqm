@@ -10,7 +10,7 @@
 
 // DQM
 #include "dqm/AnalysisModule.hpp"
-#include "ChannelMap.hpp"
+#include "dqm/ChannelMap.hpp"
 #include "dqm/Constants.hpp"
 #include "dqm/Decoder.hpp"
 #include "dqm/Exporter.hpp"

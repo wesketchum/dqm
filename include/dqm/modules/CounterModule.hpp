@@ -11,7 +11,7 @@
 
 // DQM
 #include "dqm/AnalysisModule.hpp"
-#include "ChannelMap.hpp"
+#include "dqm/ChannelMap.hpp"
 #include "dqm/Constants.hpp"
 #include "dqm/Decoder.hpp"
 #include "dqm/Exporter.hpp"
@@ -20,6 +20,7 @@
 #include "dqm/FormatUtils.hpp"
 #include "dqm/Pipeline.hpp"
 #include "dqm/DQMLogging.hpp"
+#include "dqm/ChannelStream.hpp"
 
 #include "daqdataformats/TriggerRecord.hpp"
 #include "detdataformats/tde/TDE16Frame.hpp"

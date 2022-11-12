@@ -11,15 +11,11 @@
 
 #include "DQMProcessor.hpp"
 
-#include "dqm/dqmprocessor/Nljs.hpp"
-#include "dqm/dqmprocessor/Structs.hpp"
-#include "dqm/dqmprocessorinfo/InfoNljs.hpp"
-
 // Channel map and other utilities
 #include "dqm/Constants.hpp"
 #include "dqm/DQMLogging.hpp"
-#include "ChannelMap.hpp"
-#include "ChannelMapFiller.hpp"
+#include "dqm/ChannelMap.hpp"
+#include "dqm/ChannelMapFiller.hpp"
 
 // Modules with the classes that contain the algorithms
 #include "dqm/modules/CounterModule.hpp"
