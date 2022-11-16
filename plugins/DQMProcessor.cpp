@@ -39,6 +39,11 @@
 #include <thread>
 #include <vector>
 
+#ifdef WITH_PYTHON_SUPPORT
+#include "dqm/modules/Python.hpp"
+#include "dqm/PythonUtils.hpp"
+#endif
+
 namespace dunedaq {
 namespace dqm {
 
@@ -251,6 +256,7 @@ DQMProcessor::do_work()
   // Initial tasks
   // Add some offset time to let the other parts of the DAQ start
   // Typically the first and maybe second requests of data fails
+#ifndef WITH_PYTHON_SUPPORT
   if (m_raw_conf.how_often > 0)
     map[std::chrono::system_clock::now() + std::chrono::seconds(m_offset_from_channel_map)] = {
       raw,
@@ -302,6 +308,38 @@ DQMProcessor::do_work()
       "Algorithms on TRs from DF every " + std::to_string(m_df_seconds) + " s"
     };
   }
+#else
+  Py_Initialize();
+  np::initialize();
+
+typedef std::map<int, std::vector<detdataformats::wib::WIBFrame*>> mapt;
+  p::class_<std::map<int, std::vector<detdataformats::wib::WIBFrame*>>>("MapWithFrames")
+  .def("__len__", &mapt::size)
+  .def("__getitem__", &MapItem<mapt>::get
+      // return_value_policy<copy_non_const_reference>()
+       )
+  .def("get_adc", &MapItem<mapt>::get_adc
+      // return_value_policy<copy_non_const_reference>()
+       )
+    ;
+
+  p::class_<std::vector<np::ndarray>>("VecClass")
+  .def("__len__", &std::vector<np::ndarray>::size)
+  .def("__getitem__", &std_item<std::vector<np::ndarray>>::get,
+       p::return_value_policy<p::copy_non_const_reference>()
+         )
+  ;
+
+  auto python = std::make_shared<PythonModule>("std");
+  if (m_std_conf.how_often > 0)
+    map[std::chrono::system_clock::now() + std::chrono::seconds(m_offset_from_channel_map)] = {
+      python,
+      m_std_conf.how_often,
+      m_std_conf.num_frames,
+      nullptr,
+      "STD every " + std::to_string(m_std_conf.how_often) + " s"
+    };
+#endif
 
 
   map[std::chrono::system_clock::now() + std::chrono::seconds(m_channel_map_delay)] = { chfiller,

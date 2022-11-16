@@ -135,6 +135,16 @@ After the algorithm has been added, proper parsing has to be done in
 [dqm-backend](https://github.com/DUNE-DAQ/dqm-backend) to display or further
 process the data.
 
+### How to add algorithms in python to DQM (experimental)
+For this to work, the python component of the boost library needs to be
+installed (not shipped with the dunedaq externals at the time of writing,
+13/11/2022). This component is very easy to install, once installed run
+```
+export BOOST_PYTHON=/nfs/home/jcarcell/boost_1_80_0/lib
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$BOOST_PYTHON
+```
+
+
 ## How to add a frontend type to DQM
 
 Each algorithm is templated and it has to know what to do for each format, which

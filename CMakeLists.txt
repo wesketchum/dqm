@@ -42,8 +42,8 @@ daq_add_library(
   LINK_LIBRARIES ${DQM_DEPENDENCIES}
 )
 
-daq_add_plugin(DQMProcessor duneDAQModule LINK_LIBRARIES ${DQM_DEPENDENCIES} dqm)
-target_include_directories(dqm_DQMProcessor_duneDAQModule PUBLIC $ENV{FFTW_INC})
+daq_add_plugin(DQMProcessor duneDAQModule LINK_LIBRARIES ${DQM_DEPENDENCIES} dqm /cvmfs/dunedaq.opensciencegrid.org/spack/externals/ext-v1.0/spack-0.18.1-gcc-12.1.0/spack-0.18.1/opt/spack/gcc-12.1.0/python-3.10.4-pvcs7oznmvimvho7rik5qugob7qlc4p2/lib/libpython3.10.so $ENV{BOOST_PYTHON}/libboost_python310.so $ENV{BOOST_PYTHON}/libboost_numpy310.so)
+target_include_directories(dqm_DQMProcessor_duneDAQModule PUBLIC $ENV{FFTW_INC} )
 
 # Unit tests
 daq_add_unit_test(Fourier_test LINK_LIBRARIES ${DQM_DEPENDENCIES} dqm)
@@ -53,6 +53,7 @@ daq_add_unit_test(STD_test LINK_LIBRARIES ${DQM_DEPENDENCIES} dqm)
 if(WITH_PYTHON_SUPPORT)
   daq_add_application(python_test python_test.cxx TEST LINK_LIBRARIES ${DQM_DEPENDENCIES} dqm /cvmfs/dunedaq.opensciencegrid.org/spack/externals/ext-v1.0/spack-0.18.1-gcc-12.1.0/spack-0.18.1/opt/spack/gcc-12.1.0/python-3.10.4-pvcs7oznmvimvho7rik5qugob7qlc4p2/lib/libpython3.10.so $ENV{BOOST_PYTHON}/libboost_python310.so $ENV{BOOST_PYTHON}/libboost_numpy310.so)
   target_include_directories(python_test PUBLIC /cvmfs/dunedaq.opensciencegrid.org/spack/externals/ext-v1.0/spack-0.18.1-gcc-12.1.0/spack-0.18.1/opt/spack/gcc-12.1.0/py-pybind11-2.6.2-huldi2a2krn3a44fwvqolsi6gr6m3pwa/include)
+  target_include_directories(dqm_DQMProcessor_duneDAQModule PUBLIC /cvmfs/dunedaq.opensciencegrid.org/spack/externals/ext-v1.0/spack-0.18.1-gcc-12.1.0/spack-0.18.1/opt/spack/gcc-12.1.0/py-pybind11-2.6.2-huldi2a2krn3a44fwvqolsi6gr6m3pwa/include)
 endif()
 
 daq_install()
