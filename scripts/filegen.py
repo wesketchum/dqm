@@ -40,6 +40,7 @@ def pattern_std(frame, setter, max_frames):
 def pattern_gauss(frame, setter, max_frames):
     '''
     A gaussian peak and zero everywhere else
+    Every frame has the peak displaced by one sampling time compared to the previous frame
     '''
     width = 1
     amplitude = 50
