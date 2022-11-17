@@ -219,4 +219,12 @@ mean they will work correctly since the final setup is more complicated).
 
 ### Creating files
 Another way of testing DQM is to create files with specific patterns to check
-the plot and see what we expect.
+the plots and see what we expect. There is a script called `filegen.py` that can be used for that. 
+By running
+```
+python sourcecode/dqm/scripts/filegen.py --frontend wib2 --pattern sin --num-frames 100
+```
+we'll create a binary file with `WIB2Frame`s and for each channel the waveform
+is a sine with a given frequency. Then, the FFT plots can be checked to make
+sure that there is a peak at the frequency that was set for the sine. There is
+another pattern to check that the standard deviation is calculated correctly.
