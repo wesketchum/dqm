@@ -24,7 +24,7 @@
 #include "timinglibs/TimestampEstimator.hpp"
 #include "ipm/Receiver.hpp"
 
-#include "iomanager/FollyQueue.hpp"
+#include "iomanager/queue/FollyQueue.hpp"
 
 #include <atomic>
 #include <chrono>
@@ -86,7 +86,6 @@ private:
   std::string m_df_algs;
   int m_df_num_frames {0};
 
-  std::string m_timesync_topic;
   std::string m_df2dqm_connection;
   std::string m_dqm2df_connection;
 
