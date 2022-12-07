@@ -139,10 +139,15 @@ process the data.
 For this to work, the python component of the boost library needs to be
 installed (not shipped with the dunedaq externals at the time of writing,
 13/11/2022). This component is very easy to install, once installed run
+
 ```
 export BOOST_PYTHON=/nfs/home/jcarcell/boost_1_80_0/lib
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$BOOST_PYTHON
 ```
+
+then enable the option to compile with python support in the CMakeLists.txt. To
+be able to send messages to kafka the packages `kafka-python` and `msgpack` need
+to be installed and to run FFTs in python `scipy` has to be installed.
 
 
 ## How to add a frontend type to DQM
