@@ -300,6 +300,7 @@ DQMProcessor::do_work()
   Py_Initialize();
   np::initialize();
 
+
 typedef std::map<int, std::vector<detdataformats::wib::WIBFrame*>> mapt;
   p::class_<std::map<int, std::vector<detdataformats::wib::WIBFrame*>>>("MapWithFrames")
   .def("__len__", &mapt::size)
@@ -318,15 +319,48 @@ typedef std::map<int, std::vector<detdataformats::wib::WIBFrame*>> mapt;
          )
   ;
 
-  auto python = std::make_shared<PythonModule>("std");
+  auto std_python = std::make_shared<PythonModule>("std");
   if (m_std_conf.how_often > 0)
     map[std::chrono::system_clock::now() + std::chrono::seconds(m_offset_from_channel_map)] = {
-      python,
+      std_python,
       m_std_conf.how_often,
       m_std_conf.num_frames,
       nullptr,
       "STD every " + std::to_string(m_std_conf.how_often) + " s"
     };
+
+  auto rms_python = std::make_shared<PythonModule>("rms");
+  if (m_rms_conf.how_often > 0)
+    map[std::chrono::system_clock::now() + std::chrono::seconds(m_offset_from_channel_map)] = {
+      rms_python,
+      m_rms_conf.how_often,
+      m_rms_conf.num_frames,
+      nullptr,
+      "RMS every " + std::to_string(m_rms_conf.how_often) + " s"
+    };
+
+  auto raw_python = std::make_shared<PythonModule>("raw");
+  if (m_raw_conf.how_often > 0)
+    map[std::chrono::system_clock::now() + std::chrono::seconds(m_offset_from_channel_map + 1)] = {
+      raw_python,
+      m_raw_conf.how_often,
+      m_raw_conf.num_frames,
+      nullptr,
+      "Raw every " + std::to_string(m_raw_conf.how_often) + " s"
+    };
+
+  auto fourier_plane_python = std::make_shared<PythonModule>("fp");
+  if (m_fourier_plane_conf.how_often > 0)
+    map[std::chrono::system_clock::now() + std::chrono::seconds(m_offset_from_channel_map + 1)] = {
+      fourier_plane_python,
+      m_fourier_plane_conf.how_often,
+      m_fourier_plane_conf.num_frames,
+      nullptr,
+      "Fourier plane every " + std::to_string(m_fourier_plane_conf.how_often) + " s"
+    };
+
+  PyThreadState *_save;
+  _save = PyEval_SaveThread();
 #endif
 
 

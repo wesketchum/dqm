@@ -125,7 +125,6 @@ public:
   {
     np::dtype dtype = np::dtype::get_builtin<int>();
 
-
     std::vector<np::ndarray> v;
     for (const auto& [key, val] : x){
       std::vector<int> planes;
