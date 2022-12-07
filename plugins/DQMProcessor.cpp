@@ -144,14 +144,16 @@ DQMProcessor::do_start(const nlohmann::json& args)
 
     m_received_timesync_count.store(0);
 
+    // Subscribe to all TimeSync messages
     get_iomanager()->add_callback<dfmessages::TimeSync>(
-    ".*", std::bind(&DQMProcessor::dispatch_timesync, this, std::placeholders::_1));
+      ".*", std::bind(&DQMProcessor::dispatch_timesync, this, std::placeholders::_1));
 
   }
 
   if (m_mode == "df") {
     get_iomanager()->add_callback<std::unique_ptr<daqdataformats::TriggerRecord>>(
-    m_df2dqm_connection, std::bind(&DQMProcessor::dispatch_trigger_record, this, std::placeholders::_1));  
+      m_df2dqm_connection, std::bind(&DQMProcessor::dispatch_trigger_record, this, std::placeholders::_1));
+
   }
 
   m_dqm_args.run_mark = std::make_shared<std::atomic<bool>>(true);
