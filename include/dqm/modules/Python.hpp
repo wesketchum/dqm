@@ -103,7 +103,9 @@ PythonModule::run_(std::shared_ptr<daqdataformats::TriggerRecord> record,
   f(frames, channels, planes,
     record->get_header_ref().get_run_number(),
     partition,
-    app_name
+    app_name,
+    args.kafka_address.c_str(),
+    args.kafka_topic.c_str()
     );
   PyGILState_Release(gilState);
   // try {
