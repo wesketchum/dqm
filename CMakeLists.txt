@@ -22,7 +22,7 @@ daq_codegen(*.jsonnet TEMPLATES Structs.hpp.j2 Nljs.hpp.j2 )
 daq_codegen(*info.jsonnet DEP_PKGS opmonlib TEMPLATES opmonlib/InfoStructs.hpp.j2 opmonlib/InfoNljs.hpp.j2 )
 
 # The value is stored in CMakeCache.txt so if you change the option make sure to remove the file or build cleanly
-option(WITH_PYTHON_SUPPORT "Boost Python is available and algorithms defined in Python can be used" ON)
+option(WITH_PYTHON_SUPPORT "Boost Python is available and algorithms defined in Python can be used" OFF)
 
 set(DQM_DEPENDENCIES
 appfwk::appfwk
