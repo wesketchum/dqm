@@ -147,7 +147,16 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$BOOST_PYTHON
 
 then enable the option to compile with python support in the CMakeLists.txt. To
 be able to send messages to kafka the packages `kafka-python` and `msgpack` need
-to be installed and to run FFTs in python `scipy` has to be installed.
+to be installed and to run FFTs in python `scipy` has to be installed. After
+generating a configuration for nanorc, the file `boot.json` has to be changed to
+add `PYTHONPATH` to the list of variables that `nanorc` will get, and this is
+how we add it so that it is picked from the environment:
+```
+                "PATH": "getenv",
+                "TIMING_SHARE": "getenv",
+                "TRACE_FILE": "getenv:/tmp/trace_buffer_{APP_HOST}_{DUNEDAQ_PARTITION}",
+                "PYTHONPATH": "getenv"
+```
 
 
 ## How to add a frontend type to DQM

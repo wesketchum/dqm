@@ -5,7 +5,7 @@ try:
 except ModuleNotFoundError:
     print('kafka is not installed')
 
-def main(arg, channels, planes):
+def main(arg, channels, planes, run_number, partition, app_name):
     adc = arg.get_adc()
     all_std = []
     all_channels = []
@@ -29,9 +29,10 @@ def main(arg, channels, planes):
         print(i)
         channels = all_values[indexes[i]:indexes[i+1], 1]
         values = all_values[indexes[i]:indexes[i+1], 2]
+        print(channels.shape, values.shape)
 
         producer = KafkaProducer(bootstrap_servers='monkafka:30092')
-        source, run_number, partition, app_name, plane, algorithm = '', 3, 'jcarcell', 'dqmrulocalhost0', i, 'std'
+        source, run_number, partition, app_name, plane, algorithm = '', run_number, partition, app_name, i, 'std'
 
         msg = f'''{{"source": "{source}", "run_number": "{run_number}", "partition": "{partition}", "app_name": "{app_name}", "plane": "{plane}", "algorithm": "{algorithm}" }}'''.encode()
         msg += '\n\n\nM'.encode()
