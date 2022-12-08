@@ -13,11 +13,11 @@
 #include "dqm/ChannelMap.hpp"
 #include "dqm/Constants.hpp"
 #include "dqm/Decoder.hpp"
-#include "dqm/Exporter.hpp"
 #include "dqm/Issues.hpp"
 #include "dqm/DQMFormats.hpp"
 #include "dqm/DQMLogging.hpp"
 #include "dqm/PythonUtils.hpp"
+#include "dqm/Pipeline.hpp"
 
 #include "daqdataformats/TriggerRecord.hpp"
 
@@ -80,6 +80,8 @@ PythonModule::run_(std::shared_ptr<daqdataformats::TriggerRecord> record,
   }
 
   const char* module_name = (std::string("dqm.dqm_") + m_name).c_str();
+  const char* partition = getenv("DUNEDAQ_PARTITION");
+  const char* app_name = getenv("DUNEDAQ_APPLICATION_NAME");
   // TLOG() << "module_name is " << module_name;
 
   PyGILState_STATE gilState;
@@ -98,7 +100,11 @@ PythonModule::run_(std::shared_ptr<daqdataformats::TriggerRecord> record,
   auto planes = MapItem<mapt>::get_planes(frames, map);
 
   p::object f = module.attr("main");
-  f(frames, channels, planes);
+  f(frames, channels, planes,
+    record->get_header_ref().get_run_number(),
+    partition,
+    app_name
+    );
   PyGILState_Release(gilState);
   // try {
   //   f(frames, channels, planes);
@@ -111,7 +117,6 @@ PythonModule::run_(std::shared_ptr<daqdataformats::TriggerRecord> record,
   // info.fourier_plane_times_run++;
 
 }
-
 
 void
 PythonModule::run(std::shared_ptr<daqdataformats::TriggerRecord> record,

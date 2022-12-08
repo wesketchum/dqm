@@ -14,10 +14,15 @@
 #include "dqm/Constants.hpp"
 #include "dqm/Issues.hpp"
 
+#ifndef WITH_PYTHON_SUPPORT
 #include "RMSModule.hpp"
 #include "STDModule.hpp"
 #include "CounterModule.hpp"
 #include "FourierContainer.hpp"
+#else
+#include "dqm/modules/Python.hpp"
+#include "dqm/PythonUtils.hpp"
+#endif
 
 #include "daqdataformats/TriggerRecord.hpp"
 
@@ -39,10 +44,10 @@ public:
 
 private:
 
-  std::shared_ptr<RMSModule> m_rms;
-  std::shared_ptr<STDModule> m_std;
-  std::shared_ptr<CounterModule> m_raw;
-  std::shared_ptr<FourierContainer> m_fourier_channel, m_fourier_plane;
+  std::shared_ptr<AnalysisModule> m_rms;
+  std::shared_ptr<AnalysisModule> m_std;
+  std::shared_ptr<AnalysisModule> m_raw;
+  std::shared_ptr<AnalysisModule> m_fourier_channel, m_fourier_plane;
 
   std::vector<int> m_ids;
 
@@ -62,6 +67,7 @@ DFModule::DFModule(bool enable_raw, bool enable_rms, bool enable_std, bool enabl
     m_num_frames(num_frames)
 
 {
+#ifndef WITH_PYTHON_SUPPORT
   if (m_enable_raw) {
     m_raw = std::make_shared<CounterModule>("raw", CHANNELS_PER_LINK * m_ids.size(), m_ids);
   }
@@ -86,6 +92,24 @@ DFModule::DFModule(bool enable_raw, bool enable_rms, bool enable_std, bool enabl
                                                        m_num_frames,
                                                        true);
   }
+#else
+  if (m_enable_raw) {
+    m_raw = std::make_shared<PythonModule>("raw");
+  }
+  if (m_enable_rms) {
+    m_rms = std::make_shared<PythonModule>("rms");
+  }
+  if (m_enable_std) {
+    m_std = std::make_shared<PythonModule>("std");
+  }
+  if (m_enable_fourier_channel) {
+    // m_fourier_channel =
+  }
+  if (m_enable_fourier_plane) {
+    m_fourier_plane = std::make_shared<PythonModule>("fp");
+  }
+#endif
+
 }
 
 void

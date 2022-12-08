@@ -17,13 +17,6 @@
 #include "dqm/ChannelMap.hpp"
 #include "dqm/ChannelMapFiller.hpp"
 
-// Modules with the classes that contain the algorithms
-#include "dqm/modules/CounterModule.hpp"
-#include "dqm/modules/STDModule.hpp"
-#include "dqm/modules/RMSModule.hpp"
-#include "dqm/modules/DFModule.hpp"
-#include "dqm/modules/FourierContainer.hpp"
-
 // DUNE-DAQ includes
 #include "daqdataformats/ComponentRequest.hpp"
 #include "daqdataformats/SourceID.hpp"
@@ -39,7 +32,14 @@
 #include <thread>
 #include <vector>
 
-#ifdef WITH_PYTHON_SUPPORT
+#include "dqm/modules/DFModule.hpp"
+#ifndef WITH_PYTHON_SUPPORT
+// Modules with the classes that contain the algorithms
+#include "dqm/modules/CounterModule.hpp"
+#include "dqm/modules/STDModule.hpp"
+#include "dqm/modules/RMSModule.hpp"
+#include "dqm/modules/FourierContainer.hpp"
+#else
 #include "dqm/modules/Python.hpp"
 #include "dqm/PythonUtils.hpp"
 #endif
@@ -206,6 +206,18 @@ DQMProcessor::do_work()
 
   // Instances of analysis modules
 
+  // Fills the channel map at the beggining of a run
+  auto chfiller = std::make_shared<ChannelMapFiller>("channelmapfiller", m_channel_map);
+  TLOG() << "m_df_algs = " << m_df_algs;
+  auto dfmodule = std::make_shared<DFModule>(m_df_algs.find("raw") != std::string::npos,
+                                             m_df_algs.find("rms") != std::string::npos,
+                                             m_df_algs.find("std") != std::string::npos,
+                                             m_df_algs.find("fourier_channel") != std::string::npos,
+                                             m_df_algs.find("fourier_plane") != std::string::npos,
+                                             m_clock_frequency, m_link_idx,
+                                             m_df_num_frames, m_frontend_type);
+
+#ifndef WITH_PYTHON_SUPPORT
   // Raw event display
   auto raw = std::make_shared<CounterModule>(
         "raw", CHANNELS_PER_LINK * m_link_idx.size(), m_link_idx);
@@ -228,23 +240,11 @@ DQMProcessor::do_work()
                                                       m_fourier_plane_conf.num_frames,
                                                       true);
 
-  // Whether an algorithm is enabled or not depends on the value of the bitfield m_df_algs
-  TLOG() << "m_df_algs = " << m_df_algs;
-  auto dfmodule = std::make_shared<DFModule>(m_df_algs.find("raw") != std::string::npos,
-                                             m_df_algs.find("rms") != std::string::npos,
-                                             m_df_algs.find("std") != std::string::npos,
-                                             m_df_algs.find("fourier_channel") != std::string::npos,
-                                             m_df_algs.find("fourier_plane") != std::string::npos,
-                                             m_clock_frequency, m_link_idx,
-                                             m_df_num_frames, m_frontend_type);
 
-  // Fills the channel map at the beggining of a run
-  auto chfiller = std::make_shared<ChannelMapFiller>("channelmapfiller", m_channel_map);
 
   // Initial tasks
   // Add some offset time to let the other parts of the DAQ start
   // Typically the first and maybe second requests of data fails
-#ifndef WITH_PYTHON_SUPPORT
   if (m_raw_conf.how_often > 0)
     map[std::chrono::system_clock::now() + std::chrono::seconds(m_offset_from_channel_map)] = {
       raw,
@@ -296,6 +296,7 @@ DQMProcessor::do_work()
       "Algorithms on TRs from DF every " + std::to_string(m_df_seconds) + " s"
     };
   }
+
 #else
   Py_Initialize();
   np::initialize();
@@ -358,6 +359,16 @@ typedef std::map<int, std::vector<detdataformats::wib::WIBFrame*>> mapt;
       nullptr,
       "Fourier plane every " + std::to_string(m_fourier_plane_conf.how_often) + " s"
     };
+
+  if (m_mode == "df" && m_df_seconds > 0) {
+    map[std::chrono::system_clock::now() + std::chrono::milliseconds(1000 * m_offset_from_channel_map + static_cast<int>(m_df_offset * 1000))] = {
+      dfmodule,
+      m_df_seconds,
+      -1, // Number of frames, unused
+      nullptr,
+      "Algorithms on TRs from DF every " + std::to_string(m_df_seconds) + " s"
+    };
+  }
 
   PyThreadState *_save;
   _save = PyEval_SaveThread();
