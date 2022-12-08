@@ -141,7 +141,7 @@ installed (not shipped with the dunedaq externals at the time of writing,
 13/11/2022). This component is very easy to install, once installed run
 
 ```
-export BOOST_PYTHON=/nfs/home/jcarcell/boost_1_80_0/lib
+export BOOST_PYTHON=/path/to/boost/lib
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$BOOST_PYTHON
 ```
 
