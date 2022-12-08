@@ -15,18 +15,10 @@
 
 #include "boost/python.hpp"
 
-#include <vector>
-#include <random>
-#include <algorithm>
-
-// using namespace dunedaq::dqm;
-
-BOOST_AUTO_TEST_SUITE(StDev_test)
-
-std::mt19937 mt(1000007);
+BOOST_AUTO_TEST_SUITE(Python_test)
 
 void
-StDev_test_case(int n, double low, double high)
+Python_import_test_case()
 {
   try {
     module = p::import("dqm.dqm_std");
@@ -37,9 +29,9 @@ StDev_test_case(int n, double low, double high)
   BOOST_TEST_REQUIRE(true);
 }
 
-BOOST_AUTO_TEST_CASE(StDev_test1)
+BOOST_AUTO_TEST_CASE(Python_test1)
 {
-  StDev_test_case(200, 0, 1);
+  Python_import_test_case();
 }
 
 
