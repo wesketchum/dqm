@@ -1,6 +1,6 @@
-import numpy as np
+from dqm.import_checks import kafka, msgpack, numpy as np
 
-def main(arg, channels, planes, run_number, partition, app_name):
+def main(arg, channels, planes, run_number, partition, app_name, kafka_address, topic):
     adc = arg.get_adc()
     all_raw = []
     all_channels = []
@@ -21,17 +21,12 @@ def main(arg, channels, planes, run_number, partition, app_name):
     index_1 = np.searchsorted(all_values[:, 0], 1)
     index_2 = np.searchsorted(all_values[:, 0], 2)
     indexes = [0, index_1, index_2, all_values.shape[0]]
+    producer = kafka.KafkaProducer(bootstrap_servers=kafka_address) if kafka_address else None
     for i in range(3):
         print(i)
         channels = all_values[indexes[i]:indexes[i+1], 1].tolist()
         values = all_values[indexes[i]:indexes[i+1], 2:].flatten().tolist()
 
-        try:
-            from kafka import KafkaProducer
-            import msgpack
-        except ModuleNotFoundError:
-            print('kafka is not installed')
-        producer = KafkaProducer(bootstrap_servers='monkafka:30092')
         source, run_number, partition, app_name, plane, algorithm = '', run_number, partition, app_name, i, 'raw'
 
         msg = f'''{{"source": "{source}", "run_number": "{run_number}", "partition": "{partition}", "app_name": "{app_name}", "plane": "{plane}", "algorithm": "{algorithm}" }}'''.encode()
@@ -40,5 +35,8 @@ def main(arg, channels, planes, run_number, partition, app_name):
         msg += channels + '\n\n\nM'.encode()
         values = msgpack.packb(values)
         msg += values
-        print(f'Sending message with length {len(msg)}')
-        producer.send('DQM', msg)
+        if producer:
+            print(f'Sending message with length {len(msg)}')
+            producer.send(topic, msg)
+        else:
+            print(f'Would send message with length {len(msg)}')
