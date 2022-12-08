@@ -540,6 +540,10 @@ typedef std::map<int, std::vector<detdataformats::wib::WIBFrame*>> mapt;
     }
   }
 
+#ifdef WITH_PYTHON_SUPPORT
+  PyEval_RestoreThread(_save);
+#endif
+
   // Delete the timestamp estimator after we are sure we won't need it
   m_time_est.reset(nullptr);
 } // NOLINT Function length
