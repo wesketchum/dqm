@@ -8,21 +8,14 @@
  * received with this code.
  */
 // DQM includes
-#include "Constants.hpp"
-#include "dqm/dqmprocessor/Nljs.hpp"
-#include "dqm/dqmprocessor/Structs.hpp"
-#include "dqm/dqmprocessorinfo/InfoNljs.hpp"
-#include "dqm/DQMLogging.hpp"
 
-#include "ChannelMap.hpp"
-#include "ChannelMapFiller.hpp"
-#include "DFModule.hpp"
 #include "DQMProcessor.hpp"
-#include "FourierContainer.hpp"
-// #include "HistContainer.hpp"
-#include "CounterModule.hpp"
-#include "STDModule.hpp"
-#include "RMSModule.hpp"
+
+// Channel map and other utilities
+#include "dqm/Constants.hpp"
+#include "dqm/DQMLogging.hpp"
+#include "dqm/ChannelMap.hpp"
+#include "dqm/ChannelMapFiller.hpp"
 
 // DUNE-DAQ includes
 #include "daqdataformats/ComponentRequest.hpp"
@@ -38,6 +31,18 @@
 #include <string>
 #include <thread>
 #include <vector>
+
+#include "dqm/modules/DFModule.hpp"
+#ifndef WITH_PYTHON_SUPPORT
+// Modules with the classes that contain the algorithms
+#include "dqm/modules/CounterModule.hpp"
+#include "dqm/modules/STDModule.hpp"
+#include "dqm/modules/RMSModule.hpp"
+#include "dqm/modules/FourierContainer.hpp"
+#else
+#include "dqm/modules/Python.hpp"
+#include "dqm/PythonUtils.hpp"
+#endif
 
 namespace dunedaq {
 namespace dqm {
@@ -165,7 +170,6 @@ DQMProcessor::do_drain_dataflow(const data_t&)
   m_running_thread->join();
 
   if (m_mode == "readout") {
-
     get_iomanager()->remove_callback<dfmessages::TimeSync>(".*");
   }
   else if (m_mode == "df") {
@@ -202,6 +206,18 @@ DQMProcessor::do_work()
 
   // Instances of analysis modules
 
+  // Fills the channel map at the beggining of a run
+  auto chfiller = std::make_shared<ChannelMapFiller>("channelmapfiller", m_channel_map);
+  TLOG() << "m_df_algs = " << m_df_algs;
+  auto dfmodule = std::make_shared<DFModule>(m_df_algs.find("raw") != std::string::npos,
+                                             m_df_algs.find("rms") != std::string::npos,
+                                             m_df_algs.find("std") != std::string::npos,
+                                             m_df_algs.find("fourier_channel") != std::string::npos,
+                                             m_df_algs.find("fourier_plane") != std::string::npos,
+                                             m_clock_frequency, m_link_idx,
+                                             m_df_num_frames, m_frontend_type);
+
+#ifndef WITH_PYTHON_SUPPORT
   // Raw event display
   auto raw = std::make_shared<CounterModule>(
         "raw", CHANNELS_PER_LINK * m_link_idx.size(), m_link_idx);
@@ -224,18 +240,7 @@ DQMProcessor::do_work()
                                                       m_fourier_plane_conf.num_frames,
                                                       true);
 
-  // Whether an algorithm is enabled or not depends on the value of the bitfield m_df_algs
-  TLOG() << "m_df_algs = " << m_df_algs;
-  auto dfmodule = std::make_shared<DFModule>(m_df_algs.find("raw") != std::string::npos,
-                                             m_df_algs.find("rms") != std::string::npos,
-                                             m_df_algs.find("std") != std::string::npos,
-                                             m_df_algs.find("fourier_channel") != std::string::npos,
-                                             m_df_algs.find("fourier_plane") != std::string::npos,
-                                             m_clock_frequency, m_link_idx,
-                                             m_df_num_frames, m_frontend_type);
 
-  // Fills the channel map at the beggining of a run
-  auto chfiller = std::make_shared<ChannelMapFiller>("channelmapfiller", m_channel_map);
 
   // Initial tasks
   // Add some offset time to let the other parts of the DAQ start
@@ -291,6 +296,83 @@ DQMProcessor::do_work()
       "Algorithms on TRs from DF every " + std::to_string(m_df_seconds) + " s"
     };
   }
+
+#else
+  Py_Initialize();
+  np::initialize();
+
+
+typedef std::map<int, std::vector<detdataformats::wib::WIBFrame*>> mapt;
+  p::class_<std::map<int, std::vector<detdataformats::wib::WIBFrame*>>>("MapWithFrames")
+  .def("__len__", &mapt::size)
+  .def("__getitem__", &MapItem<mapt>::get
+      // return_value_policy<copy_non_const_reference>()
+       )
+  .def("get_adc", &MapItem<mapt>::get_adc
+      // return_value_policy<copy_non_const_reference>()
+       )
+    ;
+
+  p::class_<std::vector<np::ndarray>>("VecClass")
+  .def("__len__", &std::vector<np::ndarray>::size)
+  .def("__getitem__", &std_item<std::vector<np::ndarray>>::get,
+       p::return_value_policy<p::copy_non_const_reference>()
+         )
+  ;
+
+  auto std_python = std::make_shared<PythonModule>("std");
+  if (m_std_conf.how_often > 0)
+    map[std::chrono::system_clock::now() + std::chrono::seconds(m_offset_from_channel_map)] = {
+      std_python,
+      m_std_conf.how_often,
+      m_std_conf.num_frames,
+      nullptr,
+      "STD every " + std::to_string(m_std_conf.how_often) + " s"
+    };
+
+  auto rms_python = std::make_shared<PythonModule>("rms");
+  if (m_rms_conf.how_often > 0)
+    map[std::chrono::system_clock::now() + std::chrono::seconds(m_offset_from_channel_map)] = {
+      rms_python,
+      m_rms_conf.how_often,
+      m_rms_conf.num_frames,
+      nullptr,
+      "RMS every " + std::to_string(m_rms_conf.how_often) + " s"
+    };
+
+  auto raw_python = std::make_shared<PythonModule>("raw");
+  if (m_raw_conf.how_often > 0)
+    map[std::chrono::system_clock::now() + std::chrono::seconds(m_offset_from_channel_map + 1)] = {
+      raw_python,
+      m_raw_conf.how_often,
+      m_raw_conf.num_frames,
+      nullptr,
+      "Raw every " + std::to_string(m_raw_conf.how_often) + " s"
+    };
+
+  auto fourier_plane_python = std::make_shared<PythonModule>("fp");
+  if (m_fourier_plane_conf.how_often > 0)
+    map[std::chrono::system_clock::now() + std::chrono::seconds(m_offset_from_channel_map + 1)] = {
+      fourier_plane_python,
+      m_fourier_plane_conf.how_often,
+      m_fourier_plane_conf.num_frames,
+      nullptr,
+      "Fourier plane every " + std::to_string(m_fourier_plane_conf.how_often) + " s"
+    };
+
+  if (m_mode == "df" && m_df_seconds > 0) {
+    map[std::chrono::system_clock::now() + std::chrono::milliseconds(1000 * m_offset_from_channel_map + static_cast<int>(m_df_offset * 1000))] = {
+      dfmodule,
+      m_df_seconds,
+      -1, // Number of frames, unused
+      nullptr,
+      "Algorithms on TRs from DF every " + std::to_string(m_df_seconds) + " s"
+    };
+  }
+
+  PyThreadState *_save;
+  _save = PyEval_SaveThread();
+#endif
 
 
   map[std::chrono::system_clock::now() + std::chrono::seconds(m_channel_map_delay)] = { chfiller,
@@ -457,6 +539,10 @@ DQMProcessor::do_work()
       analysis_instance.running_thread->join();
     }
   }
+
+#ifdef WITH_PYTHON_SUPPORT
+  PyEval_RestoreThread(_save);
+#endif
 
   // Delete the timestamp estimator after we are sure we won't need it
   m_time_est.reset(nullptr);

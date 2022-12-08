@@ -12,7 +12,7 @@
 #include "daqdataformats/TriggerRecord.hpp"
 #include "logging/Logging.hpp"
 
-#include "Decoder.hpp"
+#include "dqm/Decoder.hpp"
 #include "dqm/FormatUtils.hpp"
 
 #include <map>
@@ -24,9 +24,10 @@ namespace dunedaq::dqm {
 class ChannelMap
 {
 
-  std::map<int, std::map<int, std::pair<int, int>>> m_map;
-
 public:
+  std::map<int, std::map<int, std::pair<int, int>>> m_map;
+  std::map<int, std::map<int, std::pair<int, int>>> m_map_rev;
+
   std::shared_ptr<dunedaq::detchannelmaps::TPCChannelMap> m_chmap_service;
   bool m_is_filled = false;
 
@@ -94,6 +95,7 @@ ChannelMap::fill(std::shared_ptr<daqdataformats::TriggerRecord> record)
           continue;
         }
         m_map[plane][channel] = { key, ich };
+        m_map_rev[key][ich] = {plane, channel};
       }
     }
   }

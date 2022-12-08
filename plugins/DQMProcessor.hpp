@@ -12,7 +12,11 @@
 #ifndef DQM_PLUGINS_DQMPROCESSOR_HPP_
 #define DQM_PLUGINS_DQMPROCESSOR_HPP_
 
-#include "ChannelMap.hpp"
+#include "dqm/dqmprocessor/Nljs.hpp"
+#include "dqm/dqmprocessor/Structs.hpp"
+#include "dqm/dqmprocessorinfo/InfoNljs.hpp"
+
+#include "dqm/ChannelMap.hpp"
 #include "dqm/DQMFormats.hpp"
 
 #include "appfwk/DAQModule.hpp"

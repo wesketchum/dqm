@@ -52,6 +52,9 @@ ERS_DECLARE_ISSUE(dqm, BadCrateSlotFiber,
 
 ERS_DECLARE_ISSUE(dqm, ParameterChange, "Parameters changed: " << why, ((std::string)why))
 
+ERS_DECLARE_ISSUE(dqm, ModuleNotImported, "Python module " << module << " couldn't be imported", ((std::string)module))
+
+ERS_DECLARE_ISSUE(dqm, PythonModuleCrashed, "Python module " << module << " crashed", ((std::string)module))
 
 } // namespace dunedaq
 

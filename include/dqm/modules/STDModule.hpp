@@ -10,7 +10,7 @@
 
 // DQM
 #include "dqm/algs/STD.hpp"
-#include "ChannelStream.hpp"
+#include "dqm/ChannelStream.hpp"
 
 #include <string>
 #include <vector>

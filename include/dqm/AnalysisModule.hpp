@@ -8,7 +8,7 @@
 #ifndef DQM_SRC_ANALYSISMODULE_HPP_
 #define DQM_SRC_ANALYSISMODULE_HPP_
 
-#include "ChannelMap.hpp"
+#include "dqm/ChannelMap.hpp"
 #include "DQMFormats.hpp"
 
 #include "daqdataformats/TriggerRecord.hpp"
