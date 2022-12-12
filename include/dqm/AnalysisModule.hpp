@@ -8,8 +8,8 @@
 #ifndef DQM_SRC_ANALYSISMODULE_HPP_
 #define DQM_SRC_ANALYSISMODULE_HPP_
 
-#include "DQMFormats.hpp"
 #include "dqm/ChannelMap.hpp"
+#include "DQMFormats.hpp"
 
 #include "daqdataformats/TriggerRecord.hpp"
 
@@ -22,10 +22,14 @@ namespace dunedaq::dqm {
 class AnalysisModule
 {
 public:
+
   bool get_is_running() const { return m_is_running; }
 
-  virtual void run(std::shared_ptr<daqdataformats::TriggerRecord> record, DQMArgs& args, DQMInfo& info) = 0;
-  virtual ~AnalysisModule(){};
+  virtual void run(std::shared_ptr<daqdataformats::TriggerRecord> record,
+                                                             DQMArgs& args,
+                                                             DQMInfo& info
+                                                             ) = 0;
+  virtual ~AnalysisModule() {};
 
 protected:
   void set_is_running(bool status) { m_is_running = status; }

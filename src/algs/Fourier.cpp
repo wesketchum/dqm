@@ -27,22 +27,20 @@ Fourier::Fourier(double inc, int npoints) // NOLINT(build/unsigned)
   , m_npoints(npoints)
 {
   m_data.reserve(npoints);
-  m_transform = std::vector<std::complex<double>>(npoints);
+  m_transform = std::vector<std::complex<double>> (npoints);
 }
+
 
 /**
  * @brief Compute the absolute value of the fourier transform
  *        using the FFTW library
  */
 void
-Fourier::compute_fourier_transform()
-{
+Fourier::compute_fourier_transform() {
 
   if (m_data.size() != (size_t)m_npoints) {
     m_npoints = m_data.size();
-    ers::warning(ParameterChange(ERS_HERE,
-                                 "input doesn't have the expected size for the Fourier transform, changing size to " +
-                                   std::to_string(m_npoints)));
+    ers::warning(ParameterChange(ERS_HERE, "input doesn't have the expected size for the Fourier transform, changing size to " + std::to_string(m_npoints)));
   }
 
   if (m_transform.size() != (size_t)m_npoints) {
@@ -56,7 +54,7 @@ Fourier::compute_fourier_transform()
   // an unknown reason. Anyway in the docs they say that creating a new plan
   // once another one has been created before for the same size is cheap
   // FFTW_MEASURE instead of FFTW_ESTIMATE doesn't change the output
-  fftw_plan plan = fftw_plan_r2r_1d(m_npoints, m_data.data(), tmp.data(), FFTW_R2HC, FFTW_ESTIMATE);
+  fftw_plan plan = fftw_plan_r2r_1d(m_npoints, m_data.data(), tmp.data(), FFTW_R2HC, FFTW_ESTIMATE );
   if (plan == NULL) {
     ers::error(CouldNotCreateFourierPlan(ERS_HERE, ""));
     return;
@@ -70,16 +68,16 @@ Fourier::compute_fourier_transform()
   // Caveats, i = 0 and i = m_npoints/2 are already real and i = 0 is already
   // positive so only i = m_npoints/2 has to be changed
   for (int i = 1; i < m_npoints / 2; ++i) {
-    m_transform[i] = { tmp[i], tmp[m_npoints - i] };
+    m_transform[i] = {tmp[i], tmp[m_npoints - i]};
   }
-  m_transform[0] = { tmp[0], 0 };
-  m_transform[m_npoints / 2] = { tmp[m_npoints / 2], 0 };
+  m_transform[0] = {tmp[0], 0};
+  m_transform[m_npoints / 2] = {tmp[m_npoints / 2], 0};
   m_transform.resize(m_npoints / 2 + 1);
 }
 
+
 std::vector<std::complex<double>>
-Fourier::get_transform()
-{
+Fourier::get_transform() {
   return m_transform;
 }
 

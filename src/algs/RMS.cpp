@@ -39,6 +39,7 @@ RMS::rms() const
     return -1;
   }
   return sqrt(m_sum_sq / m_nentries);
+
 }
 
 } // namespace dqm

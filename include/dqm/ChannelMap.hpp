@@ -8,8 +8,8 @@
 #ifndef DQM_SRC_CHANNELMAP_HPP_
 #define DQM_SRC_CHANNELMAP_HPP_
 
-#include "daqdataformats/TriggerRecord.hpp"
 #include "detchannelmaps/TPCChannelMap.hpp"
+#include "daqdataformats/TriggerRecord.hpp"
 #include "logging/Logging.hpp"
 
 #include "dqm/Decoder.hpp"
@@ -37,16 +37,17 @@ public:
   int get_plane(int channel);
   bool is_filled();
 
-  template<class T>
+  template <class T>
   void fill(std::shared_ptr<daqdataformats::TriggerRecord> tr);
 
   std::map<int, std::map<int, std::pair<int, int>>> get_map();
 };
 
-ChannelMap::ChannelMap() {}
 
-ChannelMap::ChannelMap(std::string& name)
-{
+ChannelMap::ChannelMap() {
+}
+
+ChannelMap::ChannelMap(std::string& name) {
   m_chmap_service = dunedaq::detchannelmaps::make_map(name);
 }
 
@@ -56,7 +57,7 @@ ChannelMap::get_map()
   return m_map;
 }
 
-template<class T>
+template <class T>
 void
 ChannelMap::fill(std::shared_ptr<daqdataformats::TriggerRecord> record)
 {
@@ -82,7 +83,8 @@ ChannelMap::fill(std::shared_ptr<daqdataformats::TriggerRecord> record)
       auto tmp = std::make_tuple(crate, slot, fiber);
       if (frame_numbers.find(tmp) == frame_numbers.end()) {
         frame_numbers.insert(tmp);
-      } else {
+      }
+      else {
         continue;
       }
       for (int ich = 0; ich < 256; ++ich) {
@@ -93,7 +95,7 @@ ChannelMap::fill(std::shared_ptr<daqdataformats::TriggerRecord> record)
           continue;
         }
         m_map[plane][channel] = { key, ich };
-        m_map_rev[key][ich] = { plane, channel };
+        m_map_rev[key][ich] = {plane, channel};
       }
     }
   }

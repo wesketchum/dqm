@@ -15,9 +15,9 @@
 
 #include "dqm/algs/STD.hpp"
 
-#include <algorithm>
-#include <random>
 #include <vector>
+#include <random>
+#include <algorithm>
 
 using namespace dunedaq::dqm;
 
@@ -39,7 +39,7 @@ StDev_test_case(int n, double low, double high)
     v.push_back(num);
   }
   double mean = std::accumulate(v.begin(), v.end(), 0.0) / v.size();
-  std::for_each(v.begin(), v.end(), [&mean](double& x) { x = (x - mean) * (x - mean); });
+  std::for_each(v.begin(), v.end(), [&mean](double& x) {x = (x - mean) * (x - mean);});
   double res = sqrt(std::accumulate(v.begin(), v.end(), 0.0) / (v.size() - 1));
 
   std::cout << std.std() << " " << res << std::endl;
@@ -70,5 +70,6 @@ BOOST_AUTO_TEST_CASE(StDev_test5)
 {
   StDev_test_case(100000, 0, 100000);
 }
+
 
 BOOST_AUTO_TEST_SUITE_END()
