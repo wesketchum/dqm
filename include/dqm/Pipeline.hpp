@@ -9,16 +9,16 @@
 #define DQM_SRC_PIPELINE_HPP_
 
 #include "DQMLogging.hpp"
-#include "ers/Issue.hpp"
-#include "dqm/Issues.hpp"
-#include "dqm/DQMLogging.hpp"
 #include "dqm/DQMFormats.hpp"
+#include "dqm/DQMLogging.hpp"
+#include "dqm/Issues.hpp"
+#include "ers/Issue.hpp"
 
 #include <cstddef>
-#include <map>
-#include <vector>
 #include <functional>
+#include <map>
 #include <string>
+#include <vector>
 
 namespace dunedaq {
 namespace dqm {
@@ -94,41 +94,41 @@ check_timestamps_aligned(std::map<int, std::vector<T*>>& map)
   return true;
 }
 
-
 template<class T>
 class Pipeline
 {
   std::vector<std::function<int(std::map<int, std::vector<T*>>& arg)>> m_functions;
   std::vector<std::string> m_function_names;
 
-  std::map<std::string, std::function<int(std::map<int, std::vector<T*>>& arg)>>
-  m_available_functions { {"remove_empty", remove_empty<T>},
-                          {"check_empty", check_empty<T>},
-                          {"make_same_size", make_same_size<T>},
-                          {"check_timestamps_aligned", check_timestamps_aligned<T>},
+  std::map<std::string, std::function<int(std::map<int, std::vector<T*>>& arg)>> m_available_functions{
+    { "remove_empty", remove_empty<T> },
+    { "check_empty", check_empty<T> },
+    { "make_same_size", make_same_size<T> },
+    { "check_timestamps_aligned", check_timestamps_aligned<T> },
   };
 
 public:
   Pipeline(std::vector<std::string>& names)
   {
-    for (auto& name: names) {
+    for (auto& name : names) {
       if (m_available_functions.find(name) != m_available_functions.end()) {
         m_function_names.push_back(name);
         m_functions.push_back(m_available_functions[name]);
       }
     }
   }
-  Pipeline(std::vector<std::string>&& names) {
-    for (auto& name: names) {
+  Pipeline(std::vector<std::string>&& names)
+  {
+    for (auto& name : names) {
       if (m_available_functions.find(name) != m_available_functions.end()) {
         m_function_names.push_back(name);
         m_functions.push_back(m_available_functions[name]);
       }
     }
-
   }
 
-  bool operator() (std::map<int, std::vector<T*>>& arg) {
+  bool operator()(std::map<int, std::vector<T*>>& arg)
+  {
     for (size_t i = 0; i < m_functions.size(); ++i) {
       auto fun = m_functions[i];
       auto name = m_function_names[i];
@@ -139,9 +139,7 @@ public:
     }
     return true;
   }
-
 };
-
 
 } // namespace dqm
 } // namespace dunedaq

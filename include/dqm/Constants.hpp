@@ -19,8 +19,7 @@ get_ticks_between_timestamps(const std::string& frontend_type)
 {
   if (frontend_type == "wib") {
     return 25;
-  }
-  else if (frontend_type == "wib2") {
+  } else if (frontend_type == "wib2") {
     return 32;
   }
   return -1;

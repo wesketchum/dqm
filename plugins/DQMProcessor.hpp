@@ -20,13 +20,13 @@
 #include "dqm/DQMFormats.hpp"
 
 #include "appfwk/DAQModule.hpp"
-#include "iomanager/IOManager.hpp"
-#include "iomanager/Sender.hpp"
-#include "iomanager/Receiver.hpp"
 #include "daqdataformats/TriggerRecord.hpp"
 #include "dfmessages/TriggerDecision.hpp"
-#include "timinglibs/TimestampEstimator.hpp"
+#include "iomanager/IOManager.hpp"
+#include "iomanager/Receiver.hpp"
+#include "iomanager/Sender.hpp"
 #include "ipm/Receiver.hpp"
+#include "timinglibs/TimestampEstimator.hpp"
 
 #include "iomanager/queue/FollyQueue.hpp"
 
@@ -63,7 +63,9 @@ public:
   void dispatch_trigger_record(std::unique_ptr<daqdataformats::TriggerRecord>& tr);
 
   void do_work();
-  dfmessages::TriggerDecision create_readout_request(std::vector<dfmessages::SourceID>& m_sids, int number_of_frames, std::string& frontend_type);
+  dfmessages::TriggerDecision create_readout_request(std::vector<dfmessages::SourceID>& m_sids,
+                                                     int number_of_frames,
+                                                     std::string& frontend_type);
 
   void dfrequest();
 
@@ -85,10 +87,10 @@ private:
   dqmprocessor::StandardDQM m_fourier_plane_conf;
 
   // DF configuration parameters
-  int m_df_seconds {0};
-  double m_df_offset {0};
+  int m_df_seconds{ 0 };
+  double m_df_offset{ 0 };
   std::string m_df_algs;
-  int m_df_num_frames {0};
+  int m_df_num_frames{ 0 };
 
   std::string m_df2dqm_connection;
   std::string m_dqm2df_connection;
@@ -113,7 +115,7 @@ private:
 
   std::string m_channel_map;
 
-  iomanager::FollySPSCQueue<std::unique_ptr<daqdataformats::TriggerRecord>> dftrs{"FollyQueue", 100};
+  iomanager::FollySPSCQueue<std::unique_ptr<daqdataformats::TriggerRecord>> dftrs{ "FollyQueue", 100 };
 
   std::string m_mode;
   std::string m_frontend_type;
@@ -124,11 +126,15 @@ private:
   int m_max_frames;
 
   // Constants used in DQMProcessor.cpp
-  static constexpr int m_channel_map_delay {2};                // How much time in s to wait until running the channel map
-  static constexpr int m_offset_from_channel_map {10};         // How much time in s to wait after the channel map has been filled to run the other algorithms
-  static constexpr int m_sleep_time {300};                     // How much time in ms to sleep between checking if the run has been stopped
-  static constexpr int m_sleep_time_df {300};                  // How much time in ms to sleep between checking if a TR from DF has arrived
-  static constexpr int m_timesync_check {100};                 // How much time in ms to wait for correct timesync messages
+  static constexpr int m_channel_map_delay{ 2 }; // How much time in s to wait until running the channel map
+  static constexpr int m_offset_from_channel_map{
+    10
+  }; // How much time in s to wait after the channel map has been filled to run the other algorithms
+  static constexpr int m_sleep_time{ 300 }; // How much time in ms to sleep between checking if the run has been stopped
+  static constexpr int m_sleep_time_df{
+    300
+  }; // How much time in ms to sleep between checking if a TR from DF has arrived
+  static constexpr int m_timesync_check{ 100 }; // How much time in ms to wait for correct timesync messages
 };
 
 } // namespace dunedaq::dqm

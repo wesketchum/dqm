@@ -31,7 +31,6 @@ public:
   void fill(const double x);
 
   void clean();
-
 };
 
 } // namespace dunedaq

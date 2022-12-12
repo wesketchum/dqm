@@ -15,9 +15,9 @@
 
 #include "dqm/algs/RMS.hpp"
 
-#include <vector>
-#include <random>
 #include <numeric>
+#include <random>
+#include <vector>
 
 using namespace dunedaq::dqm;
 
@@ -67,6 +67,5 @@ BOOST_AUTO_TEST_CASE(RMS_test5)
 {
   RMS_test_case(100000, 0, 100000);
 }
-
 
 BOOST_AUTO_TEST_SUITE_END()
