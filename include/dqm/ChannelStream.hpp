@@ -12,18 +12,18 @@
 #include "dqm/AnalysisModule.hpp"
 #include "dqm/ChannelMap.hpp"
 #include "dqm/Constants.hpp"
-#include "dqm/DQMFormats.hpp"
-#include "dqm/DQMLogging.hpp"
 #include "dqm/Decoder.hpp"
 #include "dqm/Exporter.hpp"
-#include "dqm/FormatUtils.hpp"
 #include "dqm/Issues.hpp"
 #include "dqm/Pipeline.hpp"
+#include "dqm/DQMFormats.hpp"
+#include "dqm/DQMLogging.hpp"
+#include "dqm/FormatUtils.hpp"
 
 #include "daqdataformats/TriggerRecord.hpp"
 
-#include <cstdlib>
 #include <functional>
+#include <cstdlib>
 #include <map>
 #include <memory>
 #include <string>
@@ -41,10 +41,12 @@ public:
                 std::vector<int>& link_idx,
                 std::function<std::vector<I>(std::vector<T>&, int, int)> function);
 
-  void run(std::shared_ptr<daqdataformats::TriggerRecord> record, DQMArgs& args, DQMInfo& info) override;
+  void run(std::shared_ptr<daqdataformats::TriggerRecord> record,
+      DQMArgs& args, DQMInfo& info) override;
 
-  template<class R>
-  void run_(std::shared_ptr<daqdataformats::TriggerRecord> record, DQMArgs& args, DQMInfo& info);
+  template <class R>
+  void run_(std::shared_ptr<daqdataformats::TriggerRecord> record,
+       DQMArgs& args, DQMInfo& info);
 
   void transmit(const std::string& kafka_address,
                 std::shared_ptr<ChannelMap>& cmap,
@@ -64,11 +66,11 @@ private:
   std::function<std::vector<I>(std::vector<T>&, int, int)> m_function;
 };
 
-template<class T, class I>
+template <class T, class I>
 ChannelStream<T, I>::ChannelStream(std::string name,
-                                   int nchannels,
-                                   std::vector<int>& link_idx,
-                                   std::function<std::vector<I>(std::vector<T>&, int, int)> function)
+            int nchannels,
+            std::vector<int>& link_idx,
+            std::function<std::vector<I>(std::vector<T>&, int, int)> function)
   : m_name(name)
   , m_size(nchannels)
   , m_function(function)
@@ -83,23 +85,26 @@ ChannelStream<T, I>::ChannelStream(std::string name,
   }
 }
 
-template<class T, class I>
+template <class T, class I>
 void
-ChannelStream<T, I>::run(std::shared_ptr<daqdataformats::TriggerRecord> record, DQMArgs& args, DQMInfo& info)
+ChannelStream<T, I>::run(std::shared_ptr<daqdataformats::TriggerRecord> record,
+                   DQMArgs& args, DQMInfo& info)
 {
-  TLOG(TLVL_WORK_STEPS) << "Running " << m_name << " with frontend_type = " << args.frontend_type;
+  TLOG(TLVL_WORK_STEPS) << "Running "<< m_name << " with frontend_type = " << args.frontend_type;
   auto start = std::chrono::steady_clock::now();
   auto frontend_type = args.frontend_type;
   if (frontend_type == "wib") {
     set_is_running(true);
     run_<detdataformats::wib::WIBFrame>(std::move(record), args, info);
     set_is_running(false);
-  } else if (frontend_type == "wib2") {
+  }
+  else if (frontend_type == "wib2") {
     set_is_running(true);
     run_<detdataformats::wib2::WIB2Frame>(std::move(record), args, info);
     set_is_running(false);
   }
   auto stop = std::chrono::steady_clock::now();
+
 
   // else if (frontend_type == "tde") {
   //   set_is_running(true);
@@ -107,19 +112,20 @@ ChannelStream<T, I>::run(std::shared_ptr<daqdataformats::TriggerRecord> record, 
   //   set_is_running(false);
   //   return ret;
   // }
-  info.std_time_taken.store(std::chrono::duration_cast<std::chrono::milliseconds>(stop - start).count());
+  info.std_time_taken.store(std::chrono::duration_cast<std::chrono::milliseconds>(stop-start).count());
   info.std_times_run++;
 }
 
-template<class T, class I>
-template<class R>
+template <class T, class I>
+template <class R>
 void
-ChannelStream<T, I>::run_(std::shared_ptr<daqdataformats::TriggerRecord> record, DQMArgs& args, DQMInfo& info)
+ChannelStream<T, I>::run_(std::shared_ptr<daqdataformats::TriggerRecord> record,
+                DQMArgs& args, DQMInfo& info)
 {
   auto map = args.map;
 
   auto frames = decode<R>(record, args.max_frames);
-  auto pipe = Pipeline<R>({ "remove_empty", "check_empty", "check_timestamps_aligned" });
+  auto pipe = Pipeline<R>({"remove_empty", "check_empty", "check_timestamps_aligned"});
   bool valid_data = pipe(frames);
   if (!valid_data) {
     return;
@@ -139,16 +145,19 @@ ChannelStream<T, I>::run_(std::shared_ptr<daqdataformats::TriggerRecord> record,
     }
   }
 
-  transmit(args.kafka_address, map, args.kafka_topic, record->get_header_ref().get_run_number());
+  transmit(args.kafka_address,
+           map,
+           args.kafka_topic,
+           record->get_header_ref().get_run_number());
   clean();
 }
 
-template<class T, class I>
+template <class T, class I>
 void
 ChannelStream<T, I>::transmit(const std::string& kafka_address,
-                              std::shared_ptr<ChannelMap>& cmap,
-                              const std::string& topicname,
-                              int run_num)
+                    std::shared_ptr<ChannelMap>& cmap,
+                    const std::string& topicname,
+                    int run_num)
 {
   // Placeholders
   std::string dataname = m_name;
@@ -197,25 +206,23 @@ ChannelStream<T, I>::transmit(const std::string& kafka_address,
     std::string header = str.substr(0, index);
     // Assume the number of parts is at most double digits, then the size of the new part of the header
     // is at most 31 bytes
-    int parts = (str.size() - header.size() - 4) / (max_size - header.size() - 4 - 31) +
-                ((str.size() - header.size() - 4) % (max_size - header.size() - 4 - 31) > 0);
+    int parts = (str.size() - header.size() - 4) / (max_size - header.size() - 4 - 31) + ((str.size() - header.size() - 4) % (max_size - header.size() - 4 -31) > 0);
     TLOG_DEBUG(TLVL_WORK_STEPS) << "Splitting message in " << parts << " parts";
     if (parts > 99) {
       return;
     }
     for (int i = 0; i < parts; ++i) {
       std::string newheader = header;
-      newheader += ",\"part\":\"" + std::to_string(i + 1) + "\",";
+      newheader += ",\"part\":\"" + std::to_string(i+1) + "\",";
       newheader += "\"total_parts\":\"" + std::to_string(parts) + "\"";
-      std::string body =
-        str.substr(index + 4 + ((max_size - header.size() - 4 - 31) * i), max_size - header.size() - 4 - 31);
+      std::string body = str.substr(index + 4 + ((max_size - header.size() - 4 - 31) * i), max_size - header.size() - 4 - 31);
       TLOG() << "body.size() = " << body.size();
       KafkaExport(kafka_address, newheader + "}\n\n\n" + body, topicname);
     }
   }
 }
 
-template<class T, class I>
+template <class T, class I>
 void
 ChannelStream<T, I>::clean()
 {
@@ -224,14 +231,14 @@ ChannelStream<T, I>::clean()
   }
 }
 
-template<class T, class I>
+template <class T, class I>
 void
 ChannelStream<T, I>::fill(int ch, int link, I value)
 {
   histvec[ch + m_index[link]].fill(value);
 }
 
-template<class T, class I>
+template <class T, class I>
 int
 ChannelStream<T, I>::get_local_index(int ch, int link)
 {

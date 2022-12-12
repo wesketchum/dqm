@@ -12,15 +12,15 @@
 // DQM
 #include "dqm/AnalysisModule.hpp"
 #include "dqm/ChannelMap.hpp"
-#include "dqm/ChannelStream.hpp"
 #include "dqm/Constants.hpp"
-#include "dqm/DQMLogging.hpp"
 #include "dqm/Decoder.hpp"
 #include "dqm/Exporter.hpp"
-#include "dqm/FormatUtils.hpp"
 #include "dqm/Issues.hpp"
-#include "dqm/Pipeline.hpp"
 #include "dqm/algs/Counter.hpp"
+#include "dqm/FormatUtils.hpp"
+#include "dqm/Pipeline.hpp"
+#include "dqm/DQMLogging.hpp"
+#include "dqm/ChannelStream.hpp"
 
 #include "daqdataformats/TriggerRecord.hpp"
 #include "detdataformats/tde/TDE16Frame.hpp"
@@ -36,15 +36,22 @@ class CounterModule : public ChannelStream<Counter, int>
 {
 
 public:
-  CounterModule(std::string name, int nchannels, std::vector<int>& link_idx);
+  CounterModule(std::string name,
+            int nchannels,
+            std::vector<int>& link_idx);
+
 };
 
-CounterModule::CounterModule(std::string name, int nchannels, std::vector<int>& link_idx)
-  : ChannelStream(name, nchannels, link_idx, [this](std::vector<Counter>& vec, int ch, int link) -> std::vector<int> {
-    return vec[get_local_index(ch, link)].count;
-  })
+CounterModule::CounterModule(std::string name,
+                             int nchannels,
+                             std::vector<int>& link_idx
+                     )
+  : ChannelStream(name, nchannels, link_idx,
+                  [this] (std::vector<Counter>& vec, int ch, int link) -> std::vector<int> {
+                    return vec[get_local_index(ch, link)].count;})
 {
 }
+
 
 } // namespace dunedaq::dqm
 

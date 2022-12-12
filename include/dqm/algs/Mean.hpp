@@ -31,6 +31,7 @@ public:
   double mean();
 };
 
+
 void
 Mean::fill(double x)
 {
@@ -51,6 +52,7 @@ Mean::mean()
   m_mean = m_sum / m_nentries;
   return m_mean;
 }
+
 
 } // namespace dunedaq::dqm
 

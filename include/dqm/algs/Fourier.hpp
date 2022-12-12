@@ -8,8 +8,9 @@
 #ifndef DQM_INCLUDE_DQM_ALGS_FOURIER_HPP_
 #define DQM_INCLUDE_DQM_ALGS_FOURIER_HPP_
 
-#include <complex>
+
 #include <vector>
+#include <complex>
 // #include <complex> has to be before this include
 #include <fftw3.h>
 
@@ -36,6 +37,7 @@ public:
   std::complex<double> get_transform_at(int index);
   std::vector<std::complex<double>> get_transform();
 };
+
 
 } // namespace dunedaq::dqm
 

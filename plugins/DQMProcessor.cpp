@@ -12,16 +12,16 @@
 #include "DQMProcessor.hpp"
 
 // Channel map and other utilities
-#include "dqm/ChannelMap.hpp"
-#include "dqm/ChannelMapFiller.hpp"
 #include "dqm/Constants.hpp"
 #include "dqm/DQMLogging.hpp"
+#include "dqm/ChannelMap.hpp"
+#include "dqm/ChannelMapFiller.hpp"
 
 // DUNE-DAQ includes
 #include "daqdataformats/ComponentRequest.hpp"
 #include "daqdataformats/SourceID.hpp"
-#include "dfmessages/TRMonRequest.hpp"
 #include "dfmessages/TimeSync.hpp"
+#include "dfmessages/TRMonRequest.hpp"
 #include "dfmessages/TriggerRecord_serialization.hpp"
 
 // C++ includes
@@ -36,19 +36,19 @@
 #ifndef WITH_PYTHON_SUPPORT
 // Modules with the classes that contain the algorithms
 #include "dqm/modules/CounterModule.hpp"
-#include "dqm/modules/FourierContainer.hpp"
-#include "dqm/modules/RMSModule.hpp"
 #include "dqm/modules/STDModule.hpp"
+#include "dqm/modules/RMSModule.hpp"
+#include "dqm/modules/FourierContainer.hpp"
 #else
-#include "dqm/PythonUtils.hpp"
 #include "dqm/modules/Python.hpp"
+#include "dqm/PythonUtils.hpp"
 #endif
 
 namespace dunedaq {
 namespace dqm {
 
-using logging::TLVL_DATA_SENT_OR_RECEIVED;
 using logging::TLVL_WORK_STEPS;
+using logging::TLVL_DATA_SENT_OR_RECEIVED;
 
 DQMProcessor::DQMProcessor(const std::string& name)
   : DAQModule(name)
@@ -125,9 +125,9 @@ DQMProcessor::do_configure(const nlohmann::json& args)
 
   m_max_frames = conf.max_num_frames;
 
-  m_dqm_args =
-    DQMArgs{ m_run_marker, std::shared_ptr<ChannelMap>(new ChannelMap), m_frontend_type, m_kafka_address, m_kafka_topic,
-             m_max_frames };
+  m_dqm_args = DQMArgs{m_run_marker, std::shared_ptr<ChannelMap>(new ChannelMap),
+                       m_frontend_type, m_kafka_address,
+                       m_kafka_topic, m_max_frames};
 
   if (m_mode == "readout") {
     m_receiver = get_iom_receiver<std::unique_ptr<daqdataformats::TriggerRecord>>("trigger_record_q_dqm");
@@ -147,11 +147,13 @@ DQMProcessor::do_start(const nlohmann::json& args)
     // Subscribe to all TimeSync messages
     get_iomanager()->add_callback<dfmessages::TimeSync>(
       ".*", std::bind(&DQMProcessor::dispatch_timesync, this, std::placeholders::_1));
+
   }
 
   if (m_mode == "df") {
     get_iomanager()->add_callback<std::unique_ptr<daqdataformats::TriggerRecord>>(
       m_df2dqm_connection, std::bind(&DQMProcessor::dispatch_trigger_record, this, std::placeholders::_1));
+
   }
 
   m_dqm_args.run_mark = std::make_shared<std::atomic<bool>>(true);
@@ -169,7 +171,8 @@ DQMProcessor::do_drain_dataflow(const data_t&)
 
   if (m_mode == "readout") {
     get_iomanager()->remove_callback<dfmessages::TimeSync>(".*");
-  } else if (m_mode == "df") {
+  }
+  else if (m_mode == "df") {
     get_iomanager()->remove_callback<std::unique_ptr<daqdataformats::TriggerRecord>>(m_df2dqm_connection);
   }
   TLOG() << get_name() << ": received " << m_received_timesync_count.load() << " TimeSync messages.";
@@ -211,14 +214,13 @@ DQMProcessor::do_work()
                                              m_df_algs.find("std") != std::string::npos,
                                              m_df_algs.find("fourier_channel") != std::string::npos,
                                              m_df_algs.find("fourier_plane") != std::string::npos,
-                                             m_clock_frequency,
-                                             m_link_idx,
-                                             m_df_num_frames,
-                                             m_frontend_type);
+                                             m_clock_frequency, m_link_idx,
+                                             m_df_num_frames, m_frontend_type);
 
 #ifndef WITH_PYTHON_SUPPORT
   // Raw event display
-  auto raw = std::make_shared<CounterModule>("raw", CHANNELS_PER_LINK * m_link_idx.size(), m_link_idx);
+  auto raw = std::make_shared<CounterModule>(
+        "raw", CHANNELS_PER_LINK * m_link_idx.size(), m_link_idx);
   // STD
   auto std = std::make_shared<STDModule>("std", CHANNELS_PER_LINK * m_link_idx.size(), m_link_idx);
   // RMS
@@ -226,19 +228,19 @@ DQMProcessor::do_work()
   // Fourier transform
   // The Delta of time between frames is the inverse of the sampling frequency (clock frequency)
   // but because we are sampling every TICKS_BETWEEN_TIMESTAMP ticks we have to multiply by that
-  auto fourier_channel =
-    std::make_shared<FourierContainer>("fourier_channel",
-                                       CHANNELS_PER_LINK * m_link_idx.size(),
-                                       m_link_idx,
-                                       1. / m_clock_frequency * ((m_frontend_type == "wib") ? 25 : 32),
-                                       m_fourier_channel_conf.num_frames);
-  auto fourier_plane =
-    std::make_shared<FourierContainer>("fourier_plane",
-                                       4,
-                                       m_link_idx,
-                                       1. / m_clock_frequency * ((m_frontend_type == "wib") ? 25 : 32),
-                                       m_fourier_plane_conf.num_frames,
-                                       true);
+  auto fourier_channel = std::make_shared<FourierContainer>("fourier_channel",
+                                                      CHANNELS_PER_LINK * m_link_idx.size(),
+                                                      m_link_idx,
+                                                            1. / m_clock_frequency * ((m_frontend_type == "wib") ? 25 : 32),
+                                                      m_fourier_channel_conf.num_frames);
+  auto fourier_plane = std::make_shared<FourierContainer>("fourier_plane",
+                                                      4,
+                                                      m_link_idx,
+                                                       1. / m_clock_frequency * ((m_frontend_type == "wib") ? 25 : 32),
+                                                      m_fourier_plane_conf.num_frames,
+                                                      true);
+
+
 
   // Initial tasks
   // Add some offset time to let the other parts of the DAQ start
@@ -286,8 +288,7 @@ DQMProcessor::do_work()
     };
 
   if (m_mode == "df" && m_df_seconds > 0) {
-    map[std::chrono::system_clock::now() +
-        std::chrono::milliseconds(1000 * m_offset_from_channel_map + static_cast<int>(m_df_offset * 1000))] = {
+    map[std::chrono::system_clock::now() + std::chrono::milliseconds(1000 * m_offset_from_channel_map + static_cast<int>(m_df_offset * 1000))] = {
       dfmodule,
       m_df_seconds,
       -1, // Number of frames, unused
@@ -300,20 +301,24 @@ DQMProcessor::do_work()
   Py_Initialize();
   np::initialize();
 
-  typedef std::map<int, std::vector<detdataformats::wib::WIBFrame*>> mapt;
+
+typedef std::map<int, std::vector<detdataformats::wib::WIBFrame*>> mapt;
   p::class_<std::map<int, std::vector<detdataformats::wib::WIBFrame*>>>("MapWithFrames")
-    .def("__len__", &mapt::size)
-    .def("__getitem__", &MapItem<mapt>::get
-         // return_value_policy<copy_non_const_reference>()
-         )
-    .def("get_adc", &MapItem<mapt>::get_adc
-         // return_value_policy<copy_non_const_reference>()
-    );
+  .def("__len__", &mapt::size)
+  .def("__getitem__", &MapItem<mapt>::get
+      // return_value_policy<copy_non_const_reference>()
+       )
+  .def("get_adc", &MapItem<mapt>::get_adc
+      // return_value_policy<copy_non_const_reference>()
+       )
+    ;
 
   p::class_<std::vector<np::ndarray>>("VecClass")
-    .def("__len__", &std::vector<np::ndarray>::size)
-    .def(
-      "__getitem__", &std_item<std::vector<np::ndarray>>::get, p::return_value_policy<p::copy_non_const_reference>());
+  .def("__len__", &std::vector<np::ndarray>::size)
+  .def("__getitem__", &std_item<std::vector<np::ndarray>>::get,
+       p::return_value_policy<p::copy_non_const_reference>()
+         )
+  ;
 
   auto std_python = std::make_shared<PythonModule>("std");
   if (m_std_conf.how_often > 0)
@@ -356,8 +361,7 @@ DQMProcessor::do_work()
     };
 
   if (m_mode == "df" && m_df_seconds > 0) {
-    map[std::chrono::system_clock::now() +
-        std::chrono::milliseconds(1000 * m_offset_from_channel_map + static_cast<int>(m_df_offset * 1000))] = {
+    map[std::chrono::system_clock::now() + std::chrono::milliseconds(1000 * m_offset_from_channel_map + static_cast<int>(m_df_offset * 1000))] = {
       dfmodule,
       m_df_seconds,
       -1, // Number of frames, unused
@@ -366,17 +370,15 @@ DQMProcessor::do_work()
     };
   }
 
-  PyThreadState* _save;
+  PyThreadState *_save;
   _save = PyEval_SaveThread();
 #endif
 
-  map[std::chrono::system_clock::now() + std::chrono::seconds(m_channel_map_delay)] = {
-    chfiller,
-    3,
-    1, // Request only one frame for each link
-    nullptr,
-    "Channel map filler"
-  };
+
+  map[std::chrono::system_clock::now() + std::chrono::seconds(m_channel_map_delay)] = { chfiller,
+                                                                                        3,
+                                                                                        1, // Request only one frame for each link
+                                                                                        nullptr,  "Channel map filler" };
 
   // Main loop, running forever
   while (*m_dqm_args.run_mark) {
@@ -391,12 +393,10 @@ DQMProcessor::do_work()
 
     // Sleep until the next time, done in steps so that one doesn't have to wait a lot
     // when stopping
-    while (*m_dqm_args.run_mark &&
-           next_time - std::chrono::system_clock::now() > std::chrono::duration<double>(m_sleep_time / 1000.)) {
+    while (*m_dqm_args.run_mark && next_time - std::chrono::system_clock::now() > std::chrono::duration<double>(m_sleep_time / 1000.)) {
       std::this_thread::sleep_for(std::chrono::milliseconds(m_sleep_time));
     }
-    if (!*m_dqm_args.run_mark)
-      break;
+    if (!*m_dqm_args.run_mark) break;
     std::this_thread::sleep_until(next_time);
 
     // Save pointer to delete the thread later
@@ -413,7 +413,8 @@ DQMProcessor::do_work()
       map.erase(task);
       TLOG_DEBUG(5) << "Channel map already filled, removing entry and starting again";
       continue;
-    } else if (analysis_instance.mod != chfiller && !m_dqm_args.map->is_filled()) {
+    }
+    else if (analysis_instance.mod != chfiller && !m_dqm_args.map->is_filled()) {
       map[std::chrono::system_clock::now() +
           // We wait 10% of the time between runs of the algorithm
           std::chrono::milliseconds(static_cast<int>(analysis_instance.between_time * 100.0))] = {
@@ -473,7 +474,8 @@ DQMProcessor::do_work()
         continue;
       }
       TLOG_DEBUG(10) << "Request (trigger decision) pushed to the queue";
-    } else if (m_mode == "df") {
+    }
+    else if (m_mode == "df") {
       dfrequest();
     }
 
@@ -488,7 +490,8 @@ DQMProcessor::do_work()
         continue;
       }
       TLOG_DEBUG(TLVL_DATA_SENT_OR_RECEIVED) << "Data received from readout";
-    } else if (m_mode == "df") {
+    }
+    else if (m_mode == "df") {
       while (*m_dqm_args.run_mark && dftrs.get_num_elements() == 0) {
         std::this_thread::sleep_for(std::chrono::milliseconds(m_sleep_time_df));
       }
@@ -512,7 +515,11 @@ DQMProcessor::do_work()
     TLOG() << "Running \"" << analysis_instance.name << "\"";
     map[std::chrono::system_clock::now() +
         std::chrono::milliseconds(static_cast<int>(analysis_instance.between_time) * 1000)] = {
-      algo, analysis_instance.between_time, analysis_instance.number_of_frames, current_thread, analysis_instance.name
+      algo,
+      analysis_instance.between_time,
+      analysis_instance.number_of_frames,
+      current_thread,
+      analysis_instance.name
     };
 
     // Delete thread
@@ -542,9 +549,7 @@ DQMProcessor::do_work()
 } // NOLINT Function length
 
 dfmessages::TriggerDecision
-DQMProcessor::create_readout_request(std::vector<dfmessages::SourceID>& m_sids,
-                                     int number_of_frames,
-                                     std::string& frontend_type)
+DQMProcessor::create_readout_request(std::vector<dfmessages::SourceID>& m_sids, int number_of_frames, std::string& frontend_type)
 {
   auto timestamp = m_time_est->get_timestamp_estimate();
   dfmessages::TriggerDecision decision;
@@ -581,11 +586,13 @@ DQMProcessor::create_readout_request(std::vector<dfmessages::SourceID>& m_sids,
   return decision;
 }
 
+
 void
 DQMProcessor::dispatch_trigger_record(std::unique_ptr<daqdataformats::TriggerRecord>& tr)
 {
   dftrs.push(std::move(tr), std::chrono::milliseconds(100));
 }
+
 
 void
 DQMProcessor::dfrequest()
@@ -599,6 +606,7 @@ DQMProcessor::dfrequest()
   get_iom_sender<dfmessages::TRMonRequest>(m_dqm2df_connection)->send(std::move(trmon), m_sink_timeout);
 }
 
+
 void
 DQMProcessor::dispatch_timesync(dfmessages::TimeSync& timesyncmsg)
 {
@@ -609,8 +617,7 @@ DQMProcessor::dispatch_timesync(dfmessages::TimeSync& timesyncmsg)
     if (timesyncmsg.run_number == m_run_number) {
       m_time_est->add_timestamp_datapoint(timesyncmsg);
     } else {
-      TLOG_DEBUG(0) << "Discarded TimeSync message from run " << timesyncmsg.run_number << " during run "
-                    << m_run_number;
+      TLOG_DEBUG(0) << "Discarded TimeSync message from run " << timesyncmsg.run_number << " during run " << m_run_number;
     }
   }
 }

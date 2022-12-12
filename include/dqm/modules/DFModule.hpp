@@ -15,13 +15,13 @@
 #include "dqm/Issues.hpp"
 
 #ifndef WITH_PYTHON_SUPPORT
-#include "CounterModule.hpp"
-#include "FourierContainer.hpp"
 #include "RMSModule.hpp"
 #include "STDModule.hpp"
+#include "CounterModule.hpp"
+#include "FourierContainer.hpp"
 #else
-#include "dqm/PythonUtils.hpp"
 #include "dqm/modules/Python.hpp"
+#include "dqm/PythonUtils.hpp"
 #endif
 
 #include "daqdataformats/TriggerRecord.hpp"
@@ -34,21 +34,16 @@ class DFModule : public AnalysisModule
 {
 
 public:
-  DFModule(bool enable_raw,
-           bool enable_rms,
-           bool enable_std,
-           bool enable_fourier_channel,
-           bool enable_fourier_sum_plane,
-           int clock_frequency,
-           std::vector<int>& ids,
-           int num_frames,
-           std::string& frontend_type);
+  DFModule(bool enable_raw, bool enable_rms, bool enable_std, bool enable_fourier_channel, bool enable_fourier_sum_plane,
+           int clock_frequency, std::vector<int>& ids, int num_frames, std::string& frontend_type);
 
   bool m_enable_raw, m_enable_rms, m_enable_std, m_enable_fourier_channel, m_enable_fourier_plane;
   int m_clock_frequency;
-  void run(std::shared_ptr<daqdataformats::TriggerRecord> record, DQMArgs& args, DQMInfo& info) override;
+  void run(std::shared_ptr<daqdataformats::TriggerRecord> record,
+      DQMArgs& args, DQMInfo& info) override;
 
 private:
+
   std::shared_ptr<AnalysisModule> m_rms;
   std::shared_ptr<AnalysisModule> m_std;
   std::shared_ptr<AnalysisModule> m_raw;
@@ -57,25 +52,19 @@ private:
   std::vector<int> m_ids;
 
   int m_num_frames;
+
 };
 
-DFModule::DFModule(bool enable_raw,
-                   bool enable_rms,
-                   bool enable_std,
-                   bool enable_fourier_channel,
-                   bool enable_fourier_sum_plane,
-                   int clock_frequency,
-                   std::vector<int>& ids,
-                   int num_frames,
-                   std::string& frontend_type)
-  : m_enable_raw(enable_raw)
-  , m_enable_rms(enable_rms)
-  , m_enable_std(enable_std)
-  , m_enable_fourier_channel(enable_fourier_channel)
-  , m_enable_fourier_plane(enable_fourier_sum_plane)
-  , m_clock_frequency(clock_frequency)
-  , m_ids(ids)
-  , m_num_frames(num_frames)
+DFModule::DFModule(bool enable_raw, bool enable_rms, bool enable_std, bool enable_fourier_channel, bool enable_fourier_sum_plane,
+                   int clock_frequency, std::vector<int>& ids, int num_frames, std::string& frontend_type) :
+    m_enable_raw(enable_raw),
+    m_enable_rms(enable_rms),
+    m_enable_std(enable_std),
+    m_enable_fourier_channel(enable_fourier_channel),
+    m_enable_fourier_plane(enable_fourier_sum_plane),
+    m_clock_frequency(clock_frequency),
+    m_ids(ids),
+    m_num_frames(num_frames)
 
 {
 #ifndef WITH_PYTHON_SUPPORT
@@ -89,21 +78,19 @@ DFModule::DFModule(bool enable_raw,
     m_std = std::make_shared<STDModule>("std", CHANNELS_PER_LINK * m_ids.size(), m_ids);
   }
   if (m_enable_fourier_channel) {
-    m_fourier_channel =
-      std::make_shared<FourierContainer>("fft_display",
-                                         CHANNELS_PER_LINK * m_ids.size(),
-                                         m_ids,
-                                         1. / m_clock_frequency * (strcmp(frontend_type.c_str(), "wib") ? 32 : 25),
-                                         m_num_frames);
+    m_fourier_channel = std::make_shared<FourierContainer>("fft_display",
+                                                    CHANNELS_PER_LINK * m_ids.size(),
+                                                    m_ids,
+                                                   1. / m_clock_frequency * (strcmp(frontend_type.c_str(), "wib") ? 32 : 25),
+                                                    m_num_frames);
   }
   if (m_enable_fourier_plane) {
-    m_fourier_plane =
-      std::make_shared<FourierContainer>("fft_sums_display",
-                                         4,
-                                         m_ids,
-                                         1. / m_clock_frequency * (strcmp(frontend_type.c_str(), "wib") ? 32 : 25),
-                                         m_num_frames,
-                                         true);
+    m_fourier_plane = std::make_shared<FourierContainer>("fft_sums_display",
+                                                       4,
+                                                       m_ids,
+                                                       1. / m_clock_frequency * (strcmp(frontend_type.c_str(), "wib") ? 32 : 25),
+                                                       m_num_frames,
+                                                       true);
   }
 #else
   if (m_enable_raw) {
@@ -122,20 +109,21 @@ DFModule::DFModule(bool enable_raw,
     m_fourier_plane = std::make_shared<PythonModule>("fp");
   }
 #endif
+
 }
 
 void
-DFModule::run(std::shared_ptr<daqdataformats::TriggerRecord> record, DQMArgs& args, DQMInfo& info)
+DFModule::run(std::shared_ptr<daqdataformats::TriggerRecord> record,
+              DQMArgs& args, DQMInfo& info)
 {
   set_is_running(true);
   auto run_mark = args.run_mark;
 
-  std::vector<std::shared_ptr<AnalysisModule>> list{ m_raw, m_std, m_fourier_channel, m_fourier_plane };
-  std::vector<bool> will_run{ m_enable_raw, m_enable_std, m_enable_fourier_channel, m_enable_fourier_plane };
+  std::vector<std::shared_ptr<AnalysisModule>> list {m_raw, m_std, m_fourier_channel, m_fourier_plane};
+  std::vector<bool> will_run {m_enable_raw, m_enable_std, m_enable_fourier_channel, m_enable_fourier_plane};
 
-  for (size_t i = 0; i < list.size(); ++i) {
-    if (!will_run[i])
-      continue;
+  for(size_t i=0; i < list.size(); ++i) {
+    if (!will_run[i]) continue;
     if (!run_mark) {
       break;
     }
@@ -144,6 +132,7 @@ DFModule::run(std::shared_ptr<daqdataformats::TriggerRecord> record, DQMArgs& ar
 
   set_is_running(false);
 }
+
 
 } // namespace dunedaq::dqm
 
