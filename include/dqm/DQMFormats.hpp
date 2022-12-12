@@ -10,13 +10,14 @@
 
 #include "dqm/ChannelMap.hpp"
 
-#include <memory>
 #include <map>
+#include <memory>
 #include <string>
 
 namespace dunedaq::dqm {
 
-struct DQMArgs {
+struct DQMArgs
+{
   std::shared_ptr<std::atomic<bool>> run_mark;
   std::shared_ptr<ChannelMap> map;
   std::string frontend_type;
@@ -25,21 +26,13 @@ struct DQMArgs {
   int max_frames;
 };
 
-struct DQMInfo {
-  std::atomic<int> channel_map_total_channels,
-                   channel_map_total_planes,
-                   raw_times_run,
-                   std_times_run,
-                   rms_times_run,
-                   fourier_channel_times_run,
-                   fourier_plane_times_run;
+struct DQMInfo
+{
+  std::atomic<int> channel_map_total_channels, channel_map_total_planes, raw_times_run, std_times_run, rms_times_run,
+    fourier_channel_times_run, fourier_plane_times_run;
 
-  std::atomic<float> raw_time_taken,
-                     std_time_taken,
-                     rms_time_taken,
-                     fourier_channel_time_taken,
-                     fourier_plane_time_taken;
-
+  std::atomic<float> raw_time_taken, std_time_taken, rms_time_taken, fourier_channel_time_taken,
+    fourier_plane_time_taken;
 };
 
 } // namespace dunedaq::dqm

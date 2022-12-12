@@ -12,12 +12,12 @@
 #include "dqm/AnalysisModule.hpp"
 #include "dqm/ChannelMap.hpp"
 #include "dqm/Constants.hpp"
-#include "dqm/Decoder.hpp"
-#include "dqm/Issues.hpp"
 #include "dqm/DQMFormats.hpp"
 #include "dqm/DQMLogging.hpp"
-#include "dqm/PythonUtils.hpp"
+#include "dqm/Decoder.hpp"
+#include "dqm/Issues.hpp"
 #include "dqm/Pipeline.hpp"
+#include "dqm/PythonUtils.hpp"
 
 #include "daqdataformats/TriggerRecord.hpp"
 
@@ -26,7 +26,6 @@
 #include <memory>
 #include <string>
 #include <vector>
-#include <string>
 
 #include <Python.h>
 #include <boost/python.hpp>
@@ -47,14 +46,12 @@ class PythonModule : public AnalysisModule
 public:
   PythonModule(std::string name);
 
-  void run(std::shared_ptr<daqdataformats::TriggerRecord> record,
-      DQMArgs& args, DQMInfo& info) override;
+  void run(std::shared_ptr<daqdataformats::TriggerRecord> record, DQMArgs& args, DQMInfo& info) override;
 
-  template <class T>
-  void run_(std::shared_ptr<daqdataformats::TriggerRecord> record,
-       DQMArgs& args, DQMInfo& info);
+  template<class T>
+  void run_(std::shared_ptr<daqdataformats::TriggerRecord> record, DQMArgs& args, DQMInfo& info);
 
-  void transmit_global(const std::string &kafka_address,
+  void transmit_global(const std::string& kafka_address,
                        std::shared_ptr<ChannelMap> cmap,
                        const std::string& topicname,
                        int run_num);
@@ -65,15 +62,14 @@ PythonModule::PythonModule(std::string name)
 {
 }
 
-template <class T>
+template<class T>
 void
-PythonModule::run_(std::shared_ptr<daqdataformats::TriggerRecord> record,
-                       DQMArgs& args, DQMInfo& info)
+PythonModule::run_(std::shared_ptr<daqdataformats::TriggerRecord> record, DQMArgs& args, DQMInfo& info)
 {
   auto start = std::chrono::steady_clock::now();
   auto map = args.map;
   auto frames = decode<T>(record, args.max_frames);
-  auto pipe = Pipeline<T>({"remove_empty", "check_empty", "make_same_size", "check_timestamps_aligned"});
+  auto pipe = Pipeline<T>({ "remove_empty", "check_empty", "make_same_size", "check_timestamps_aligned" });
   bool valid_data = pipe(frames);
   if (!valid_data) {
     return;
@@ -100,13 +96,14 @@ PythonModule::run_(std::shared_ptr<daqdataformats::TriggerRecord> record,
   auto planes = MapItem<mapt>::get_planes(frames, map);
 
   p::object f = module.attr("main");
-  f(frames, channels, planes,
+  f(frames,
+    channels,
+    planes,
     record->get_header_ref().get_run_number(),
     partition,
     app_name,
     args.kafka_address.c_str(),
-    args.kafka_topic.c_str()
-    );
+    args.kafka_topic.c_str());
   PyGILState_Release(gilState);
   // try {
   //   f(frames, channels, planes);
@@ -117,14 +114,12 @@ PythonModule::run_(std::shared_ptr<daqdataformats::TriggerRecord> record,
 
   // info.fourier_plane_time_taken.store(std::chrono::duration_cast<std::chrono::milliseconds>(stop-start).count());
   // info.fourier_plane_times_run++;
-
 }
 
 void
-PythonModule::run(std::shared_ptr<daqdataformats::TriggerRecord> record,
-                      DQMArgs& args, DQMInfo& info)
+PythonModule::run(std::shared_ptr<daqdataformats::TriggerRecord> record, DQMArgs& args, DQMInfo& info)
 {
-  TLOG(TLVL_WORK_STEPS) << "Running "<< m_name << " with frontend_type = " << args.frontend_type;
+  TLOG(TLVL_WORK_STEPS) << "Running " << m_name << " with frontend_type = " << args.frontend_type;
   auto frontend_type = args.frontend_type;
   auto run_mark = args.run_mark;
   auto map = args.map;
@@ -133,8 +128,7 @@ PythonModule::run(std::shared_ptr<daqdataformats::TriggerRecord> record,
     set_is_running(true);
     run_<detdataformats::wib::WIBFrame>(std::move(record), args, info);
     set_is_running(false);
-  }
-  else if (frontend_type == "wib2") {
+  } else if (frontend_type == "wib2") {
     set_is_running(true);
     run_<detdataformats::wib2::WIB2Frame>(std::move(record), args, info);
     set_is_running(false);

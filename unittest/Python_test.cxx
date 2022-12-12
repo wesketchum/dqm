@@ -34,5 +34,4 @@ BOOST_AUTO_TEST_CASE(Python_test1)
   Python_import_test_case();
 }
 
-
 BOOST_AUTO_TEST_SUITE_END()

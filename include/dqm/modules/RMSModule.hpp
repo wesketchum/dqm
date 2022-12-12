@@ -9,8 +9,8 @@
 #define DQM_SRC_RMSMODULE_HPP_
 
 // DQM
-#include "dqm/algs/RMS.hpp"
 #include "dqm/ChannelStream.hpp"
+#include "dqm/algs/RMS.hpp"
 
 #include <string>
 #include <vector>
@@ -21,19 +21,13 @@ class RMSModule : public ChannelStream<RMS, double>
 {
 
 public:
-  RMSModule(std::string name,
-            int nchannels,
-            std::vector<int>& link_idx);
-
+  RMSModule(std::string name, int nchannels, std::vector<int>& link_idx);
 };
 
-RMSModule::RMSModule(std::string name,
-                             int nchannels,
-                             std::vector<int>& link_idx
-                     )
-  : ChannelStream(name, nchannels, link_idx,
-                  [this] (std::vector<RMS>& vec, int ch, int link) -> std::vector<double> {
-                    return {vec[get_local_index(ch, link)].rms()};})
+RMSModule::RMSModule(std::string name, int nchannels, std::vector<int>& link_idx)
+  : ChannelStream(name, nchannels, link_idx, [this](std::vector<RMS>& vec, int ch, int link) -> std::vector<double> {
+    return { vec[get_local_index(ch, link)].rms() };
+  })
 {
 }
 

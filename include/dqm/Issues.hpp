@@ -46,7 +46,8 @@ ERS_DECLARE_ISSUE(dqm, TimestampsNotAligned, "Timestamps are not aligned, DQM wi
 
 ERS_DECLARE_ISSUE(dqm, InvalidInput, "Invalid input: " << why, ((std::string)why))
 
-ERS_DECLARE_ISSUE(dqm, BadCrateSlotFiber,
+ERS_DECLARE_ISSUE(dqm,
+                  BadCrateSlotFiber,
                   "Bad crate, slot, fiber: (" << crate << ", " << slot << ", " << fiber << ")",
                   ((int)crate)((int)slot)((int)fiber))
 
