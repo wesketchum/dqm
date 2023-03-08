@@ -18,6 +18,7 @@
 #include "dqm/ChannelMapFiller.hpp"
 
 // DUNE-DAQ includes
+#include "appfwk/DAQModuleHelper.hpp"
 #include "daqdataformats/ComponentRequest.hpp"
 #include "daqdataformats/SourceID.hpp"
 #include "dfmessages/TimeSync.hpp"
@@ -59,8 +60,15 @@ DQMProcessor::DQMProcessor(const std::string& name)
 }
 
 void
-DQMProcessor::init(const data_t&)
+DQMProcessor::init(const data_t& init_data)
 {
+  // *KAB, for later:* auto connection_map = appfwk::connection_index(init_data, { "sample_local_name" });
+  auto connection_map = appfwk::connection_index(init_data);
+
+  if (connection_map.count("timesync_input") > 0) {
+    auto iom = iomanager::IOManager::get();
+    m_timesync_receiver = iom->get_receiver<dfmessages::TimeSync>(connection_map["timesync_input"]);
+  }
 }
 
 void
@@ -145,9 +153,9 @@ DQMProcessor::do_start(const nlohmann::json& args)
     m_received_timesync_count.store(0);
 
     // Subscribe to all TimeSync messages
-    get_iomanager()->add_callback<dfmessages::TimeSync>(
-      ".*", std::bind(&DQMProcessor::dispatch_timesync, this, std::placeholders::_1));
-
+    if (m_timesync_receiver) {
+      m_timesync_receiver->add_callback(std::bind(&DQMProcessor::dispatch_timesync, this, std::placeholders::_1));
+    }
   }
 
   if (m_mode == "df") {
@@ -170,12 +178,14 @@ DQMProcessor::do_drain_dataflow(const data_t&)
   m_running_thread->join();
 
   if (m_mode == "readout") {
-    get_iomanager()->remove_callback<dfmessages::TimeSync>(".*");
+    if (m_timesync_receiver) {
+      m_timesync_receiver->remove_callback();
+    }
+    TLOG() << get_name() << ": received " << m_received_timesync_count.load() << " TimeSync messages.";
   }
   else if (m_mode == "df") {
     get_iomanager()->remove_callback<std::unique_ptr<daqdataformats::TriggerRecord>>(m_df2dqm_connection);
   }
-  TLOG() << get_name() << ": received " << m_received_timesync_count.load() << " TimeSync messages.";
 }
 
 void
