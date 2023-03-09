@@ -56,6 +56,8 @@ ERS_DECLARE_ISSUE(dqm, ModuleNotImported, "Python module " << module << " couldn
 
 ERS_DECLARE_ISSUE(dqm, PythonModuleCrashed, "Python module " << module << " crashed", ((std::string)module))
 
+ERS_DECLARE_ISSUE(dqm, MissingConnection, "The " << conn_desc << " connection is not available, and this will prevent this module from working correctly. This problem is probably the result of a mistake in the connection information given to this module at INIT time, please check that information for possible problems.", ((std::string)conn_desc))
+
 } // namespace dunedaq
 
 #endif // DQM_INCLUDE_DQM_ISSUES_HPP_

@@ -108,7 +108,7 @@ FourierContainer::run_(std::shared_ptr<daqdataformats::TriggerRecord> record,
     return;
   }
 
-  auto size = frames.begin()->second.size();
+  //auto size = frames.begin()->second.size();
 
   // Normal mode, fourier transform for every channel
   if (!m_global_mode) {

@@ -120,7 +120,7 @@ template <class T, class I>
 template <class R>
 void
 ChannelStream<T, I>::run_(std::shared_ptr<daqdataformats::TriggerRecord> record,
-                DQMArgs& args, DQMInfo& info)
+                          DQMArgs& args, DQMInfo& /*info*/)
 {
   auto map = args.map;
 

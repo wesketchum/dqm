@@ -18,6 +18,7 @@
 #include "dqm/ChannelMapFiller.hpp"
 
 // DUNE-DAQ includes
+#include "appfwk/DAQModuleHelper.hpp"
 #include "daqdataformats/ComponentRequest.hpp"
 #include "daqdataformats/SourceID.hpp"
 #include "dfmessages/TimeSync.hpp"
@@ -59,8 +60,21 @@ DQMProcessor::DQMProcessor(const std::string& name)
 }
 
 void
-DQMProcessor::init(const data_t&)
+DQMProcessor::init(const data_t& init_data)
 {
+  auto connection_map = appfwk::connection_index(init_data);
+
+  if (connection_map.count("timesync_input") > 0) {
+    m_timesync_receiver = get_iom_receiver<dfmessages::TimeSync>(connection_map["timesync_input"]);
+  }
+
+  if (connection_map.count("trigger_decision_output") > 0) {
+    m_td_sender = get_iom_sender<dfmessages::TriggerDecision>(connection_map["trigger_decision_output"]);
+  }
+
+  if (connection_map.count("trigger_record_input") > 0) {
+    m_tr_receiver = get_iom_receiver<std::unique_ptr<daqdataformats::TriggerRecord>>(connection_map["trigger_record_input"]);
+  }
 }
 
 void
@@ -129,9 +143,15 @@ DQMProcessor::do_configure(const nlohmann::json& args)
                        m_frontend_type, m_kafka_address,
                        m_kafka_topic, m_max_frames};
 
+  // if we are in readout mode and we don't have the appropriate connections,
+  // complain loudly
   if (m_mode == "readout") {
-    m_receiver = get_iom_receiver<std::unique_ptr<daqdataformats::TriggerRecord>>("trigger_record_q_dqm");
-    m_sender = get_iom_sender<dfmessages::TriggerDecision>("trigger_decision_q_dqm");
+    if (! m_td_sender) {
+      ers::error(MissingConnection(ERS_HERE, "TriggerDecision sender"));
+    }
+    if (! m_tr_receiver) {
+      ers::error(MissingConnection(ERS_HERE, "TriggerRecord receiver"));
+    }
   }
 }
 
@@ -145,9 +165,9 @@ DQMProcessor::do_start(const nlohmann::json& args)
     m_received_timesync_count.store(0);
 
     // Subscribe to all TimeSync messages
-    get_iomanager()->add_callback<dfmessages::TimeSync>(
-      ".*", std::bind(&DQMProcessor::dispatch_timesync, this, std::placeholders::_1));
-
+    if (m_timesync_receiver) {
+      m_timesync_receiver->add_callback(std::bind(&DQMProcessor::dispatch_timesync, this, std::placeholders::_1));
+    }
   }
 
   if (m_mode == "df") {
@@ -170,12 +190,14 @@ DQMProcessor::do_drain_dataflow(const data_t&)
   m_running_thread->join();
 
   if (m_mode == "readout") {
-    get_iomanager()->remove_callback<dfmessages::TimeSync>(".*");
+    if (m_timesync_receiver) {
+      m_timesync_receiver->remove_callback();
+    }
+    TLOG() << get_name() << ": received " << m_received_timesync_count.load() << " TimeSync messages.";
   }
   else if (m_mode == "df") {
     get_iomanager()->remove_callback<std::unique_ptr<daqdataformats::TriggerRecord>>(m_df2dqm_connection);
   }
-  TLOG() << get_name() << ": received " << m_received_timesync_count.load() << " TimeSync messages.";
 }
 
 void
@@ -466,14 +488,18 @@ typedef std::map<int, std::vector<detdataformats::wib::WIBFrame*>> mapt;
     // Now it's the time to do something
     dfmessages::TriggerDecision request;
     if (m_mode == "readout") {
-      request = create_readout_request(m_sids, analysis_instance.number_of_frames, m_dqm_args.frontend_type);
-      try {
-        m_sender->send(std::move(request), m_sink_timeout);
-      } catch (iomanager::TimeoutExpired&) {
-        TLOG() << "DQM: Unable to push to the request queue";
-        continue;
+      if (m_td_sender) {
+        request = create_readout_request(m_sids, analysis_instance.number_of_frames, m_dqm_args.frontend_type);
+        try {
+          m_td_sender->send(std::move(request), m_sink_timeout);
+        } catch (iomanager::TimeoutExpired&) {
+          TLOG() << "DQM: Unable to push to the request queue";
+          continue;
+        }
+        TLOG_DEBUG(10) << "Request (trigger decision) pushed to the queue";
+      } else {
+        ers::error(MissingConnection(ERS_HERE, "TriggerDecision sender"));
       }
-      TLOG_DEBUG(10) << "Request (trigger decision) pushed to the queue";
     }
     else if (m_mode == "df") {
       dfrequest();
@@ -483,13 +509,17 @@ typedef std::map<int, std::vector<detdataformats::wib::WIBFrame*>> mapt;
     ++m_total_request_count;
 
     if (m_mode == "readout") {
-      try {
-        element = m_receiver->receive(m_source_timeout);
-      } catch (const ers::Issue& excpt) {
-        TLOG() << "DQM: Unable to pop from the data queue";
-        continue;
+      if (m_tr_receiver) {
+        try {
+          element = m_tr_receiver->receive(m_source_timeout);
+        } catch (const ers::Issue& excpt) {
+          TLOG() << "DQM: Unable to pop from the data queue";
+          continue;
+        }
+        TLOG_DEBUG(TLVL_DATA_SENT_OR_RECEIVED) << "Data received from readout";
+      } else {
+        ers::error(MissingConnection(ERS_HERE, "TriggerRecord receiver"));
       }
-      TLOG_DEBUG(TLVL_DATA_SENT_OR_RECEIVED) << "Data received from readout";
     }
     else if (m_mode == "df") {
       while (*m_dqm_args.run_mark && dftrs.get_num_elements() == 0) {
