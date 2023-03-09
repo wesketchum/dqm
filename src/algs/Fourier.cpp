@@ -38,14 +38,17 @@ Fourier::Fourier(double inc, int npoints) // NOLINT(build/unsigned)
 void
 Fourier::compute_fourier_transform() {
 
-  if (m_data.size() != (size_t)m_npoints) {
-    m_npoints = m_data.size();
-    ers::warning(ParameterChange(ERS_HERE, "input doesn't have the expected size for the Fourier transform, changing size to " + std::to_string(m_npoints)));
+	
+  if (m_data.size() < (size_t)m_npoints) {
+    //m_npoints = m_data.size();
+    ers::info(ParameterChange(ERS_HERE, "Input doesn't have the expected min n_samples for the Fourier transform, " + std::to_string(m_data.size()) + " instead of "+ std::to_string(m_npoints) + ". Skipping this event."));
+    return;
   }
 
-  if (m_transform.size() != (size_t)m_npoints) {
-    m_transform.resize(m_npoints);
-  }
+//  if (m_transform.size() != (size_t)m_npoints) {
+//    m_transform.resize(m_npoints);
+//  }
+
   std::vector<double> tmp(m_npoints);
 
   // A plan is created, executed and destroyed each time_t
