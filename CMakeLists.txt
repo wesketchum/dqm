@@ -10,6 +10,7 @@ daq_setup_environment()
 find_package(appfwk REQUIRED)
 find_package(daqdataformats REQUIRED)
 find_package(detdataformats REQUIRED)
+find_package(fddetdataformats REQUIRED)
 find_package(detchannelmaps REQUIRED)
 find_package(dfmessages REQUIRED)
 find_package(iomanager REQUIRED)
@@ -27,6 +28,7 @@ option(WITH_PYTHON_SUPPORT "Boost Python is available and algorithms defined in 
 set(DQM_DEPENDENCIES
 appfwk::appfwk
 detdataformats::detdataformats
+fddetdataformats::fddetdataformats
 detchannelmaps::detchannelmaps
 dfmessages::dfmessages
 timinglibs::timinglibs

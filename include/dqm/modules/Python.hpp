@@ -131,12 +131,12 @@ PythonModule::run(std::shared_ptr<daqdataformats::TriggerRecord> record,
   auto kafka_address = args.kafka_address;
   if (frontend_type == "wib") {
     set_is_running(true);
-    run_<detdataformats::wib::WIBFrame>(std::move(record), args, info);
+    run_<fddetdataformats::WIBFrame>(std::move(record), args, info);
     set_is_running(false);
   }
   else if (frontend_type == "wib2") {
     set_is_running(true);
-    run_<detdataformats::wib2::WIB2Frame>(std::move(record), args, info);
+    run_<fddetdataformats::WIB2Frame>(std::move(record), args, info);
     set_is_running(false);
   }
 }

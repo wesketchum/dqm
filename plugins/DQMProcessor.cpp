@@ -324,8 +324,8 @@ DQMProcessor::do_work()
   np::initialize();
 
 
-typedef std::map<int, std::vector<detdataformats::wib::WIBFrame*>> mapt;
-  p::class_<std::map<int, std::vector<detdataformats::wib::WIBFrame*>>>("MapWithFrames")
+typedef std::map<int, std::vector<fddetdataformats::WIBFrame*>> mapt;
+  p::class_<std::map<int, std::vector<fddetdataformats::WIBFrame*>>>("MapWithFrames")
   .def("__len__", &mapt::size)
   .def("__getitem__", &MapItem<mapt>::get
       // return_value_policy<copy_non_const_reference>()

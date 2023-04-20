@@ -23,7 +23,7 @@
 #include <boost/python/numpy.hpp>
 // #include <pybind11/stl.h>
 
-#include "detdataformats/wib/WIBFrame.hpp"
+#include "fddetdataformats/WIBFrame.hpp"
 #include "daqdataformats/TriggerRecord.hpp"
 #include "daqdataformats/SourceID.hpp"
 #include "dqm/FormatUtils.hpp"
@@ -76,9 +76,9 @@ template<class T>
 class MapItem
 {
 public:
-  // std::shared_ptr<std::map<int, std::vector<detdataformats::wib::WIBFrame*>>> ptr;
-  // MapItem (std::map<int, std::vector<detdataformats::wib::WIBFrame*>> map_with_frames) {
-  //   ptr = std::make_shared<std::map<int, std::vector<detdataformats::wib::WIBFrame*>>>(map_with_frames);
+  // std::shared_ptr<std::map<int, std::vector<fddetdataformats::WIBFrame*>>> ptr;
+  // MapItem (std::map<int, std::vector<fddetdataformats::WIBFrame*>> map_with_frames) {
+  //   ptr = std::make_shared<std::map<int, std::vector<fddetdataformats::WIBFrame*>>>(map_with_frames);
   // }
   typedef typename T::key_type K;
   typedef typename T::mapped_type V;
@@ -188,11 +188,11 @@ int main() {
   np::ndarray a = np::zeros(p::make_tuple(3, 3), np::dtype::get_builtin<float>());
   std::cout << "Original array:\n" << p::extract<char const *>(p::str(a)) << std::endl;
 
-  std::map<int, std::vector<detdataformats::wib::WIBFrame*>> map_with_frames;
+  std::map<int, std::vector<fddetdataformats::WIBFrame*>> map_with_frames;
   std::vector<int> test;
-  std::vector<detdataformats::wib::WIBFrame> tmp;
+  std::vector<fddetdataformats::WIBFrame> tmp;
   for (int i = 0; i < 256; ++i) {
-    detdataformats::wib::WIBFrame* fr = new detdataformats::wib::WIBFrame;
+    fddetdataformats::WIBFrame* fr = new fddetdataformats::WIBFrame;
     for (int j = 0; j < 256; ++j) {
       fr->set_channel(j, j);
     }
@@ -200,7 +200,7 @@ int main() {
   }
 
   for (int i = 0; i < 256; ++i) {
-    detdataformats::wib::WIBFrame* fr = new detdataformats::wib::WIBFrame;
+    fddetdataformats::WIBFrame* fr = new fddetdataformats::WIBFrame;
     for (int j = 0; j < 256; ++j) {
       fr->set_channel(j, j+1);
     }
@@ -215,16 +215,16 @@ int main() {
     std::cout << "Unable to import module" << std::endl;
   }
 
-  typedef std::vector<detdataformats::wib::WIBFrame*> vect;
-  class_<std::vector<detdataformats::wib::WIBFrame*>>("Frames")
+  typedef std::vector<fddetdataformats::WIBFrame*> vect;
+  class_<std::vector<fddetdataformats::WIBFrame*>>("Frames")
     .def("__len__", &vect::size)
     .def("__getitem__", &std_item<vect>::get,
         return_value_policy<copy_non_const_reference>()
            )
     ;
 
-  typedef std::map<int, std::vector<detdataformats::wib::WIBFrame*>> mapt;
-  class_<std::map<int, std::vector<detdataformats::wib::WIBFrame*>>>("MapWithFrames")
+  typedef std::map<int, std::vector<fddetdataformats::WIBFrame*>> mapt;
+  class_<std::map<int, std::vector<fddetdataformats::WIBFrame*>>>("MapWithFrames")
     .def("__len__", &mapt::size)
     .def("__getitem__", &MapItem<mapt>::get
         // return_value_policy<copy_non_const_reference>()

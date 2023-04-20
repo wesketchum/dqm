@@ -213,7 +213,7 @@ each plane?).
 
 For the implementation, most functions that handle data are templated and the
 template argument is the type of the data (for example,
-`detdataformats::wib::WIBFrame`). Pointers to the data are extracted from the
+`fddetdataformats::WIBFrame`). Pointers to the data are extracted from the
 fragments in the decoder, which also filters the type of fragment that DQM
 supports (`kProtoWIB, kWIB`) Before starting the processing, there is a
 preprocessing pipeline that will check the data, throw some errors if something
