@@ -8,8 +8,8 @@
 #ifndef DQM_INCLUDE_DQM_FORMATUTILS_HPP_
 #define DQM_INCLUDE_DQM_FORMATUTILS_HPP_
 
-#include "detdataformats/wib/WIBFrame.hpp"
-#include "detdataformats/wib2/WIB2Frame.hpp"
+#include "fddetdataformats/WIBFrame.hpp"
+#include "fddetdataformats/WIB2Frame.hpp"
 
 namespace dunedaq::dqm {
 
@@ -19,12 +19,12 @@ inline int get_crate(const T* fr) {
 }
 
 template <>
-inline int get_crate(const detdataformats::wib::WIBFrame* fr) {
+inline int get_crate(const fddetdataformats::WIBFrame* fr) {
   return fr->get_wib_header()->crate_no;
 }
 
 template <>
-inline int get_crate(const detdataformats::wib2::WIB2Frame* fr) {
+inline int get_crate(const fddetdataformats::WIB2Frame* fr) {
   return fr->header.crate;
 }
 
@@ -34,12 +34,12 @@ inline int get_slot(const T* fr) {
 }
 
 template <>
-inline int get_slot(const detdataformats::wib::WIBFrame* fr) {
+inline int get_slot(const fddetdataformats::WIBFrame* fr) {
   return fr->get_wib_header()->slot_no;
 }
 
 template <>
-inline int get_slot(const detdataformats::wib2::WIB2Frame* fr) {
+inline int get_slot(const fddetdataformats::WIB2Frame* fr) {
   return fr->header.slot;
 }
 
@@ -49,12 +49,12 @@ inline int get_fiber(const T* fr) {
 }
 
 template <>
-inline int get_fiber(const detdataformats::wib::WIBFrame* fr) {
+inline int get_fiber(const fddetdataformats::WIBFrame* fr) {
   return fr->get_wib_header()->fiber_no;
 }
 
 template <>
-inline int get_fiber(const detdataformats::wib2::WIB2Frame* fr) {
+inline int get_fiber(const fddetdataformats::WIB2Frame* fr) {
   return fr->header.link;
 }
 
@@ -69,12 +69,12 @@ inline uint16_t get_adc(const T* fr, const int ch) {
 }
 
 template <>
-inline uint16_t get_adc(const detdataformats::wib::WIBFrame* fr, const int ch) {
+inline uint16_t get_adc(const fddetdataformats::WIBFrame* fr, const int ch) {
   return fr->get_channel(ch);
 }
 
 template <>
-inline uint16_t get_adc(const detdataformats::wib2::WIB2Frame* fr, const int ch) {
+inline uint16_t get_adc(const fddetdataformats::WIB2Frame* fr, const int ch) {
   return fr->get_adc(ch);
 }
 

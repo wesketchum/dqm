@@ -95,12 +95,12 @@ ChannelStream<T, I>::run(std::shared_ptr<daqdataformats::TriggerRecord> record,
   auto frontend_type = args.frontend_type;
   if (frontend_type == "wib") {
     set_is_running(true);
-    run_<detdataformats::wib::WIBFrame>(std::move(record), args, info);
+    run_<fddetdataformats::WIBFrame>(std::move(record), args, info);
     set_is_running(false);
   }
   else if (frontend_type == "wib2") {
     set_is_running(true);
-    run_<detdataformats::wib2::WIB2Frame>(std::move(record), args, info);
+    run_<fddetdataformats::WIB2Frame>(std::move(record), args, info);
     set_is_running(false);
   }
   auto stop = std::chrono::steady_clock::now();
@@ -108,7 +108,7 @@ ChannelStream<T, I>::run(std::shared_ptr<daqdataformats::TriggerRecord> record,
 
   // else if (frontend_type == "tde") {
   //   set_is_running(true);
-  //   auto ret = run_<detdataformats::wib::WIBFrame>(std::move(record), map, kafka_address);
+  //   auto ret = run_<fddetdataformats::WIBFrame>(std::move(record), map, kafka_address);
   //   set_is_running(false);
   //   return ret;
   // }

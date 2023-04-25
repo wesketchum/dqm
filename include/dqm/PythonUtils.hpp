@@ -54,9 +54,9 @@ template<class T>
 class MapItem
 {
 public:
-  // std::shared_ptr<std::map<int, std::vector<detdataformats::wib::WIBFrame*>>> ptr;
-  // MapItem (std::map<int, std::vector<detdataformats::wib::WIBFrame*>> map_with_frames) {
-  //   ptr = std::make_shared<std::map<int, std::vector<detdataformats::wib::WIBFrame*>>>(map_with_frames);
+  // std::shared_ptr<std::map<int, std::vector<fddetdataformats::WIBFrame*>>> ptr;
+  // MapItem (std::map<int, std::vector<fddetdataformats::WIBFrame*>> map_with_frames) {
+  //   ptr = std::make_shared<std::map<int, std::vector<fddetdataformats::WIBFrame*>>>(map_with_frames);
   // }
   typedef typename T::key_type K;
   typedef typename T::mapped_type V;
