@@ -23,7 +23,7 @@
 #include "dqm/ChannelStream.hpp"
 
 #include "daqdataformats/TriggerRecord.hpp"
-#include "detdataformats/tde/TDE16Frame.hpp"
+#include "fddetdataformats/TDE16Frame.hpp"
 
 #include <cstdlib>
 #include <map>
