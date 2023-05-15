@@ -1,8 +1,8 @@
 import numpy as np
 import click
-from detdataformats.wib import WIBFrame
-from detdataformats.wib2 import WIB2Frame
-from detdataformats.daphne import DAPHNEFrame, DAPHNEStreamFrame
+from fddetdataformats import WIBFrame
+from fddetdataformats import WIB2Frame
+from fddetdataformats import DAPHNEFrame, DAPHNEStreamFrame
 from rich.console import Console
 import math
 
