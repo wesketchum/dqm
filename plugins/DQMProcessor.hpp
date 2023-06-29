@@ -25,7 +25,8 @@
 #include "iomanager/Receiver.hpp"
 #include "daqdataformats/TriggerRecord.hpp"
 #include "dfmessages/TriggerDecision.hpp"
-#include "timinglibs/TimestampEstimator.hpp"
+#include "utilities/TimestampEstimator.hpp"
+#include "utilities/TimeSync.hpp"
 #include "ipm/Receiver.hpp"
 
 #include "iomanager/queue/FollyQueue.hpp"
@@ -59,7 +60,6 @@ public:
   void do_drain_dataflow(const data_t&);
   void do_configure(const data_t&);
 
-  void dispatch_timesync(dfmessages::TimeSync& timesyncmsg);
   void dispatch_trigger_record(std::unique_ptr<daqdataformats::TriggerRecord>& tr);
 
   void do_work();
@@ -73,7 +73,7 @@ private:
   std::shared_ptr<std::atomic<bool>> m_run_marker;
   std::shared_ptr<iomanager::ReceiverConcept<std::unique_ptr<daqdataformats::TriggerRecord>>> m_tr_receiver;
   std::shared_ptr<iomanager::SenderConcept<dfmessages::TriggerDecision>> m_td_sender;
-  std::shared_ptr<iomanager::ReceiverConcept<dfmessages::TimeSync>> m_timesync_receiver;
+  std::shared_ptr<iomanager::ReceiverConcept<utilities::TimeSync>> m_timesync_receiver;
 
   std::chrono::milliseconds m_sink_timeout{ 1000 };
   std::chrono::milliseconds m_source_timeout{ 1000 };
@@ -94,7 +94,7 @@ private:
   std::string m_df2dqm_connection;
   std::string m_dqm2df_connection;
 
-  std::unique_ptr<timinglibs::TimestampEstimator> m_time_est;
+  std::unique_ptr<utilities::TimestampEstimator> m_time_est;
 
   std::atomic<daqdataformats::run_number_t> m_run_number;
 
@@ -110,7 +110,6 @@ private:
   std::atomic<int> m_total_request_count{ 0 };
   std::atomic<int> m_data_count{ 0 };
   std::atomic<int> m_total_data_count{ 0 };
-  std::atomic<uint64_t> m_received_timesync_count{ 0 }; // NOLINT(build/unsigned)
 
   std::string m_channel_map;
 

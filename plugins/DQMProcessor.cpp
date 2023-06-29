@@ -21,7 +21,7 @@
 #include "appfwk/DAQModuleHelper.hpp"
 #include "daqdataformats/ComponentRequest.hpp"
 #include "daqdataformats/SourceID.hpp"
-#include "dfmessages/TimeSync.hpp"
+#include "utilities/TimeSync.hpp"
 #include "dfmessages/TRMonRequest.hpp"
 #include "dfmessages/TriggerRecord_serialization.hpp"
 
@@ -65,7 +65,7 @@ DQMProcessor::init(const data_t& init_data)
   auto connection_map = appfwk::connection_index(init_data);
 
   if (connection_map.count("timesync_input") > 0) {
-    m_timesync_receiver = get_iom_receiver<dfmessages::TimeSync>(connection_map["timesync_input"]);
+    m_timesync_receiver = get_iom_receiver<utilities::TimeSync>(connection_map["timesync_input"]);
   }
 
   if (connection_map.count("trigger_decision_output") > 0) {
@@ -158,15 +158,17 @@ DQMProcessor::do_configure(const nlohmann::json& args)
 void
 DQMProcessor::do_start(const nlohmann::json& args)
 {
+  m_run_number.store(daqdataformats::run_number_t(args.at("run").get<daqdataformats::run_number_t>()));
+
   if (m_mode == "readout") {
 
-    m_time_est.reset(new timinglibs::TimestampEstimator(m_clock_frequency));
-
-    m_received_timesync_count.store(0);
+    m_time_est.reset(new utilities::TimestampEstimator(m_run_number, m_clock_frequency));
 
     // Subscribe to all TimeSync messages
     if (m_timesync_receiver) {
-      m_timesync_receiver->add_callback(std::bind(&DQMProcessor::dispatch_timesync, this, std::placeholders::_1));
+      m_timesync_receiver->add_callback(std::bind(&utilities::TimestampEstimator::timesync_callback,
+                                                  reinterpret_cast<utilities::TimestampEstimator*>(m_time_est.get()),
+                                                  std::placeholders::_1));
     }
   }
 
@@ -177,8 +179,6 @@ DQMProcessor::do_start(const nlohmann::json& args)
   }
 
   m_dqm_args.run_mark = std::make_shared<std::atomic<bool>>(true);
-
-  m_run_number.store(daqdataformats::run_number_t(args.at("run").get<daqdataformats::run_number_t>()));
 
   m_running_thread.reset(new std::thread(&DQMProcessor::do_work, this));
 }
@@ -193,7 +193,7 @@ DQMProcessor::do_drain_dataflow(const data_t&)
     if (m_timesync_receiver) {
       m_timesync_receiver->remove_callback();
     }
-    TLOG() << get_name() << ": received " << m_received_timesync_count.load() << " TimeSync messages.";
+    TLOG() << get_name() << ": received " << m_time_est->get_received_timesync_count() << " TimeSync messages.";
   }
   else if (m_mode == "df") {
     get_iomanager()->remove_callback<std::unique_ptr<daqdataformats::TriggerRecord>>(m_df2dqm_connection);
@@ -634,22 +634,6 @@ DQMProcessor::dfrequest()
   trmon.data_destination = m_df2dqm_connection;
 
   get_iom_sender<dfmessages::TRMonRequest>(m_dqm2df_connection)->send(std::move(trmon), m_sink_timeout);
-}
-
-
-void
-DQMProcessor::dispatch_timesync(dfmessages::TimeSync& timesyncmsg)
-{
-  ++m_received_timesync_count;
-  TLOG_DEBUG(13) << "Received TimeSync message with DAQ time= " << timesyncmsg.daq_time
-                 << ", run=" << timesyncmsg.run_number << " (local run number is " << m_run_number << ")";
-  if (m_time_est.get() != nullptr) {
-    if (timesyncmsg.run_number == m_run_number) {
-      m_time_est->add_timestamp_datapoint(timesyncmsg);
-    } else {
-      TLOG_DEBUG(0) << "Discarded TimeSync message from run " << timesyncmsg.run_number << " during run " << m_run_number;
-    }
-  }
 }
 
 } // namespace dqm

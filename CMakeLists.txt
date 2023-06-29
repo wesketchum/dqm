@@ -15,7 +15,7 @@ find_package(detchannelmaps REQUIRED)
 find_package(dfmessages REQUIRED)
 find_package(iomanager REQUIRED)
 find_package(RdKafka REQUIRED)
-find_package(timinglibs REQUIRED)
+find_package(utilities REQUIRED)
 find_package(Boost COMPONENTS unit_test_framework program_options REQUIRED)
 find_package(fftw REQUIRED)
 
@@ -31,7 +31,7 @@ detdataformats::detdataformats
 fddetdataformats::fddetdataformats
 detchannelmaps::detchannelmaps
 dfmessages::dfmessages
-timinglibs::timinglibs
+utilities::utilities
 )
 
 if(WITH_PYTHON_SUPPORT)
