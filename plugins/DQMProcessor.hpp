@@ -26,7 +26,7 @@
 #include "daqdataformats/TriggerRecord.hpp"
 #include "dfmessages/TriggerDecision.hpp"
 #include "utilities/TimestampEstimator.hpp"
-#include "utilities/TimeSync.hpp"
+#include "dfmessages/TimeSync.hpp"
 #include "ipm/Receiver.hpp"
 
 #include "iomanager/queue/FollyQueue.hpp"
@@ -73,7 +73,7 @@ private:
   std::shared_ptr<std::atomic<bool>> m_run_marker;
   std::shared_ptr<iomanager::ReceiverConcept<std::unique_ptr<daqdataformats::TriggerRecord>>> m_tr_receiver;
   std::shared_ptr<iomanager::SenderConcept<dfmessages::TriggerDecision>> m_td_sender;
-  std::shared_ptr<iomanager::ReceiverConcept<utilities::TimeSync>> m_timesync_receiver;
+  std::shared_ptr<iomanager::ReceiverConcept<dfmessages::TimeSync>> m_timesync_receiver;
 
   std::chrono::milliseconds m_sink_timeout{ 1000 };
   std::chrono::milliseconds m_source_timeout{ 1000 };

@@ -21,7 +21,7 @@
 #include "appfwk/DAQModuleHelper.hpp"
 #include "daqdataformats/ComponentRequest.hpp"
 #include "daqdataformats/SourceID.hpp"
-#include "utilities/TimeSync.hpp"
+#include "dfmessages/TimeSync.hpp"
 #include "dfmessages/TRMonRequest.hpp"
 #include "dfmessages/TriggerRecord_serialization.hpp"
 
@@ -65,7 +65,7 @@ DQMProcessor::init(const data_t& init_data)
   auto connection_map = appfwk::connection_index(init_data);
 
   if (connection_map.count("timesync_input") > 0) {
-    m_timesync_receiver = get_iom_receiver<utilities::TimeSync>(connection_map["timesync_input"]);
+    m_timesync_receiver = get_iom_receiver<dfmessages::TimeSync>(connection_map["timesync_input"]);
   }
 
   if (connection_map.count("trigger_decision_output") > 0) {
@@ -166,7 +166,7 @@ DQMProcessor::do_start(const nlohmann::json& args)
 
     // Subscribe to all TimeSync messages
     if (m_timesync_receiver) {
-      m_timesync_receiver->add_callback(std::bind(&utilities::TimestampEstimator::timesync_callback,
+      m_timesync_receiver->add_callback(std::bind(&utilities::TimestampEstimator::timesync_callback<dfmessages::TimeSync>,
                                                   reinterpret_cast<utilities::TimestampEstimator*>(m_time_est.get()),
                                                   std::placeholders::_1));
     }
