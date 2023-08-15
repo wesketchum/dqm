@@ -186,16 +186,19 @@ DQMProcessor::do_start(const nlohmann::json& args)
 void
 DQMProcessor::do_drain_dataflow(const data_t&)
 {
-  m_dqm_args.run_mark->store(false);
-  m_running_thread->join();
-
+  // 15-Aug-2023, KAB: operations which involve the TimestampEstimator (m_time_est) need to come *before*
+  // the worker thread is stopped because the m_time_est pointer is reset at the end of the work function.
   if (m_mode == "readout") {
     if (m_timesync_receiver) {
       m_timesync_receiver->remove_callback();
     }
     TLOG() << get_name() << ": received " << m_time_est->get_received_timesync_count() << " TimeSync messages.";
   }
-  else if (m_mode == "df") {
+
+  m_dqm_args.run_mark->store(false);
+  m_running_thread->join();
+
+  if (m_mode == "df") {
     get_iomanager()->remove_callback<std::unique_ptr<daqdataformats::TriggerRecord>>(m_df2dqm_connection);
   }
 }
