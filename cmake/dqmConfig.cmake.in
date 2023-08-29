@@ -16,7 +16,7 @@ find_dependency(daqdataformats)
 find_dependency(detdataformats)
 find_dependency(fddetdataformats)
 find_dependency(detchannelmaps)
-find_dependency(timinglibs)
+find_dependency(utilities)
 find_dependency(HighFive)
 
 
