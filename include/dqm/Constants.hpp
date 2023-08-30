@@ -23,6 +23,12 @@ get_ticks_between_timestamps(const std::string& frontend_type)
   else if (frontend_type == "wib2") {
     return 32;
   }
+  else if (frontend_type == "wibeth") {
+    return 32*64;
+  }
+  else if (frontend_type == "daphnestream") {
+    return 64;
+  }
   return -1;
 }
 

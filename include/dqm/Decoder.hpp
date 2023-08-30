@@ -42,9 +42,19 @@ decode(std::shared_ptr<daqdataformats::TriggerRecord> record, int max_frames) {
                               << types_str << "and sizes " << sizes_str;
 
   for (const auto& fragment : fragments) {
+    /* 22Aug2023 - Wes K - Update the fragment types we consider.
     if (fragment->get_fragment_type() != daqdataformats::FragmentType::kProtoWIB &&
         fragment->get_fragment_type() != daqdataformats::FragmentType::kWIB &&
         fragment->get_fragment_type() != daqdataformats::FragmentType::kTDE_AMC) {
+      continue;
+    }
+    */
+    if ( !(fragment->get_fragment_type() == daqdataformats::FragmentType::kProtoWIB ||
+	   fragment->get_fragment_type() == daqdataformats::FragmentType::kWIB ||
+	   fragment->get_fragment_type() == daqdataformats::FragmentType::kTDE_AMC ||
+	   fragment->get_fragment_type() == daqdataformats::FragmentType::kWIBEth ||
+	   fragment->get_fragment_type() == daqdataformats::FragmentType::kDAPHNE ||
+	   fragment->get_fragment_type() == daqdataformats::FragmentType::kDAPHNEStream) ) {
       continue;
     }
     auto id = fragment->get_element_id();

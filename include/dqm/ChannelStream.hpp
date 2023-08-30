@@ -21,6 +21,11 @@
 #include "dqm/FormatUtils.hpp"
 
 #include "daqdataformats/TriggerRecord.hpp"
+#include "fddetdataformats/WIBFrame.hpp"
+#include "fddetdataformats/WIB2Frame.hpp"
+#include "fddetdataformats/WIBEthFrame.hpp"
+#include "fddetdataformats/DAPHNEFrame.hpp"
+#include "fddetdataformats/DAPHNEStreamFrame.hpp"
 
 #include <functional>
 #include <cstdlib>
@@ -101,6 +106,21 @@ ChannelStream<T, I>::run(std::shared_ptr<daqdataformats::TriggerRecord> record,
   else if (frontend_type == "wib2") {
     set_is_running(true);
     run_<fddetdataformats::WIB2Frame>(std::move(record), args, info);
+    set_is_running(false);
+  }
+  else if (frontend_type == "wibeth") {
+    set_is_running(true);
+    run_<fddetdataformats::WIBEthFrame>(std::move(record), args, info);
+    set_is_running(false);
+  }
+  else if (frontend_type == "daphne") {
+    set_is_running(true);
+    run_<fddetdataformats::DAPHNEFrame>(std::move(record), args, info);
+    set_is_running(false);
+  }
+  else if (frontend_type == "daphnestream") {
+    set_is_running(true);
+    run_<fddetdataformats::DAPHNEStreamFrame>(std::move(record), args, info);
     set_is_running(false);
   }
   auto stop = std::chrono::steady_clock::now();

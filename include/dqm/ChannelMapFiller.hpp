@@ -16,6 +16,9 @@
 #include "daqdataformats/TriggerRecord.hpp"
 #include "fddetdataformats/WIBFrame.hpp"
 #include "fddetdataformats/WIB2Frame.hpp"
+#include "fddetdataformats/WIBEthFrame.hpp"
+#include "fddetdataformats/DAPHNEFrame.hpp"
+#include "fddetdataformats/DAPHNEStreamFrame.hpp"
 
 #include <memory>
 #include <string>
@@ -60,6 +63,15 @@ ChannelMapFiller::run(std::shared_ptr<daqdataformats::TriggerRecord> record,
   }
   else if (args.frontend_type == "wib2") {
     args.map->fill<fddetdataformats::WIB2Frame>(record);
+  }
+  else if (args.frontend_type == "wibeth") {
+    args.map->fill<fddetdataformats::WIBEthFrame>(record);
+  }
+  else if (args.frontend_type == "daphne") {
+    args.map->fill<fddetdataformats::DAPHNEFrame>(record);
+  }
+  else if (args.frontend_type == "daphnestream") {
+    args.map->fill<fddetdataformats::DAPHNEStreamFrame>(record);
   }
   set_is_running(false);
 }
